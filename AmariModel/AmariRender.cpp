@@ -3,7 +3,7 @@
 #include "GlUtils.h"
 #include "AmariRender.h"
 
-static const size_t BitsPerPixel = 4;
+static const size_t g_bitsPerPixel = 4;
 
 /*****************************************************************************
  * AmariRender
@@ -45,7 +45,9 @@ static const char fragment_src[] =
     "}";
 
 AmariRender::AmariRender()
- : use_blur(true), blur_sigma(1.f), tex_data(NULL) {
+ : use_blur(true)
+ , blur_sigma(1.0)
+ , tex(nullptr) {
     //
 }
 
@@ -55,12 +57,6 @@ AmariRender::~AmariRender() {
 
 bool AmariRender::init(size_t size) {
     GLuint genbuf[1];
-
-    // Allocate mem
-    tex_size = size;
-    tex_data_size = size * size;
-    tex_data = new GLubyte[tex_data_size * BitsPerPixel];
-    memset(tex_data, 0, sizeof(GLubyte) * BitsPerPixel * tex_data_size);
 
     // Init textures
     glGenTextures(1, genbuf); LOGOPENGLERROR();
@@ -73,7 +69,7 @@ bool AmariRender::init(size_t size) {
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); LOGOPENGLERROR();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); LOGOPENGLERROR();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex_size, tex_size, 0, GL_RGBA,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, NULL); LOGOPENGLERROR();
 
     // Init VBO
@@ -98,20 +94,26 @@ bool AmariRender::init(size_t size) {
     uTex = program.uniform("tex");
     uResolution = program.uniform("iRes");
     uMVP = program.uniform("mvp");
+    if (aCoord == -1 || aTexCoord == -1 || uTex == -1
+        || uResolution == -1 || uMVP == -1) {
+        LOGE << "Invalid shader program";
+        return false;
+    }
+
+    // Allocate mem
+    tex = texture_alloc(size, g_bitsPerPixel);
 
     return true;
 }
 
 void AmariRender::release() {
-    if (tex_data) {
-        delete[] tex_data;
-        tex_data = NULL;
+    if (tex) {
+        texture_free(tex);
+        tex = nullptr;
     }
 
     glDeleteTextures(1, &texture); LOGOPENGLERROR();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
-
-    // program.release();
 }
 
 void AmariRender::render(const glm::mat4& mvp) {
@@ -140,21 +142,14 @@ void AmariRender::resize(unsigned int w, unsigned int h) {
     this->h = h;
 }
 
-void AmariRender::update_texture(const float data[], const size_t size) {
-#pragma omp parallel for
-    for (int idx=0; idx<size; idx++) {
-        GLubyte k = (data[idx]>0.f) ? 0xFF : 0x00;
-        tex_data[BitsPerPixel*idx  ] = tex_data[BitsPerPixel*idx+1] = tex_data[BitsPerPixel*idx+2] = k;
-        if (BitsPerPixel>3) {
-            tex_data[BitsPerPixel*idx+3] = 0xFF;
-        }
-    }
+void AmariRender::update_texture(matrix_t* m) {
+    texture_copy_matrix(tex, m);
 
-    if (this->use_blur) {
-        gaussian_filter(this->tex_data, this->tex_size, BitsPerPixel, this->blur_sigma);
+    if (use_blur) {
+        kernel_filter_texture(tex, blur_sigma, MODE_WRAP);
     }
 
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex_size, tex_size, GL_RGBA,
-                    GL_UNSIGNED_BYTE, tex_data); LOGOPENGLERROR();
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, GL_RGBA,
+                    GL_UNSIGNED_BYTE, (const GLubyte *)(tex->data)); LOGOPENGLERROR();
 }

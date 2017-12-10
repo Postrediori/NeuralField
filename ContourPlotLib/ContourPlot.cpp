@@ -2,25 +2,30 @@
 #include "GlUtils.h"
 #include "ContourPlot.h"
 
-unsigned char CellType(float vals[]) {
-    unsigned char flags = FLAG_NO;
-    if (vals[0]>0.f) {
+flags_t CellType(double vals[]) {
+    flags_t flags = FLAG_NO;
+    if (vals[0] > 0.0) {
         flags |= FLAG_SW;
     }
-    if (vals[1]>0.f) {
+    if (vals[1] > 0.0) {
         flags |= FLAG_NW;
     }
-    if (vals[2]>0.f) {
+    if (vals[2] > 0.0) {
         flags |= FLAG_NE;
     }
-    if (vals[3]>0.f) {
+    if (vals[3] > 0.0) {
         flags |= FLAG_SE;
     }
     return flags;
 }
 
 ContourPlot::ContourPlot(GLuint p)
-    : w(0), h(0), vbo_count(0), vbo(0), threshold(0.f), program(p) {
+    : w(0)
+    , h(0)
+    , vbo_count(0)
+    , vbo(0)
+    , threshold(0.0)
+    , program(p) {
     a_coord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
     u_mvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
     u_zoom = glGetUniformLocation(program, "zoom"); LOGOPENGLERROR();
@@ -33,12 +38,11 @@ ContourPlot::~ContourPlot() {
     this->release();
 }
 
-bool ContourPlot::init(const float* const points,
-                      int xdiv, int ydiv,
-                      float xmn, float xmx, float ymn, float ymx,
-                      float t) { return true; }
+bool ContourPlot::init(matrix_t* points, area_t a) { return init(points, a, 0.0); }
 
-void ContourPlot::render(const glm::mat4& mvp, float zoom,
+bool ContourPlot::init(matrix_t* points, area_t a, double t) { return true; }
+
+void ContourPlot::render(const glm::mat4& mvp, double zoom,
                          const glm::vec2& offset, const GLfloat c[]) { }
 
 void ContourPlot::release() {

@@ -7,21 +7,18 @@ ContourParallel::ContourParallel(GLuint p)
     : ContourPlot(p) {
 }
 
-bool ContourParallel::init(const float* const points,
-                      int xdiv, int ydiv,
-                      float xmn, float xmx, float ymn, float ymx,
-                      float t) {
+bool ContourParallel::init(matrix_t* points, area_t a, double t) {
     threshold = t;
     vbo_count = 0;
     vbo = 0;
+    
+    area = a;
+    
+    int xdiv = points->cols - 1;
+    int ydiv = points->rows - 1;
 
-    xmin = xmn;
-    xmax = xmx;
-    ymin = ymn;
-    ymax = ymx;
-
-    float dX = (xmax - xmin) / (float)xdiv;
-    float dY = (ymax - ymin) / (float)ydiv;
+    double dX = (a.xmax - a.xmin) / (double)xdiv;
+    double dY = (a.ymax - a.ymin) / (double)ydiv;
 
     //unsigned char flags, u;
     //float x, y;
@@ -31,7 +28,7 @@ bool ContourParallel::init(const float* const points,
     int c = 0;
     int max_idx = xdiv * ydiv;
 
-    std::vector<glm::vec4> lines;
+    lines_t lines;
     lines.resize(max_idx * 2);
 
 #pragma omp parallel for shared(lines)
@@ -39,18 +36,18 @@ bool ContourParallel::init(const float* const points,
         int i = idx % xdiv;
         int j = idx / xdiv;
 
-        float y = ymin + j * dY;
-        float x = xmin + i * dX;
+        double y = a.ymin + j * dY;
+        double x = a.xmin + i * dX;
         
         float vals[4];
-        vals[0] = points[(j  )*(xdiv+1)+(i  )] - threshold;
-        vals[1] = points[(j  )*(xdiv+1)+(i+1)] - threshold;
-        vals[2] = points[(j+1)*(xdiv+1)+(i+1)] - threshold;
-        vals[3] = points[(j+1)*(xdiv+1)+(i  )] - threshold;
+        vals[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
+        vals[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
+        vals[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
+        vals[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
 
         //unsigned char flags;
         //flags = CellType(vals);
-        unsigned char flags = FLAG_NO;
+        flags_t flags = FLAG_NO;
         if (vals[0]>0.f) flags |= FLAG_SW;
         if (vals[1]>0.f) flags |= FLAG_NW;
         if (vals[2]>0.f) flags |= FLAG_NE;
@@ -59,9 +56,9 @@ bool ContourParallel::init(const float* const points,
         if (flags==1 || flags==2 || flags==4 || flags==7
             || flags==8 || flags==11 || flags==13 || flags==14) {
             // One corner
-            float x1, y1;
-            float x2, y2;
-            float sx = dX, sy = dY;
+            double x1, y1;
+            double x2, y2;
+            double sx = dX, sy = dY;
 
             switch (flags) {
             case 1:
@@ -101,9 +98,9 @@ bool ContourParallel::init(const float* const points,
 
         } else if (flags==3 || flags==6 || flags==9 || flags==12) {
             // Half
-            float x1, y1;
-            float x2, y2;
-            float sx = dX, sy = dY;
+            double x1, y1;
+            double x2, y2;
+            double sx = dX, sy = dY;
 
             switch (flags) {
             case 3:
@@ -129,18 +126,18 @@ bool ContourParallel::init(const float* const points,
 
         } else if (flags==5 || flags==10) {
             // Ambiguity
-            float v;
+            double v;
             bool u;
-            v = (points[(j  )*(xdiv+1)+(i  )]+points[(j  )*(xdiv+1)+(i+1)]+
-                 points[(j+1)*(xdiv+1)+(i+1)]+points[(j+1)*(xdiv+1)+(i  )])/4.f;
+            v = (points->data[(j  )*(xdiv+1)+(i  )]+points->data[(j  )*(xdiv+1)+(i+1)]+
+                 points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )])/4.f;
             v -= threshold;
             u = v>0.f;
 
-            float x1, y1;
-            float x2, y2;
-            float x3, y3;
-            float x4, y4;
-            float sx = dX, sy = dY;
+            double x1, y1;
+            double x2, y2;
+            double x3, y3;
+            double x4, y4;
+            double sx = dX, sy = dY;
 
             if ((flags==5 && u) || (flags==10 && !u)) {
                 x1 = x;
@@ -193,7 +190,7 @@ bool ContourParallel::init(const float* const points,
 }
 
 void ContourParallel::render(const glm::mat4& mvp,
-                             float zoom,
+                             double zoom,
                              const glm::vec2& offset,
                              const GLfloat c[]) {
     glUseProgram(program); LOGOPENGLERROR();

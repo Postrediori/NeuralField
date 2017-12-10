@@ -12,6 +12,7 @@ target_link_libraries(${PROJECT}
     ${GLEW_LIBRARIES}
     ${FREETYPE_LIBRARIES}
     GlUtilsLib
+    LinAlgLib
     plog
     )
 

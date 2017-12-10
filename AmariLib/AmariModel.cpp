@@ -11,11 +11,11 @@ inline float frand1000() {
  * Amari model
  ****************************************************************************/
 AmariModel::AmariModel()
-    : h(-0.1f)
-    , k(0.05f)
-    , K_(0.125f)
-    , m(0.025f)
-    , M_(0.065f)
+    : h(-0.1)
+    , k(0.05)
+    , K_(0.125)
+    , m(0.025)
+    , M_(0.065)
     , mode(MODE_REFLECT) {
 }
 
@@ -28,72 +28,73 @@ bool AmariModel::init(const char* config_file) {
         return false;
     }
 
-    sigma_k = 1.f / sqrtf(2.f * this->k);
-    sigma_m = 1.f / sqrtf(2.f * this->m);
-    pi_k = this->K_ * M_PI / this->k;
-    pi_m = this->M_ * M_PI / this->m;
+    sigma_k = 1.0 / sqrtf(2.0 * k);
+    sigma_m = 1.0 / sqrtf(2.0 * m);
+    pi_k = K_ * M_PI / k;
+    pi_m = M_ * M_PI / m;
 
-    create_kernel(sigma_k, &excitement_kernel, &excitement_kernel_size);
-    create_kernel(sigma_m, &inhibition_kernel, &inhibition_kernel_size);
+    excitement_kernel = kernel_create(sigma_k);
+    inhibition_kernel = kernel_create(sigma_m);
 
-    this->stimulus = new float[this->data_size];
-    this->activity = new float[this->data_size];
-    this->excitement = new float[this->data_size];
-    this->inhibition = new float[this->data_size];
+    stimulus = matrix_allocate(size, size);
+    activity = matrix_allocate(size, size);
+    excitement = matrix_allocate(size, size);
+    inhibition = matrix_allocate(size, size);
 
-    this->restart();
+    restart();
 
     return true;
 }
 
 void AmariModel::restart() {
-    matrix_scalar_set(this->stimulus, this->size, -this->h);
+    matrix_random_f(stimulus);
+    matrix_scalar_mul(stimulus, -h);
 
-    for (int i=0; i<this->data_size; i++) {
-        this->stimulus[i] *= frand1000();
-    }
-
-    matrix_scalar_set(this->activity,   this->size, this->h);
-    matrix_scalar_set(this->excitement, this->size, 0.0f);
-    matrix_scalar_set(this->inhibition, this->size, 0.0f);
+    matrix_scalar_set(activity, h);
+    matrix_scalar_set(excitement, 0.0);
+    matrix_scalar_set(inhibition, 0.0);
 }
 
 void AmariModel::release() {
-    delete[] this->stimulus;
-    delete[] this->activity;
-    delete[] this->excitement;
-    delete[] this->inhibition;
+    matrix_free(stimulus);
+    matrix_free(activity);
+    matrix_free(excitement);
+    matrix_free(inhibition);
+    stimulus = nullptr;
+    activity = nullptr;
+    excitement = nullptr;
+    inhibition = nullptr;
 
-    delete[] this->excitement_kernel;
-    delete[] this->inhibition_kernel;
+    kernel_free(excitement_kernel);
+    kernel_free(inhibition_kernel);
+    excitement_kernel = nullptr;
+    inhibition_kernel = nullptr;
 }
 
 void AmariModel::stimulate() {
-    matrix_heaviside(this->activity, this->size);
+    matrix_heaviside(activity);
 
-    apply_filter(this->activity, this->excitement, this->size,
-                 excitement_kernel, excitement_kernel_size, mode);
-    matrix_scalar_mul(this->excitement, this->size, this->pi_k);
+    kernel_apply_to_matrix(excitement, activity, excitement_kernel, mode);
+    matrix_scalar_mul(excitement, pi_k);
 
-    apply_filter(this->activity, this->inhibition, this->size,
-                 inhibition_kernel, inhibition_kernel_size, mode);
-    matrix_scalar_mul(this->inhibition, this->size, this->pi_m);
+    kernel_apply_to_matrix(inhibition, activity, inhibition_kernel, mode);
+    matrix_scalar_mul(inhibition, pi_m);
 
-    matrix_scalar_set(this->activity, this->size, this->h);
-    matrix_add(this->activity, this->excitement, this->size);
-    matrix_sub(this->activity, this->inhibition, this->size);
-    matrix_add(this->activity, this->stimulus, this->size);
+    matrix_scalar_set(activity, h);
+    matrix_add(activity, excitement);
+    matrix_sub(activity, inhibition);
+    matrix_add(activity, stimulus);
 }
 
 bool AmariModel::load_config(const char* config_file) {
     std::ifstream in(config_file, std::ios::in);
     if (!in) {
-        LOGE << "Unable to load AMari Model Config File " << config_file;
+        LOGE << "Unable to load Amari Model Config File " << config_file;
         return false;
     }
 
     int ival;
-    float fval;
+    double fval;
     char sval[256];
 
     std::string line;
@@ -102,40 +103,41 @@ bool AmariModel::load_config(const char* config_file) {
             continue;
         }
 
-        if (strncmp(line.c_str(), "h = ", 4)==0) {
-            sscanf(line.c_str(), "h = %f\n", &fval);
+        if (line.find("h = ")==0) {
+            sscanf(line.c_str(), "h = %lf\n", &fval);
             this->h = fval;
 
-        } else if (strncmp(line.c_str(), "k = ", 4)==0) {
-            sscanf(line.c_str(), "k = %f\n", &fval);
+        } else if (line.find("k = ")==0) {
+            sscanf(line.c_str(), "k = %lf\n", &fval);
             this->k = fval;
 
-        } else if (strncmp(line.c_str(), "K = ", 4)==0) {
-            sscanf(line.c_str(), "K = %f\n", &fval);
+        } else if (line.find("K = ")==0) {
+            sscanf(line.c_str(), "K = %lf\n", &fval);
             this->K_ = fval;
 
-        } else if (strncmp(line.c_str(), "m = ", 4)==0) {
-            sscanf(line.c_str(), "m = %f\n", &fval);
+        } else if (line.find("m = ")==0) {
+            sscanf(line.c_str(), "m = %lf\n", &fval);
             this->m = fval;
 
-        } else if (strncmp(line.c_str(), "M = ", 4)==0) {
-            sscanf(line.c_str(), "M = %f\n", &fval);
+        } else if (line.find("M = ")==0) {
+            sscanf(line.c_str(), "M = %lf\n", &fval);
             this->M_ = fval;
 
-        } else if (strncmp(line.c_str(), "mode = ", 7)==0) {
+        } else if (line.find("mode = ")==0) {
             sscanf(line.c_str(), "mode = %s\n", &sval);
             if (strcmp(sval, "wrap")==0) {
                 this->mode = MODE_WRAP;
+                
             } else if (strcmp(sval, "reflect")==0) {
                 this->mode = MODE_REFLECT;
+                
             } else if (strcmp(sval, "mirror")==0) {
                 this->mode = MODE_MIRROR;
             }
 
-        } else if (strncmp(line.c_str(), "size = ", 7)==0) {
+        } else if (line.find("size = ")==0) {
             sscanf(line.c_str(), "size = %d\n", &ival);
             this->size = ival;
-            this->data_size = this->size * this->size;
         }
     }
     
@@ -145,5 +147,5 @@ bool AmariModel::load_config(const char* config_file) {
 }
 
 void AmariModel::set_activity(size_t x, size_t y, float a) {
-    this->activity[y * this->size + x] = a;
+    activity->data[y * activity->cols + x] = a;
 }

@@ -1,36 +1,54 @@
 #include "stdafx.h"
+#include "Texture.h"
+#include "Matrix.h"
 #include "Gauss.h"
 
 /*****************************************************************************
  * Gaussian filter
  ****************************************************************************/
-inline float gfunc(float x, float sigma) {
-    float s = sigma * sigma;
-    return expf(-.5f * x * x / s);
+static double gfunc(double x, double sigma) {
+    double s = sigma * sigma;
+    return exp(-0.5 * x * x / s);
 }
 
-size_t normalize_index(int p, size_t i_size, KernelMode mode) {
+static size_t normalize_index(int p, size_t i_size, KernelMode mode) {
     int n = p;
 
     switch (mode){
     case MODE_WRAP:
-        if (n<0) n = i_size - ((-n) % i_size);
-        if (n>=i_size) n %= i_size;
+        if (n<0) {
+            n = i_size - ((-n) % i_size);
+        }
+        if (n>=i_size) {
+            n %= i_size;
+        }
         break;
 
     case MODE_REFLECT:
         while (n<0 || n>=i_size) {
-            if (n==-1) n = 0;
-            if (n<-1) n = 1;
-            if (n==i_size) n = i_size - 2;
-            if (n>i_size) n = i_size - 3;
+            if (n==-1) {
+                n = 0;
+            }
+            if (n<-1) {
+                n = 1;
+            }
+            if (n==i_size) {
+                n = i_size - 2;
+            }
+            if (n>i_size) {
+                n = i_size - 3;
+            }
         }
         break;
 
     case MODE_MIRROR:
         while (n<0 || n>=i_size) {
-            if (n<0) n = -n;
-            if (n>=i_size) n = 2 * i_size - n;
+            if (n<0) {
+                n = -n;
+            }
+            if (n>=i_size) {
+                n = 2 * i_size - n;
+            }
         }
         break;
     }
@@ -38,148 +56,202 @@ size_t normalize_index(int p, size_t i_size, KernelMode mode) {
     return (size_t)n;
 }
 
-void create_kernel(float sigma, float** kernel, size_t* size) {
-    int lw = (int)(4.f * sigma + .5f);
-    (*size) = lw * 2 + 1;
-    (*kernel) = new float[(*size)];
-
-    int k_size = (*size);
-    float *k = (*kernel);
-
-    int i;
-    float s, f;
-
-    s = 1.f;
-    k[lw] = 1.f;
-    for (i=1; i<=lw; i++) {
-        f = gfunc((float)(i), sigma);
-        k[lw-i] = f;
-        k[lw+i] = f;
-        s += f * 2.f;
+kernel_t* kernel_alloc(size_t size) {
+    kernel_t* k = new kernel_t;
+    if (!k) {
+        LOGE << "kernel alloc error";
+        return nullptr;
     }
-
-    for (i=0; i<k_size; i++) {
-        k[i] /= s;
-    }
+    k->size = size;
+    k->data = new double[size];
+    return k;
 }
 
-void apply_filter(float src[], float dst[], size_t i_size, float k[], size_t k_size, KernelMode mode) {
-    int k2 = k_size / 2;
-
-    size_t max_size = i_size * i_size;
-    float* tmp = new float[max_size];
-    
-    int i, j;
-    float d;
-
-    int l;
-    
-#pragma omp parallel for private(i,j,d) shared(src,tmp,k)
-    for (l=0; l<max_size; l++) {
-        i = l % i_size;
-        j = l / i_size;
-
-        d = 0.f;
-
-        for (int n=0; n<k_size; n++) {
-            int p = i + n - k2;
-            p = normalize_index(p, i_size, mode);
-            d += src[p+j*i_size] * k[n];
-        }
-
-        tmp[i+j*i_size] = d;
+void kernel_free(kernel_t* k) {
+    if (!k) {
+        LOGE << "kernel null error";
+        return;
     }
-    
-#pragma omp parallel for private(i,j,d) shared(tmp,dst,k)
-    for (l=0; l<max_size; l++) {
-        i = l % i_size;
-        j = l / i_size;
-
-        d = 0.f;
-
-        for (int n=0; n<k_size; n++) {
-            int p = i + n - k2;
-            p = normalize_index(p, i_size, mode);
-            d += tmp[j+p*i_size] * k[n];
-        }
-
-        dst[j+i*i_size] = d;
+    if (k->data) {
+        delete[] k->data;
     }
-
-    delete[] tmp;
+    delete k;
 }
 
-void gaussian_filter(float a[], float b[], size_t i_size, float sigma, KernelMode mode) {
-    size_t k_size;
-    float* kernel;
-    create_kernel(sigma, &kernel, &k_size);
-
-    apply_filter(a, b, i_size, kernel, k_size, mode);
-
-    delete[] kernel;
-}
-
-void apply_filter(unsigned char* texture, size_t tex_size, unsigned char BitsPerPixel,
-                  float k[], size_t k_size, KernelMode mode) {
-    int k2 = k_size / 2;
-    int i, j, l;
-    float r, g, b;
-
-    size_t pixels_count = tex_size * tex_size;
-    unsigned char* tmp = new unsigned char[pixels_count * BitsPerPixel];
-    
-#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
-    for (l=0; l<pixels_count; l++) {
-        j = l / tex_size;
-        i = l % tex_size;
-
-        r = g = b = 0.f;
-
-        for (int n=0; n<k_size; n++) {
-            int p = i + n - k2;
-            p = normalize_index(p, tex_size, mode);
-
-            r += texture[(p+j*tex_size)*BitsPerPixel+0] * k[n];
-            g += texture[(p+j*tex_size)*BitsPerPixel+1] * k[n];
-            b += texture[(p+j*tex_size)*BitsPerPixel+2] * k[n];
-        }
-
-        tmp[(i+j*tex_size)*BitsPerPixel+0] = r;
-        tmp[(i+j*tex_size)*BitsPerPixel+1] = g;
-        tmp[(i+j*tex_size)*BitsPerPixel+2] = b;
+kernel_t* kernel_create(double sigma) {
+    int lw = (int)(4.0 * sigma + 0.5);
+    int k_size = lw * 2 + 1;
+    if (k_size <= 0) {
+        LOGE << "kernel invalid sigma error";
+        return nullptr;
     }
     
-#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
-    for (l=0; l<pixels_count; l++) {
-        j = l / tex_size;
-        i = l % tex_size;
+    kernel_t* k = kernel_alloc(k_size);
 
-        r = g = b = 0.0;
-
-        for (int n=0; n<k_size; n++) {
-            int p = i + n - k2;
-            p = normalize_index(p, tex_size, mode);
-
-            r += tmp[(j+p*tex_size)*BitsPerPixel+0] * k[n];
-            g += tmp[(j+p*tex_size)*BitsPerPixel+1] * k[n];
-            b += tmp[(j+p*tex_size)*BitsPerPixel+2] * k[n];
-        }
-
-        texture[(j+i*tex_size)*BitsPerPixel+0] = r;
-        texture[(j+i*tex_size)*BitsPerPixel+1] = g;
-        texture[(j+i*tex_size)*BitsPerPixel+2] = b;
+    double s = 1.0;
+    k->data[lw] = 1.0;
+    for (int i=1; i <= lw; i++) {
+        double f = gfunc((double)(i), sigma);
+        k->data[lw-i] = f;
+        k->data[lw+i] = f;
+        s += f * 2.0;
     }
 
-    delete[] tmp;
+    for (int i=0; i < k_size; i++) {
+        k->data[i] /= s;
+    }
+    
+    return k;
 }
 
-void gaussian_filter(unsigned char* texture, size_t tex_size, unsigned char BitsPerPixel,
-                     float sigma, KernelMode mode) {
-    size_t k_size;
-    float* kernel;
-    create_kernel(sigma, &kernel, &k_size);
+matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k, KernelMode mode) {
+    if (dst == nullptr || src == nullptr || k == nullptr) {
+        LOGE << "kernel null error";;
+        return nullptr;
+    }
+    
+    if (dst->rows != src->rows) {
+        LOGE << "kernel rows mismatch";
+        return dst;
+    }
+    
+    if (dst->cols != src->cols) {
+        LOGE << "kernel cols mismatch";
+        return dst;
+    }
+    
+    //size_t max_size = a->size * a->size;
+    matrix_t* tmp = matrix_allocate(src->rows, src->cols);
+    if (!tmp) {
+        return dst;
+    }
+    
+    //float* tmp = new float[max_size];
+    
+    //int i, j;
+    //float d;
+    
+    int k2 = k->size / 2;
+    
+//#pragma omp parallel for private(i,j,d) shared(src,tmp,k)
+    for (int j = 0; j < dst->cols; ++j) {
+        for (int i = 0; i < dst->rows; ++i) {
+            double d = 0.0;
 
-    apply_filter(texture, tex_size, BitsPerPixel, kernel, k_size, mode);
+            for (int n = 0; n < k->size; n++) {
+                int p = i + n - k2;
+                p = normalize_index(p, dst->cols, mode);
+                d += src->data[p + j * src->cols] * k->data[n];
+            }
 
-    delete[] kernel;
+            tmp->data[i + j * tmp->cols] = d;
+        }
+    }
+    
+//#pragma omp parallel for private(i,j,d) shared(tmp,dst,k)
+    for (int j = 0; j < dst->cols; ++j) {
+        for (int i = 0; i < dst->rows; ++i) {
+            double d = 0.0;
+
+            for (int n = 0; n < k->size; ++n) {
+                int p = i + n - k2;
+                p = normalize_index(p, dst->rows, mode);
+                d += tmp->data[j + p * tmp->cols] * k->data[n];
+            }
+
+            dst->data[j + i * dst->cols] = d;
+        }
+    }
+
+    matrix_free(tmp);
+    
+    return dst;
+}
+
+matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, KernelMode mode) {
+    if (dst == nullptr || src == nullptr) {
+        LOGE << "kernel null error";
+        return dst;
+    }
+    kernel_t* k = kernel_create(sigma);
+    if (!k) {
+        return dst;
+    }
+    
+    kernel_apply_to_matrix(dst, src, k, mode);
+
+    kernel_free(k);
+    
+    return dst;
+}
+
+texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k, KernelMode mode) {
+    if (t == nullptr || k == nullptr) {
+        LOGE << "kernel null error";
+        return t;
+    }
+    
+    texture_t* tmp = texture_alloc(t->size, t->bpp);
+    if (!tmp) {
+        return t;
+    }
+    
+    int k2 = k->size / 2;
+    
+//#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
+    for (int j = 0; j < t->size; ++j) {
+        for (int i = 0; i < t->size; ++i) {
+            double r = 0.0, g = 0.0, b = 0.0;
+
+            for (int n = 0; n < k->size; n++) {
+                int p = i + n - k2;
+                p = normalize_index(p, t->size, mode);
+
+                r += t->data[(p+j*t->size)*t->bpp+0] * k->data[n];
+                g += t->data[(p+j*t->size)*t->bpp+1] * k->data[n];
+                b += t->data[(p+j*t->size)*t->bpp+2] * k->data[n];
+            }
+
+            tmp->data[(i+j*t->size)*t->bpp+0] = r;
+            tmp->data[(i+j*t->size)*t->bpp+1] = g;
+            tmp->data[(i+j*t->size)*t->bpp+2] = b;
+        }
+    }
+    
+//#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
+    for (int j = 0; j < t->size; ++j) {
+        for (int i = 0; i < t->size; ++i) {
+            double r = 0.0, g = 0.0, b = 0.0;
+
+            for (int n = 0; n < k->size; ++n) {
+                int p = i + n - k2;
+                p = normalize_index(p, tmp->size, mode);
+
+                r += tmp->data[(j+p*tmp->size)*tmp->bpp+0] * k->data[n];
+                g += tmp->data[(j+p*tmp->size)*tmp->bpp+1] * k->data[n];
+                b += tmp->data[(j+p*tmp->size)*tmp->bpp+2] * k->data[n];
+            }
+
+            t->data[(j+i*t->size)*t->bpp+0] = r;
+            t->data[(j+i*t->size)*t->bpp+1] = g;
+            t->data[(j+i*t->size)*t->bpp+2] = b;
+        }
+    }
+
+    texture_free(tmp);
+    
+    return t;
+}
+
+texture_t* kernel_filter_texture(texture_t* t, double sigma, KernelMode mode) {
+    kernel_t* k = kernel_create(sigma);
+    if (!k) {
+        return t;
+    }
+
+    kernel_apply_to_texture(t, k, mode);
+
+    kernel_free(k);
+    
+    return t;
 }

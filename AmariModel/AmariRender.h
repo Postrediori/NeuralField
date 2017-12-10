@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Matrix.h"
+#include "Texture.h"
 #include "Shader.h"
 
 class AmariRender {
@@ -13,17 +15,16 @@ public:
     void render(const glm::mat4& mvp);
     void resize(unsigned int w, unsigned int h);
 
-    void update_texture(const float data[], const size_t size);
+    void update_texture(matrix_t* m);
     
 public:
     unsigned int w, h;
+    size_t size;
 
-    size_t tex_size;
-    size_t tex_data_size;
-    GLubyte * tex_data;
+    texture_t* tex;
 
     bool use_blur;
-    float blur_sigma;
+    double blur_sigma;
 
     GLuint texture;
 

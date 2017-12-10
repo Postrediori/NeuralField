@@ -23,10 +23,11 @@ static const char g_configFile[] = "data/amari.conf";
 static const char g_vertexShader[] = "data/plane.vert";
 static const char g_fragmentShader[]  = "data/plane.frag";
 
-static const float XMin = -1.f;
+/* static const float XMin = -1.f;
 static const float XMax =  1.f;
 static const float YMin = -1.f;
-static const float YMax =  1.f;
+static const float YMax =  1.f; */
+static const area_t g_area = {-1.0, 1.0, -1.0, 1.0};
 
 static const int g_timerInterval = 10;
 static const float g_textureBlurDelta = 0.1f;
@@ -61,7 +62,7 @@ bool AmariModelContext::Init() {
     // Init MVP matrices
     model_ = glm::mat4(1.0f);
     view_ = glm::mat4(1.0f);
-    projection_ = glm::ortho(XMin, XMax, YMin, YMax);
+    projection_ = glm::ortho(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
 
     // Init model
     if (!amariModel_.init(g_configFile)) {
@@ -76,7 +77,7 @@ bool AmariModelContext::Init() {
     }
     
     amariRender_.resize(Width, Height);
-    amariRender_.update_texture(amariModel_.activity, amariModel_.data_size);
+    amariRender_.update_texture(amariModel_.activity);
 
     // Init contour lines
     if (!contourProgram_.load(g_vertexShader, g_fragmentShader)) {
@@ -85,25 +86,19 @@ bool AmariModelContext::Init() {
     }
 
     contourLines_.reset(new ContourLine(contourProgram_.program()));
-    if (!contourLines_->init(amariModel_.activity,
-        amariModel_.size-1, amariModel_.size-1,
-        XMin, XMax, YMin, YMax, 1.f)) {
+    if (!contourLines_->init(amariModel_.activity, g_area, 1.0)) {
         LOGE << "Unable to create Contour Lines";
         return false;
     }
 
     contourFill_.reset(new ContourFill(contourProgram_.program()));
-    if (!contourFill_->init(amariModel_.activity,
-        amariModel_.size-1, amariModel_.size-1,
-        XMin, XMax, YMin, YMax, 1.f)) {
+    if (!contourFill_->init(amariModel_.activity, g_area, 1.0)) {
         LOGE << "Unable to create Filled Contour";
         return false;
     }
 
     contourParallel_.reset(new ContourParallel(contourProgram_.program()));
-    if (!contourParallel_->init(amariModel_.activity,
-        amariModel_.size-1, amariModel_.size-1,
-        XMin, XMax, YMin, YMax, 1.f)) {
+    if (!contourParallel_->init(amariModel_.activity, g_area, 1.0)) {
         LOGE << "Unable to create Parallel Contour";
         return false;
     }
@@ -232,29 +227,23 @@ void AmariModelContext::Update() {
     amariModel_.stimulate();
 
     if (renderMode_ == RENDER_TEXTURE) {
-        amariRender_.update_texture(amariModel_.activity, amariModel_.data_size);
+        amariRender_.update_texture(amariModel_.activity);
 
     } else if (renderMode_ == RENDER_CONTOUR) {
         if (contourLines_) {
             contourLines_->release();
-            contourLines_->init(amariModel_.activity,
-                amariModel_.size-1, amariModel_.size-1,
-                XMin, XMax, YMin, YMax, 0.f);
+            contourLines_->init(amariModel_.activity, g_area);
         }
 
         if (contourFill_) {
             contourFill_->release();
-            contourFill_->init(amariModel_.activity,
-                amariModel_.size-1, amariModel_.size-1,
-                XMin, XMax, YMin, YMax, 0.f);
+            contourFill_->init(amariModel_.activity, g_area);
         }
 
     } else if (renderMode_ == RENDER_PARALLEL) {
         if (contourParallel_) {
             contourParallel_->release();
-            contourParallel_->init(amariModel_.activity,
-                amariModel_.size-1, amariModel_.size-1,
-                XMin, XMax, YMin, YMax, 0.f);
+            contourParallel_->init(amariModel_.activity, g_area);
         }
 
         //if (gContourParallelFill) {

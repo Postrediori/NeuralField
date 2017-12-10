@@ -1,7 +1,6 @@
 #pragma once
 
-//#include "ContourPlot.h"
-class ContourPlot;
+#include "ContourPlot.h"
 
 /*****************************************************************************
  * ContourParallelFill - level filles plot that uses OpenMP
@@ -10,12 +9,9 @@ class ContourParallelFill : public ContourPlot {
 public:
     ContourParallelFill(GLuint p);
     
-    bool init(const float* const points,
-              int xdiv, int ydiv,
-              float xmn, float xmx, float ymn, float ymx,
-              float t);
+    bool init(matrix_t* points, area_t a, double t);
     void render(const glm::mat4& mvp,
-                float zoom,
+                double zoom,
                 const glm::vec2& offset,
                 const GLfloat c[]);
 };

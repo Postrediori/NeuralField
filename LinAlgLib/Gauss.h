@@ -1,19 +1,26 @@
 #pragma once
 
+#include "Texture.h"
+
 enum KernelMode {
     MODE_WRAP,
     MODE_REFLECT,
     MODE_MIRROR
 };
 
-float gfunc(float x, float sigma);
-size_t normalize_index(int p, size_t i_size, KernelMode mode);
-void create_kernel(float sigma, float** kernel, size_t* size);
+struct kernel_t {
+    size_t size;
+    double sigma;
+    double* data;
+};
 
-void apply_filter(float src[], float dst[], size_t i_size, float k[], size_t k_size, KernelMode mode);
-void gaussian_filter(float a[], float b[], size_t i_size, float sigma, KernelMode mode = MODE_WRAP);
+kernel_t* kernel_alloc(size_t size);
+void kernel_free(kernel_t* k);
 
-void apply_filter(unsigned char* texture, size_t tex_size, unsigned char BitsPerPixel,
-    float k[], size_t k_size, KernelMode mode);
-void gaussian_filter(unsigned char* texture, size_t tex_size, unsigned char BitsPerPixel,
-    float sigma, KernelMode mode = MODE_WRAP);
+kernel_t* kernel_create(double sigma);
+
+matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k, KernelMode mode);
+matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, KernelMode mode);
+
+texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k, KernelMode mode);
+texture_t* kernel_filter_texture(texture_t* t, double sigma, KernelMode mode);

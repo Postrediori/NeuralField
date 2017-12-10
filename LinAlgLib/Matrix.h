@@ -1,10 +1,20 @@
 #pragma once
 
-void matrix_scalar_set(float a[], size_t i_size, float h);
-void matrix_scalar_add(float a[], size_t i_size, float h);
-void matrix_scalar_mul(float a[], size_t i_size, float h);
-void matrix_add(float a[], float b[], size_t i_size);
-void matrix_sub(float a[], float b[], size_t i_size);
+struct matrix_t {
+    size_t rows;
+    size_t cols;
+    double* data;
+};
 
-void matrix_heaviside(float a[], size_t i_size);
-void matrix_random_f(float a[], size_t i_size);
+matrix_t* matrix_allocate(size_t rows, size_t cols);
+void matrix_free(matrix_t* m);
+
+matrix_t* matrix_scalar_set(matrix_t* a, double h);
+matrix_t* matrix_scalar_add(matrix_t* a, double h);
+matrix_t* matrix_scalar_mul(matrix_t* a, double h);
+
+matrix_t* matrix_add(matrix_t* a, matrix_t* b);
+matrix_t* matrix_sub(matrix_t* a, matrix_t* b);
+
+matrix_t* matrix_heaviside(matrix_t* a);
+matrix_t* matrix_random_f(matrix_t* a);
