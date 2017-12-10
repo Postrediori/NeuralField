@@ -126,7 +126,7 @@ matrix_t* matrix_random_f(matrix_t* a) {
     }
 #pragma omp parallel for
     for (size_t idx = 0; idx < a->rows * a->cols; idx++) {
-        a->data[idx] = (double)(rand() % 1000) / 1000.0;
+        a->data[idx] = drand48();
     }
     return a;
 }
