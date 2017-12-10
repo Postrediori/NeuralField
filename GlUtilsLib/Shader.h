@@ -5,19 +5,27 @@
 class ShaderProgram {
 public:
     ShaderProgram();
+    virtual ~ShaderProgram();
 
+    GLuint program() const;
+    GLint attrib(const std::string& variable) const;
+    GLint uniform(const std::string& variable) const;
+    
+    virtual bool load(const std::string& vertexShader,
+                      const std::string& fragmentShader);
+
+private:
     void release();
 
-    GLint attrib(const GLchar* name);
-    GLint uniform(const GLchar* name);
+private:
+    GLuint program_;
+    GLuint vertex_;
+    GLuint fragment_;
+};
 
-    bool load_file(const char* vertex_shader,
-                  const char* fragment_shader);
-    bool load_source(const char* vertex_src,
-                    const char* fragment_src);
-
+class ShaderFiles : public ShaderProgram {
 public:
-    GLuint glProgram;
-    GLuint glShaderV;
-    GLuint glShaderF;
+    ShaderFiles();
+    bool load(const std::string& vertexFile,
+              const std::string& fragmentFile);
 };

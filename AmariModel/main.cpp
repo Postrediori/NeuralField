@@ -53,7 +53,7 @@ FontAtlas* a24;
 AmariModel* gAmariModel  = NULL;
 AmariRender* gAmariRender = NULL;
 
-ShaderProgram gContourProgram;
+ShaderFiles gContourProgram;
 ContourPlot* gContourLines;
 ContourPlot* gContourFill;
 ContourPlot* gContourParallel;
@@ -137,12 +137,12 @@ bool Init() {
     gAmariRender->update_texture(gAmariModel->activity, gAmariModel->data_size);
 
     // Init contour lines
-    if (!gContourProgram.load_file(VertexShader, FragmentShader)) {
+    if (!gContourProgram.load(VertexShader, FragmentShader)) {
         LOGE << "Unable to create shader for contour lines";
         return false;
     }
 
-    gContourLines = new ContourLine(gContourProgram.glProgram);
+    gContourLines = new ContourLine(gContourProgram.program());
     if (!gContourLines->init(gAmariModel->activity,
         gAmariModel->size-1, gAmariModel->size-1,
         XMin, XMax, YMin, YMax, 1.f)) {
@@ -150,7 +150,7 @@ bool Init() {
         return false;
     }
 
-    gContourFill = new ContourFill(gContourProgram.glProgram);
+    gContourFill = new ContourFill(gContourProgram.program());
     if (!gContourFill->init(gAmariModel->activity,
         gAmariModel->size-1, gAmariModel->size-1,
         XMin, XMax, YMin, YMax, 1.f)) {
@@ -158,7 +158,7 @@ bool Init() {
         return false;
     }
 
-    gContourParallel = new ContourParallel(gContourProgram.glProgram);
+    gContourParallel = new ContourParallel(gContourProgram.program());
     if (!gContourParallel->init(gAmariModel->activity,
         gAmariModel->size-1, gAmariModel->size-1,
         XMin, XMax, YMin, YMax, 1.f)) {
@@ -166,10 +166,12 @@ bool Init() {
         return false;
     }
 
-    //gContourParallelFill = new ContourParallelFill(gContourProgram.glProgram);
+    //gContourParallelFill = new ContourParallelFill(gContourProgram.program());
     //if (gContourParallelFill->init(gAmariModel->activity,
     //    gAmariModel->size-1, gAmariModel->size-1,
-    //    XMin, XMax, YMin, YMax, 1.f)!=0) return -1;
+    //    XMin, XMax, YMin, YMax, 1.f) != 0) {
+    //    return -1;
+    //}
 
     // Set up OpenGL
     glEnable(GL_TEXTURE_2D); LOGOPENGLERROR();
@@ -218,7 +220,7 @@ void Deinit() {
     //    gContourParallelFill = NULL;
     //}
 
-    gContourProgram.release();
+    // gContourProgram.release();
 }
 
 /*****************************************************************************

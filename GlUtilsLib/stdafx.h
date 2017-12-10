@@ -8,5 +8,6 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <memory>
 
 #include <cstdarg>

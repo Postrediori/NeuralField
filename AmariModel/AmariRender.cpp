@@ -88,7 +88,7 @@ bool AmariRender::init(size_t size) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVertices), QuadVertices, GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init shader
-    if (!program.load_source(vertex_src, fragment_src)) {
+    if (!program.load(vertex_src, fragment_src)) {
         LOGE << "Unable to load shader for Amari Renderer";
         return false;
     }
@@ -111,14 +111,14 @@ void AmariRender::release() {
     glDeleteTextures(1, &texture); LOGOPENGLERROR();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 
-    program.release();
+    // program.release();
 }
 
 void AmariRender::render(const glm::mat4& mvp) {
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
 
-    glUseProgram(program.glProgram); LOGOPENGLERROR();
+    glUseProgram(program.program()); LOGOPENGLERROR();
 
     glUniformMatrix4fv(uMVP, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
     glUniform2f(uResolution, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();

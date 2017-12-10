@@ -166,7 +166,7 @@ bool FontRenderer::init(const char* vertex_shader, const char* fragment_shader) 
     }
 
     // Init shader
-    if(program.load_source(vertex_shader, fragment_shader) != 0) {
+    if(program.load(vertex_shader, fragment_shader) != 0) {
         LOGE << "Unable to load shader program from files";
         return false;
     }
@@ -184,7 +184,7 @@ bool FontRenderer::init() {
     }
 
     // Init shader
-    if (!program.load_source(vertex_src_1_30, fragment_src_1_30)) {
+    if (!program.load(vertex_src_1_30, fragment_src_1_30)) {
         LOGE << "Unable to load shader program from embedded source code";
         return false;
     }
@@ -240,7 +240,7 @@ FontAtlas* FontRenderer::createAtlas(const int height) {
 }
 
 void FontRenderer::release() {
-    program.release();
+    // program.release();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
@@ -250,7 +250,7 @@ void FontRenderer::renderStart() {
 
     glEnable(GL_BLEND); LOGOPENGLERROR();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); LOGOPENGLERROR();
-    glUseProgram(program.glProgram); LOGOPENGLERROR();
+    glUseProgram(program.program()); LOGOPENGLERROR();
 }
 
 void FontRenderer::renderEnd() {
