@@ -111,7 +111,7 @@ bool AmariRender::init(size_t size) {
 }
 
 void AmariRender::release() {
-    tex.release();
+    tex.reset();
     
     glDeleteTextures(1, &texture); LOGOPENGLERROR();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
