@@ -8,15 +8,15 @@ static const size_t g_bitsPerPixel = 4;
 /*****************************************************************************
  * AmariRender
  ****************************************************************************/
-static const size_t QuadVerticesCount = 4;
-static const GLfloat QuadVertices[] = {
+static const GLsizei g_quadVerticesCount = 4;
+static const GLfloat g_quadVertices[] = {
     -1.0f, -1.0f, 0.f, 0.f,
     -1.0f,  1.0f, 0.f, 1.f,
     1.0f, -1.0f, 1.f, 0.f,
     1.0f,  1.0f, 1.f, 1.f,
 };
 
-static const char vertex_src[] = 
+static const char g_vertexShader[] = 
     "#version 130\n"
     "in vec2 coord;"
     "in vec2 tex_coord;"
@@ -33,7 +33,7 @@ static const char vertex_src[] =
     "    xy_coord=tex_coord.xy;"
     "}";
 
-static const char fragment_src[] =
+static const char g_fragmentShader[] =
     "#version 130\n"
     "in vec2 xy_coord;"
     "out vec4 frag_color;"
@@ -46,16 +46,17 @@ static const char fragment_src[] =
 
 AmariRender::AmariRender()
  : use_blur(true)
- , blur_sigma(1.0)
- , tex(nullptr) {
+ , blur_sigma(1.0) {
     //
 }
 
 AmariRender::~AmariRender() {
-    //
+    release();
 }
 
 bool AmariRender::init(size_t size) {
+    this->size = size;
+    
     GLuint genbuf[1];
 
     // Init textures
@@ -67,6 +68,7 @@ bool AmariRender::init(size_t size) {
     }
 
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); LOGOPENGLERROR();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); LOGOPENGLERROR();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGBA,
@@ -81,10 +83,10 @@ bool AmariRender::init(size_t size) {
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVertices), QuadVertices, GL_STATIC_DRAW); LOGOPENGLERROR();
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices), g_quadVertices, GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init shader
-    if (!program.load(vertex_src, fragment_src)) {
+    if (!program.load(g_vertexShader, g_fragmentShader)) {
         LOGE << "Unable to load shader for Amari Renderer";
         return false;
     }
@@ -101,26 +103,25 @@ bool AmariRender::init(size_t size) {
     }
 
     // Allocate mem
-    tex = texture_alloc(size, g_bitsPerPixel);
+    TextureGuard_t new_texture(texture_alloc(size, g_bitsPerPixel),
+        [](texture_t* t) { texture_free(t); });
+    std::swap(tex, new_texture);
 
     return true;
 }
 
 void AmariRender::release() {
-    if (tex) {
-        texture_free(tex);
-        tex = nullptr;
-    }
-
+    tex.release();
+    
     glDeleteTextures(1, &texture); LOGOPENGLERROR();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
 void AmariRender::render(const glm::mat4& mvp) {
+    glUseProgram(program.program()); LOGOPENGLERROR();
+
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
-
-    glUseProgram(program.program()); LOGOPENGLERROR();
 
     glUniformMatrix4fv(uMVP, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
     glUniform2f(uResolution, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
@@ -134,7 +135,9 @@ void AmariRender::render(const glm::mat4& mvp) {
     glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE,
                           sizeof(GLfloat)*4, (void *)(sizeof(GLfloat)*2)); LOGOPENGLERROR();
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, QuadVerticesCount); LOGOPENGLERROR();
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, g_quadVerticesCount); LOGOPENGLERROR();
+
+    glUseProgram(0); LOGOPENGLERROR();
 }
 
 void AmariRender::resize(unsigned int w, unsigned int h) {
@@ -143,13 +146,13 @@ void AmariRender::resize(unsigned int w, unsigned int h) {
 }
 
 void AmariRender::update_texture(matrix_t* m) {
-    texture_copy_matrix(tex, m);
+    texture_copy_matrix(tex.get(), m);
 
     if (use_blur) {
-        kernel_filter_texture(tex, blur_sigma, MODE_WRAP);
+        kernel_filter_texture(tex.get(), blur_sigma, MODE_WRAP);
     }
 
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, GL_RGBA,
-                    GL_UNSIGNED_BYTE, (const GLubyte *)(tex->data)); LOGOPENGLERROR();
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->size, tex->size, GL_RGBA,
+                    GL_UNSIGNED_BYTE, (const GLubyte *)tex->data); LOGOPENGLERROR();
 }

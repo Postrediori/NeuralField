@@ -43,11 +43,19 @@ texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
         return t;
     }
     
+    if (t->bpp != 3 && t->bpp != 4) {
+        LOGE << "texture bpp error";
+        return t;
+    } 
+    
 #pragma omp parallel for
     for (size_t idx = 0; idx < t->size * t->size; ++idx) {
         uint8_t k = m->data[idx] > 0.0 ? 0xff : 0x00;
-        for (size_t n = 0; n < t->bpp; ++n) {
-            t->data[idx * t->bpp + n] = k;
+        t->data[idx * t->bpp + 0] = k;
+        t->data[idx * t->bpp + 1] = k;
+        t->data[idx * t->bpp + 2] = k;
+        if (t->bpp == 4) {
+            t->data[idx * t->bpp + 3] = 0xff;
         }
     }
     

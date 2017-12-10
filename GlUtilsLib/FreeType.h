@@ -1,18 +1,19 @@
 #pragma once
 
+#include <map>
 #include "GlUtils.h"
 #include "Shader.h"
+
+typedef int FontSize_t;
 
 /*****************************************************************************
  * FontAtlas
  ****************************************************************************/
 
-//const int CharacterCount = 128;
-//const int MaxWidth = 1024;
-#define CharacterCount 128
-#define MaxWidth 1024
+static const size_t g_characterCount = 128;
+static const int g_maxWidth = 1024;
 
-struct CHARINFO {
+struct CharInfo_t {
     float ax, ay; // advance x and y
     float bw, bh; // bitmap width and height
     float bl, bt; // bitmap left and top
@@ -21,22 +22,25 @@ struct CHARINFO {
 
 class FontAtlas {
 public:
-    FontAtlas(FT_Face face, const int height);
+    FontAtlas(FT_Face face, FontSize_t height);
     ~FontAtlas();
     
 public:
     GLuint tex;
     int w, h;
-    CHARINFO characters[CharacterCount];
+    CharInfo_t characters[g_characterCount];
 };
 
 /*****************************************************************************
  * FontRenderer
  ****************************************************************************/
-struct COORD2D {
-    GLfloat x, y;
-    GLfloat s, t;
+struct FontArea_t {
+    float x, y;
+    float sx, sy;
 };
+
+typedef std::unique_ptr<FontAtlas> FontAtlasGuard_t;
+typedef std::map<FontSize_t, FontAtlasGuard_t> Fonts_t;
 
 class FontRenderer {
 public:
@@ -45,17 +49,14 @@ public:
     bool init();
     bool init(const char* vertex_shader, const char* fragment_shader);
     bool load(const char* filename);
-    FontAtlas* createAtlas(const int height);
+    void createAtlas(int height);
 
     void release();
 
     void renderStart();
     void renderEnd();
     void renderColor(const GLfloat* c);
-    void renderText(const FontAtlas* a,
-                    const float textx, const float texty,
-                    const float sx, const float sy,
-                    const char* fmt, ...);
+    void renderText(FontSize_t size, FontArea_t area, const std::string& str);
 
 private:
     bool init_renderer();
@@ -70,4 +71,6 @@ public:
     ShaderProgram program;
     FT_Library ft;
     FT_Face face;
+    
+    Fonts_t fonts;
 };

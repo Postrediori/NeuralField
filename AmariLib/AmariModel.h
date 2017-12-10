@@ -33,20 +33,11 @@ public:
 
     KernelMode mode;
 
-    //size_t excitement_kernel_size;
-    //float* excitement_kernel;
-    kernel_t* excitement_kernel;
+    KernelGuard_t excitement_kernel;
+    KernelGuard_t inhibition_kernel;
 
-    //size_t inhibition_kernel_size;
-    //float* inhibition_kernel;
-    kernel_t* inhibition_kernel;
-
-    //float* stimulus;
-    //float* activity;
-    //float* excitement;
-    //float* inhibition;
-    matrix_t* stimulus;
-    matrix_t* activity;
-    matrix_t* excitement;
-    matrix_t* inhibition;
+    MatrixGuard_t stimulus;
+    MatrixGuard_t activity;
+    MatrixGuard_t excitement;
+    MatrixGuard_t inhibition;
 };

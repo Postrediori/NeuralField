@@ -9,7 +9,7 @@ class ContourParallel : public ContourPlot {
 public:
     ContourParallel(GLuint p);
     
-    bool init(matrix_t* points, area_t a, double t);
+    bool update(matrix_t* points, area_t a, double t);
     void render(const glm::mat4& mvp,
                 double zoom,
                 const glm::vec2& offset,

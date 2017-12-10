@@ -19,15 +19,6 @@ target_link_libraries(${PROJECT}
     plog
     )
 
-if(MSVC)
-    add_definitions(
-        -D_USE_MATH_DEFINES
-        -DFREEGLUT_LIB_PRAGMAS=0
-        -DFREEGLUT_STATIC
-        -DGLEW_STATIC
-        )
-endif()
-
 # Data files
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/amari.conf

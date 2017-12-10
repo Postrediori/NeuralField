@@ -50,7 +50,6 @@ public:
     glm::mat4 model_, view_, projection_;
     
     FontRenderer fr_;
-    std::unique_ptr<FontAtlas> a24_;
     
     AmariModel amariModel_;
     AmariRender amariRender_;

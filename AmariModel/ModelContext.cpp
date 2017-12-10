@@ -18,6 +18,8 @@ static const GLfloat g_foreground[] = {0.50f, 0.50f, 1.00f, 1.00f};
 static const GLfloat g_outline[] = {1.00f, 1.00f, 1.00f, 1.00f};
 static const GLfloat g_textColor[] = {1.00f, 1.00f, 1.00f, 1.00f};
 
+static const FontSize_t g_fontSize = 24;
+
 static const char g_fontFile[] = "data/font.ttf";
 static const char g_configFile[] = "data/amari.conf";
 static const char g_vertexShader[] = "data/plane.vert";
@@ -53,11 +55,12 @@ bool AmariModelContext::Init() {
     if (!fr_.load(g_fontFile)) {
         return false;
     }
-    a24_.reset(fr_.createAtlas(24));
-    if (!a24_) {
-        LOGE << "Unable to create typeset";
-        return false;
-    }
+    fr_.createAtlas(g_fontSize);
+    //a24_.reset(fr_.createAtlas(g_fontSize));
+    //if (!a24_) {
+    //    LOGE << "Unable to create typeset";
+    //    return false;
+    //}
 
     // Init MVP matrices
     model_ = glm::mat4(1.0f);
@@ -77,7 +80,7 @@ bool AmariModelContext::Init() {
     }
     
     amariRender_.resize(Width, Height);
-    amariRender_.update_texture(amariModel_.activity);
+    amariRender_.update_texture(amariModel_.activity.get());
 
     // Init contour lines
     if (!contourProgram_.load(g_vertexShader, g_fragmentShader)) {
@@ -86,22 +89,27 @@ bool AmariModelContext::Init() {
     }
 
     contourLines_.reset(new ContourLine(contourProgram_.program()));
-    if (!contourLines_->init(amariModel_.activity, g_area, 1.0)) {
+    if (!contourLines_->init()) {
         LOGE << "Unable to create Contour Lines";
         return false;
     }
 
+
     contourFill_.reset(new ContourFill(contourProgram_.program()));
-    if (!contourFill_->init(amariModel_.activity, g_area, 1.0)) {
+    if (!contourFill_->init()) {
         LOGE << "Unable to create Filled Contour";
         return false;
     }
 
     contourParallel_.reset(new ContourParallel(contourProgram_.program()));
-    if (!contourParallel_->init(amariModel_.activity, g_area, 1.0)) {
+    if (!contourParallel_->init()) {
         LOGE << "Unable to create Parallel Contour";
         return false;
     }
+
+    contourLines_->update(amariModel_.activity.get(), g_area, 1.0);
+    contourFill_->update(amariModel_.activity.get(), g_area, 1.0);
+    contourParallel_->update(amariModel_.activity.get(), g_area, 1.0);
 
     //gContourParallelFill = new ContourParallelFill(gContourProgram.program());
     //if (gContourParallelFill->init(gAmariModel->activity,
@@ -159,16 +167,22 @@ void AmariModelContext::Render() {
     fr_.renderStart();
     fr_.renderColor(g_textColor);
     if (showHelp_) {
-        fr_.renderText(a24_.get(), -1+8*scaleX_, -1+200*scaleY_, scaleX_, scaleY_, "1-3 ... Choose plot mode");
-        fr_.renderText(a24_.get(), -1+8*scaleX_, -1+175*scaleY_, scaleX_, scaleY_, "B ... Turn texture blur on/off");
-        fr_.renderText(a24_.get(), -1+8*scaleX_, -1+150*scaleY_, scaleX_, scaleY_, "LMB ... Activate model");
-        fr_.renderText(a24_.get(), -1+8*scaleX_, -1+125*scaleY_, scaleX_, scaleY_, "RMB ... Clear model");
-        fr_.renderText(a24_.get(), -1+8*scaleX_, -1+100*scaleY_, scaleX_, scaleY_, "F2 ... Show/hide help");
-        fr_.renderText(a24_.get(), -1+8*scaleX_, -1+75*scaleY_,  scaleX_, scaleY_, "F1 ... Fullscreen on/off");
-        fr_.renderText(a24_.get(), -1+8*scaleX_, -1+50*scaleY_,  scaleX_, scaleY_, "Display Mode : %s",
-            g_renderModeLabels[renderMode_]);
+        fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+200*scaleY_, scaleX_, scaleY_}, "1-3 ... Choose plot mode");
+        fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+175*scaleY_, scaleX_, scaleY_}, "B ... Turn texture blur on/off");
+        fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+150*scaleY_, scaleX_, scaleY_}, "LMB ... Activate model");
+        fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+125*scaleY_, scaleX_, scaleY_}, "RMB ... Clear model");
+        fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+100*scaleY_, scaleX_, scaleY_}, "F2 ... Show/hide help");
+        fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+75*scaleY_,  scaleX_, scaleY_}, "F1 ... Fullscreen on/off");
+        
+        std::stringstream str;
+        str << "Display Mode : " << g_renderModeLabels[renderMode_];
+        fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+50*scaleY_,  scaleX_, scaleY_}, str.str());
     }
-    fr_.renderText(a24_.get(), -1+8*scaleX_, -1+25*scaleY_, scaleX_, scaleY_, "FPS : %.1f", fpsCounter_.fps);
+    
+    std::stringstream str;
+    str << "FPS : " << fpsCounter_.fps;
+    fr_.renderText(g_fontSize, {-1+8*scaleX_, -1+25*scaleY_, scaleX_, scaleY_}, str.str());
+    
     fr_.renderEnd();
     
     fpsCounter_.update(glutGet(GLUT_ELAPSED_TIME));
@@ -227,23 +241,20 @@ void AmariModelContext::Update() {
     amariModel_.stimulate();
 
     if (renderMode_ == RENDER_TEXTURE) {
-        amariRender_.update_texture(amariModel_.activity);
+        amariRender_.update_texture(amariModel_.activity.get());
 
     } else if (renderMode_ == RENDER_CONTOUR) {
         if (contourLines_) {
-            contourLines_->release();
-            contourLines_->init(amariModel_.activity, g_area);
+            contourLines_->update(amariModel_.activity.get(), g_area, 0.0);
         }
 
         if (contourFill_) {
-            contourFill_->release();
-            contourFill_->init(amariModel_.activity, g_area);
+            contourFill_->update(amariModel_.activity.get(), g_area, 0.0);
         }
 
     } else if (renderMode_ == RENDER_PARALLEL) {
         if (contourParallel_) {
-            contourParallel_->release();
-            contourParallel_->init(amariModel_.activity, g_area);
+            contourParallel_->update(amariModel_.activity.get(), g_area, 0.0);
         }
 
         //if (gContourParallelFill) {

@@ -11,10 +11,8 @@ ContourLine::ContourLine(GLuint p)
     : ContourPlot(p) {
 }
 
-bool ContourLine::init(matrix_t* points, area_t a, double t) {
+bool ContourLine::update(matrix_t* points, area_t a, double t) {
     threshold = t;
-    vbo_count = 0;
-    vbo = 0;
     
     area = a;
 
@@ -85,17 +83,9 @@ bool ContourLine::init(matrix_t* points, area_t a, double t) {
 
     vbo_count = lines.size();
 
-    GLuint genbuf[1];
-    glGenBuffers(1, genbuf); LOGOPENGLERROR();
-    vbo = genbuf[0];
-    if (!vbo) {
-        LOGE << "Unable to initialize VBO for contour line";
-        return false;
-    }
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * lines.size(),
-        lines.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
+        lines.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
     
     LOGD << "Created filled contour with " << lines.size() / 2 << " lines";
     

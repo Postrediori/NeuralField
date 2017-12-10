@@ -13,9 +13,11 @@
 #include <plog/Appenders/ConsoleAppender.h>
 
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 #include <memory>
+#include <functional>
 
 #include <ctime>
 #include <cstddef>

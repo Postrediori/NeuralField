@@ -13,6 +13,15 @@ macro(make_project_)
 
     set_flags_()
 
+    if(MSVC)
+        add_definitions(
+            -D_USE_MATH_DEFINES
+            -DFREEGLUT_LIB_PRAGMAS=0
+            -DFREEGLUT_STATIC
+            -DGLEW_STATIC
+            )
+    endif()
+    
     if (NOT DEFINED HEADERS)
         file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
     endif ()

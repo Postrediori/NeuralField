@@ -33,13 +33,25 @@ bool AmariModel::init(const char* config_file) {
     pi_k = K_ * M_PI / k;
     pi_m = M_ * M_PI / m;
 
-    excitement_kernel = kernel_create(sigma_k);
-    inhibition_kernel = kernel_create(sigma_m);
+    KernelGuard_t new_excitement_kernel(kernel_create(sigma_k)
+        , [](kernel_t* k) { kernel_free(k); });
+    KernelGuard_t new_inhibition_kernel(kernel_create(sigma_m)
+        , [](kernel_t* k) { kernel_free(k); });
+    std::swap(excitement_kernel, new_excitement_kernel);
+    std::swap(inhibition_kernel, new_inhibition_kernel);
 
-    stimulus = matrix_allocate(size, size);
-    activity = matrix_allocate(size, size);
-    excitement = matrix_allocate(size, size);
-    inhibition = matrix_allocate(size, size);
+    MatrixGuard_t new_stimulus(matrix_allocate(size, size)
+        , [](matrix_t* m) { matrix_free(m); });
+    MatrixGuard_t new_activity(matrix_allocate(size, size)
+        , [](matrix_t* m) { matrix_free(m); });
+    MatrixGuard_t new_excitement(matrix_allocate(size, size)
+        , [](matrix_t* m) { matrix_free(m); });
+    MatrixGuard_t new_inhibition(matrix_allocate(size, size)
+        , [](matrix_t* m) { matrix_free(m); });
+    std::swap(stimulus, new_stimulus);
+    std::swap(activity, new_activity);
+    std::swap(excitement, new_excitement);
+    std::swap(inhibition, new_inhibition);
 
     restart();
 
@@ -47,43 +59,37 @@ bool AmariModel::init(const char* config_file) {
 }
 
 void AmariModel::restart() {
-    matrix_random_f(stimulus);
-    matrix_scalar_mul(stimulus, -h);
+    matrix_random_f(stimulus.get());
+    matrix_scalar_mul(stimulus.get(), -h);
 
-    matrix_scalar_set(activity, h);
-    matrix_scalar_set(excitement, 0.0);
-    matrix_scalar_set(inhibition, 0.0);
+    matrix_scalar_set(activity.get(), h);
+    matrix_scalar_set(excitement.get(), 0.0);
+    matrix_scalar_set(inhibition.get(), 0.0);
 }
 
 void AmariModel::release() {
-    matrix_free(stimulus);
-    matrix_free(activity);
-    matrix_free(excitement);
-    matrix_free(inhibition);
-    stimulus = nullptr;
-    activity = nullptr;
-    excitement = nullptr;
-    inhibition = nullptr;
+    stimulus.release();
+    activity.release();
+    excitement.release();
+    inhibition.release();
 
-    kernel_free(excitement_kernel);
-    kernel_free(inhibition_kernel);
-    excitement_kernel = nullptr;
-    inhibition_kernel = nullptr;
+    excitement_kernel.release();
+    inhibition_kernel.release();
 }
 
 void AmariModel::stimulate() {
-    matrix_heaviside(activity);
+    matrix_heaviside(activity.get());
 
-    kernel_apply_to_matrix(excitement, activity, excitement_kernel, mode);
-    matrix_scalar_mul(excitement, pi_k);
+    kernel_apply_to_matrix(excitement.get(), activity.get(), excitement_kernel.get(), mode);
+    matrix_scalar_mul(excitement.get(), pi_k);
 
-    kernel_apply_to_matrix(inhibition, activity, inhibition_kernel, mode);
-    matrix_scalar_mul(inhibition, pi_m);
+    kernel_apply_to_matrix(inhibition.get(), activity.get(), inhibition_kernel.get(), mode);
+    matrix_scalar_mul(inhibition.get(), pi_m);
 
-    matrix_scalar_set(activity, h);
-    matrix_add(activity, excitement);
-    matrix_sub(activity, inhibition);
-    matrix_add(activity, stimulus);
+    matrix_scalar_set(activity.get(), h);
+    matrix_add(activity.get(), excitement.get());
+    matrix_sub(activity.get(), inhibition.get());
+    matrix_add(activity.get(), stimulus.get());
 }
 
 bool AmariModel::load_config(const char* config_file) {

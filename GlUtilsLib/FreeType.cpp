@@ -3,7 +3,12 @@
 #include "Shader.h"
 #include "FreeType.h"
 
-// #define max(a,b) ((a)>(b)?(a):(b))
+struct Coord2d_t {
+    GLfloat x, y;
+    GLfloat s, t;
+};
+
+static const size_t g_firstCharacter = 32;
 
 static const char vertex_src_1_30[] =
     "#version 130\n"
@@ -44,7 +49,7 @@ static const char fragment_src_1_10[] =
     "    gl_FragColor=vec4(1.,1.,1.,a)*color;"
     "}";
 
-inline int max(int a, int b) {
+static int max(int a, int b) {
     return (a>b) ? a : b;
 }
 
@@ -52,7 +57,7 @@ inline int max(int a, int b) {
  * FontAtlas
  ****************************************************************************/
  
-FontAtlas::FontAtlas(FT_Face face, const int height) {
+FontAtlas::FontAtlas(FT_Face face, FontSize_t height) {
     LOGI << "Started font loading";
 	
     FT_Set_Pixel_Sizes(face, 0, height);
@@ -65,13 +70,13 @@ FontAtlas::FontAtlas(FT_Face face, const int height) {
     int roww = 0, rowh = 0;
 
     // Find minimum size for a texture holding all visible ASCII characters
-    for (int i=32; i<CharacterCount; i++) {
+    for (int i = g_firstCharacter; i < g_characterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             LOGE << "FreeType Error: Loading character " << i << " failed!";
             continue;
         }
 
-        if (roww+g->bitmap.width+1>=MaxWidth) {
+        if (roww+g->bitmap.width + 1 >= g_maxWidth) {
             w = max(w, roww);
             h += rowh;
             roww = 0;
@@ -107,13 +112,13 @@ FontAtlas::FontAtlas(FT_Face face, const int height) {
 
     rowh = 0;
 
-    for (int i=32; i<CharacterCount; i++) {
+    for (int i = g_firstCharacter; i < g_characterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             LOGE << "FreeType Error: Loading character " << i << " failed!";
             continue;
         }
 
-        if ((ox+g->bitmap.width+1)>=MaxWidth) {
+        if ((ox + g->bitmap.width + 1) >= g_maxWidth) {
             oy += rowh;
             rowh = 0;
             ox = 0;
@@ -124,7 +129,7 @@ FontAtlas::FontAtlas(FT_Face face, const int height) {
                         GL_RED, GL_UNSIGNED_BYTE, g->bitmap.buffer);
         LOGOPENGLERROR();
 
-        CHARINFO inf;
+        CharInfo_t inf;
         inf.ax = g->advance.x >> 6;
         inf.ay = g->advance.y >> 6;
 
@@ -143,7 +148,9 @@ FontAtlas::FontAtlas(FT_Face face, const int height) {
         ox += g->bitmap.width + 1;
     }
 
-    LOGI << "FreeType: Generated a " << w << "x" << h << " ("<< (w*h/1024) << " kb) texture atlas";
+    LOGI << "FreeType: Generated a "
+        << w << "x" << h
+        << " ("<< (w*h/1024) << " kb) texture atlas";
 }
 
 FontAtlas::~FontAtlas() {
@@ -234,9 +241,8 @@ bool FontRenderer::load(const char* filename) {
     return true;
 }
 
-FontAtlas* FontRenderer::createAtlas(const int height) {
-    FontAtlas* a = new FontAtlas(face, height);
-    return a;
+void FontRenderer::createAtlas(const int height) {
+    fonts.emplace(std::make_pair(height, FontAtlasGuard_t(new FontAtlas(face, height))));
 }
 
 void FontRenderer::release() {
@@ -262,20 +268,12 @@ void FontRenderer::renderColor(const GLfloat c[]) {
     glUniform4fv(uColor, 1, c); LOGOPENGLERROR();
 }
 
-void FontRenderer::renderText(const FontAtlas* a,
-                              const float textx, const float texty,
-                              const float sx, const float sy,
-                              const char* fmt, ...) {
-    static char text[256];
-    va_list ap;
-
-    if (fmt==NULL) {
+void FontRenderer::renderText(FontSize_t size, FontArea_t area, const std::string& str) {
+    if (str.empty()) {
         return;
     }
-
-    va_start(ap, fmt);
-    vsprintf(text, fmt, ap);
-    va_end(ap);
+    
+    const auto& a = fonts[size];
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, a->tex); LOGOPENGLERROR();
@@ -285,27 +283,28 @@ void FontRenderer::renderText(const FontAtlas* a,
     glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
     glVertexAttribPointer(aCoord, 4, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
 
-    int len = strlen(text);
-    COORD2D* coords = new COORD2D[6*len];
+    size_t len = str.length();
+    std::vector<Coord2d_t> coords;
+    coords.reserve(6 * len);
     int c = 0;
 
     // Loop through all characters
     GLfloat tdx, tdy;
     float w, h;
     float x2, y2;
-    float x = textx, y = texty;
-    for (const unsigned char * p=(const unsigned char *)text; *p; p++) {
-        CHARINFO inf = a->characters[*p];
+    float x = area.x, y = area.y;
+    for (const auto& c : str) {
+        CharInfo_t inf = a->characters[c];
 
         // Calculate vertex and texture coordinates
-        x2 = x + inf.bl * sx;
-        y2 = -y - inf.bt * sy;
-        w = inf.bw * sx;
-        h = inf.bh * sy;
+        x2 = x + inf.bl * area.sx;
+        y2 = -y - inf.bt * area.sy;
+        w = inf.bw * area.sx;
+        h = inf.bh * area.sy;
 
         // Advance the cursor to the start of the next character
-        x += inf.ax * sx;
-        y += inf.ay * sy;
+        x += inf.ax * area.sx;
+        y += inf.ay * area.sy;
 
         // Skip glyphs that have no pixels
         if (!w || !h) {
@@ -315,49 +314,18 @@ void FontRenderer::renderText(const FontAtlas* a,
         tdx = inf.bw/(float)a->w;
         tdy = inf.bh/(float)a->h;
 
-        COORD2D crd;
-        crd.x = x2+w;
-        crd.y = -y2;
-        crd.s = inf.tx+tdx;
-        crd.t = inf.ty;
-        coords[c++] = crd;
+        coords.push_back({x2 + w, -y2, inf.tx + tdx, inf.ty});
+        coords.push_back({x2, -y2 - h, inf.tx, inf.ty + tdy});
+        coords.push_back({x2 + w, -y2 - h, inf.tx + tdx, inf.ty + tdy});
 
-        crd.x = x2;
-        crd.y = -y2-h;
-        crd.s = inf.tx;
-        crd.t = inf.ty+tdy;
-        coords[c++] = crd;
-
-        crd.x = x2+w;
-        crd.y = -y2-h;
-        crd.s = inf.tx+tdx;
-        crd.t = inf.ty+tdy;
-        coords[c++] = crd;
-
-        crd.x = x2;
-        crd.y = -y2;
-        crd.s = inf.tx;
-        crd.t = inf.ty;
-        coords[c++] = crd;
-
-        crd.x = x2;
-        crd.y = -y2-h;
-        crd.s = inf.tx;
-        crd.t = inf.ty+tdy;
-        coords[c++] = crd;
-
-        crd.x = x2+w;
-        crd.y = -y2;
-        crd.s = inf.tx+tdx;
-        crd.t = inf.ty;
-        coords[c++] = crd;
+        coords.push_back({x2, -y2, inf.tx, inf.ty});
+        coords.push_back({x2, -y2 - h, inf.tx, inf.ty + tdy});
+        coords.push_back({x2 + w, -y2, inf.tx + tdx, inf.ty});
     }
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(COORD2D)*6*len, coords, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Coord2d_t) * coords.size(),
+        coords.data(), GL_DYNAMIC_DRAW);
     LOGOPENGLERROR();
 
-    delete[] coords;
-
-    glDrawArrays(GL_TRIANGLES, 0, c); LOGOPENGLERROR();
+    glDrawArrays(GL_TRIANGLES, 0, coords.size()); LOGOPENGLERROR();
 }
-

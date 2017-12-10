@@ -7,10 +7,8 @@ ContourParallel::ContourParallel(GLuint p)
     : ContourPlot(p) {
 }
 
-bool ContourParallel::init(matrix_t* points, area_t a, double t) {
+bool ContourParallel::update(matrix_t* points, area_t a, double t) {
     threshold = t;
-    vbo_count = 0;
-    vbo = 0;
     
     area = a;
     
@@ -20,16 +18,10 @@ bool ContourParallel::init(matrix_t* points, area_t a, double t) {
     double dX = (a.xmax - a.xmin) / (double)xdiv;
     double dY = (a.ymax - a.ymin) / (double)ydiv;
 
-    //unsigned char flags, u;
-    //float x, y;
-    //float vals[4];
-    //float v;
-
-    int c = 0;
     int max_idx = xdiv * ydiv;
 
-    lines_t lines;
-    lines.resize(max_idx * 2);
+    std::vector<glm::vec4> lines;
+    lines.reserve(max_idx * 2);
 
 #pragma omp parallel for shared(lines)
     for (int idx=0; idx<max_idx; idx++) {
@@ -45,13 +37,11 @@ bool ContourParallel::init(matrix_t* points, area_t a, double t) {
         vals[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
         vals[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
 
-        //unsigned char flags;
-        //flags = CellType(vals);
         flags_t flags = FLAG_NO;
-        if (vals[0]>0.f) flags |= FLAG_SW;
-        if (vals[1]>0.f) flags |= FLAG_NW;
-        if (vals[2]>0.f) flags |= FLAG_NE;
-        if (vals[3]>0.f) flags |= FLAG_SE;
+        if (vals[0]>0.0) flags |= FLAG_SW;
+        if (vals[1]>0.0) flags |= FLAG_NW;
+        if (vals[2]>0.0) flags |= FLAG_NE;
+        if (vals[3]>0.0) flags |= FLAG_SE;
 
         if (flags==1 || flags==2 || flags==4 || flags==7
             || flags==8 || flags==11 || flags==13 || flags==14) {
@@ -93,7 +83,7 @@ bool ContourParallel::init(matrix_t* points, area_t a, double t) {
     
 #pragma omp critical
             {
-                lines[c++] = glm::vec4(x1, y1, x2, y2);
+                lines.push_back(glm::vec4(x1, y1, x2, y2));
             }
 
         } else if (flags==3 || flags==6 || flags==9 || flags==12) {
@@ -121,7 +111,7 @@ bool ContourParallel::init(matrix_t* points, area_t a, double t) {
 
 #pragma omp critical
             {
-                lines[c++] = glm::vec4(x1, y1, x2, y2);
+                lines.push_back(glm::vec4(x1, y1, x2, y2));
             }
 
         } else if (flags==5 || flags==10) {
@@ -129,9 +119,9 @@ bool ContourParallel::init(matrix_t* points, area_t a, double t) {
             double v;
             bool u;
             v = (points->data[(j  )*(xdiv+1)+(i  )]+points->data[(j  )*(xdiv+1)+(i+1)]+
-                 points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )])/4.f;
+                 points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )])/4.0;
             v -= threshold;
-            u = v>0.f;
+            u = v > 0.0;
 
             double x1, y1;
             double x2, y2;
@@ -165,26 +155,19 @@ bool ContourParallel::init(matrix_t* points, area_t a, double t) {
 
 #pragma omp critical
             {
-                lines[c++] = glm::vec4(x1, y1, x2, y2);
-                lines[c++] = glm::vec4(x3, y3, x4, y4);
+                lines.push_back(glm::vec4(x1, y1, x2, y2));
+                lines.push_back(glm::vec4(x3, y3, x4, y4));
             }
         }
     }
 
-    vbo_count = c * 2;
-
-    GLuint genbuf[1];
-    glGenBuffers(1, genbuf); LOGOPENGLERROR();
-    vbo = genbuf[0];
-    if (!vbo) {
-        LOGE << "Unable to initialize VBO for parallel contour plot";
-        return false;
-    }
+    vbo_count = lines.size() * 2;
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, c * sizeof(glm::vec4), lines.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * lines.size(), lines.data(),
+                 GL_DYNAMIC_DRAW); LOGOPENGLERROR();
 
-    LOGD << "Created parallel line contour with " << c << " lines";
+    LOGD << "Created parallel line contour with " << lines.size() << " lines";
 
     return true;
 }
@@ -196,7 +179,7 @@ void ContourParallel::render(const glm::mat4& mvp,
     glUseProgram(program); LOGOPENGLERROR();
 
     glUniformMatrix4fv(u_mvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
-    glUniform1f(u_zoom, zoom); LOGOPENGLERROR();
+    glUniform1f(u_zoom, (GLfloat)zoom); LOGOPENGLERROR();
     glUniform2fv(u_ofs, 1, glm::value_ptr(offset)); LOGOPENGLERROR();
     glUniform2f(u_res, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform4fv(u_color, 1, c); LOGOPENGLERROR();
@@ -206,4 +189,6 @@ void ContourParallel::render(const glm::mat4& mvp,
     glVertexAttribPointer(a_coord, 2, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
 
     glDrawArrays(GL_LINES, 0, vbo_count); LOGOPENGLERROR();
+
+    glUseProgram(0); LOGOPENGLERROR();
 }

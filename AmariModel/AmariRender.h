@@ -21,7 +21,7 @@ public:
     unsigned int w, h;
     size_t size;
 
-    texture_t* tex;
+    TextureGuard_t tex;
 
     bool use_blur;
     double blur_sigma;

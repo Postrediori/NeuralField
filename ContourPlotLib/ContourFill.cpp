@@ -12,10 +12,8 @@ ContourFill::ContourFill(GLuint p)
     : ContourPlot(p) {
 }
 
-bool ContourFill::init(matrix_t* points, area_t a, double t) {
+bool ContourFill::update(matrix_t* points, area_t a, double t) {
     threshold = t;
-    vbo_count = 0;
-    vbo = 0;
 
     area = a;
     
@@ -89,17 +87,9 @@ bool ContourFill::init(matrix_t* points, area_t a, double t) {
 
     vbo_count = triangles.size();
 
-    GLuint genbuf[1];
-    glGenBuffers(1, genbuf); LOGOPENGLERROR();
-    vbo = genbuf[0];
-    if (!vbo) {
-        LOGE << "Unable to initialize VBO for contour fill";
-        return false;
-    }
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * triangles.size(),
-        triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
+        triangles.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
     
     LOGD << "Created outline contour with " << triangles.size() / 3 << " triangles";
     
@@ -121,6 +111,8 @@ void ContourFill::render(const glm::mat4& mvp, double zoom, const glm::vec2& off
     glVertexAttribPointer(a_coord, 2, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
 
     glDrawArrays(GL_TRIANGLES, 0, vbo_count); LOGOPENGLERROR();
+
+    glUseProgram(0); LOGOPENGLERROR();
 }
 
 void MakeFill(triangles_t& triangles, discrete_t d) {

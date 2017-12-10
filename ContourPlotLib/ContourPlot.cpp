@@ -26,21 +26,41 @@ ContourPlot::ContourPlot(GLuint p)
     , vbo(0)
     , threshold(0.0)
     , program(p) {
-    a_coord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
-    u_mvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
-    u_zoom = glGetUniformLocation(program, "zoom"); LOGOPENGLERROR();
-    u_ofs = glGetUniformLocation(program, "ofs"); LOGOPENGLERROR();
-    u_res = glGetUniformLocation(program, "res"); LOGOPENGLERROR();
-    u_color = glGetUniformLocation(program, "color"); LOGOPENGLERROR();
 }
 
 ContourPlot::~ContourPlot() {
     this->release();
 }
 
-bool ContourPlot::init(matrix_t* points, area_t a) { return init(points, a, 0.0); }
+bool ContourPlot::init() {
+    GLuint genbuf[1];
+    glGenBuffers(1, genbuf); LOGOPENGLERROR();
+    vbo = genbuf[0];
+    if (!vbo) {
+        LOGE << "Unable to initialize VBO for parallel contour plot";
+        return false;
+    }
 
-bool ContourPlot::init(matrix_t* points, area_t a, double t) { return true; }
+    a_coord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
+    u_mvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
+    u_zoom = glGetUniformLocation(program, "zoom"); LOGOPENGLERROR();
+    u_ofs = glGetUniformLocation(program, "ofs"); LOGOPENGLERROR();
+    u_res = glGetUniformLocation(program, "res"); LOGOPENGLERROR();
+    u_color = glGetUniformLocation(program, "color"); LOGOPENGLERROR();
+    if (a_coord == -1
+            || u_mvp == -1
+            || u_zoom == -1
+            || u_ofs == -1
+            || u_res == -1
+            || u_color == -1) {
+        LOGE << "Invalid Shader for contoul plot";
+        return false;
+    }
+
+    return true;
+}
+
+bool ContourPlot::update(matrix_t* points, area_t a, double t) { return true; }
 
 void ContourPlot::render(const glm::mat4& mvp, double zoom,
                          const glm::vec2& offset, const GLfloat c[]) { }

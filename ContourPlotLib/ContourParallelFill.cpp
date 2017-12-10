@@ -7,10 +7,8 @@ ContourParallelFill::ContourParallelFill(GLuint p)
     : ContourPlot(p) {
 }
 
-bool ContourParallelFill::init(matrix_t* points, area_t a, double t) {
+bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
     threshold = t;
-    vbo_count = 0;
-    vbo = 0;
 
     area = a;
 
@@ -340,14 +338,6 @@ bool ContourParallelFill::init(matrix_t* points, area_t a, double t) {
     }
 
     vbo_count = c;
-
-    GLuint genbuf[1];
-    glGenBuffers(1, genbuf); LOGOPENGLERROR();
-    vbo = genbuf[0];
-    if (!vbo) {
-        LOGE << "Unable to initialize VBO for parallel contour fill";
-        return false;
-    }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, vbo_count * sizeof(glm::vec2), triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();

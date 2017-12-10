@@ -14,8 +14,8 @@ flags_t CellType(double vals[]);
 
 struct area_t {
     double xmin;
-    double ymin;
     double xmax;
+    double ymin;
     double ymax;
 };
 
@@ -39,8 +39,8 @@ public:
     ContourPlot(GLuint p);
     virtual ~ContourPlot();
 
-    bool init(matrix_t* points, area_t a);
-    virtual bool init(matrix_t* points, area_t a, double t);
+    bool init();
+    virtual bool update(matrix_t* points, area_t a, double t);
     virtual void render(const glm::mat4& mvp, double zoom, const glm::vec2& offset,
                         const GLfloat c[]);
 

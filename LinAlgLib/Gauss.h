@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include "Texture.h"
 
 enum KernelMode {
@@ -13,6 +14,8 @@ struct kernel_t {
     double sigma;
     double* data;
 };
+
+typedef std::unique_ptr<kernel_t, std::function<void(kernel_t*)>> KernelGuard_t;
 
 kernel_t* kernel_alloc(size_t size);
 void kernel_free(kernel_t* k);
