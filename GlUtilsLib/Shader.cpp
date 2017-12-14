@@ -51,10 +51,10 @@ static std::string GetShaderError(const GLuint shader) {
     if (!blen) {
         str << "Unknown error";
     } else {
-        GLchar* compiler_log = new GLchar[blen+1];
-        glGetInfoLogARB(shader, blen, &slen, compiler_log); LOGOPENGLERROR();
-        str << compiler_log;
-        delete[] compiler_log;
+        std::vector<char> log(blen + 1);
+        glGetInfoLogARB(shader, blen, &slen, &log[0]); LOGOPENGLERROR();
+        std::string s(log.begin(), log.end());
+        str << s;
     }
 
     return str.str();
@@ -69,11 +69,11 @@ static std::string GetShaderInfo(const GLuint shader) {
     if (!blen) {
         str << "no info";
     } else {
-        GLchar* log = new GLchar[blen+1];
-        glGetShaderInfoLog(shader, blen, &slen, log); LOGOPENGLERROR();
-        str << log;
-        str << "[" << slen << " byte(s)]";
-        delete[] log;
+        std::vector<char> log(blen + 1);
+        glGetShaderInfoLog(shader, blen, &slen, &log[0]); LOGOPENGLERROR();
+        std::string s(log.begin(), log.end());
+        str << s;
+        str << " [" << slen << " byte(s)]";
     }
     
     return str.str();
