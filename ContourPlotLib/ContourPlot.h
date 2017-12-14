@@ -29,7 +29,7 @@ struct discrete_t {
 
 
 typedef std::vector<glm::vec2> triangles_t;
-typedef std::vector<glm::vec2> lines_t;
+typedef std::vector<glm::vec4> lines_t;
 
 /*****************************************************************************
  * ContourPlot

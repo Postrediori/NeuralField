@@ -27,7 +27,7 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
     int max_idx = xdiv * ydiv;
 
     triangles_t triangles;
-    triangles.resize(max_idx * 3 * 4);
+    triangles.reserve(max_idx * 3 * 4);
 
 #ifdef _MSC_VER
 #pragma omp parallel for shared(points, triangles)
@@ -99,97 +99,97 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
             if (flags==1) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x, y);
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x, y);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x2, y2);
                 }
 
             } else if (flags==14) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x+sx, y);
-                    triangles[c++] = glm::vec2(x+sx, y+sy);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x+sx, y);
+                    triangles.emplace_back(x+sx, y+sy);
 
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x+sx, y+sy);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x+sx, y+sy);
+                    triangles.emplace_back(x2, y2);
 
-                    triangles[c++] = glm::vec2(x2, y2);
-                    triangles[c++] = glm::vec2(x+sx, y+sy);
-                    triangles[c++] = glm::vec2(x, y+sy);
+                    triangles.emplace_back(x2, y2);
+                    triangles.emplace_back(x+sx, y+sy);
+                    triangles.emplace_back(x, y+sy);
                 }
 
             } else if (flags==2) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x+sx, y);
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x+sx, y);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x2, y2);
                 }
 
             } else if (flags==13) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x, y);
-                    triangles[c++] = glm::vec2(x2, y2);
-                    triangles[c++] = glm::vec2(x, y+sy);
+                    triangles.emplace_back(x, y);
+                    triangles.emplace_back(x2, y2);
+                    triangles.emplace_back(x, y+sy);
 
-                    triangles[c++] = glm::vec2(x, y+sy);
-                    triangles[c++] = glm::vec2(x2, y2);
-                    triangles[c++] = glm::vec2(x1, y1);
+                    triangles.emplace_back(x, y+sy);
+                    triangles.emplace_back(x2, y2);
+                    triangles.emplace_back(x1, y1);
 
-                    triangles[c++] = glm::vec2(x, y+sy);
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x+sx, y+sy);
+                    triangles.emplace_back(x, y+sy);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x+sx, y+sy);
                 }
 
             } else if (flags==4) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x+sx, y+sy);
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x+sx, y+sy);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x2, y2);
                 }
 
             } else if (flags==11) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x, y);
-                    triangles[c++] = glm::vec2(x+sx, y);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x, y);
+                    triangles.emplace_back(x+sx, y);
+                    triangles.emplace_back(x2, y2);
 
-                    triangles[c++] = glm::vec2(x, y);
-                    triangles[c++] = glm::vec2(x2, y2);
-                    triangles[c++] = glm::vec2(x1, y1);
+                    triangles.emplace_back(x, y);
+                    triangles.emplace_back(x2, y2);
+                    triangles.emplace_back(x1, y1);
 
-                    triangles[c++] = glm::vec2(x, y);
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x, y+sy);
+                    triangles.emplace_back(x, y);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x, y+sy);
                 }
 
             } else if (flags==8) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x, y+sy);
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x, y+sy);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x2, y2);
                 }
 
             } else if (flags==7) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x, y);
-                    triangles[c++] = glm::vec2(x+sx, y);
-                    triangles[c++] = glm::vec2(x1, y1);
+                    triangles.emplace_back(x, y);
+                    triangles.emplace_back(x+sx, y);
+                    triangles.emplace_back(x1, y1);
 
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x+sx, y);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x+sx, y);
+                    triangles.emplace_back(x2, y2);
 
-                    triangles[c++] = glm::vec2(x+sx, y);
-                    triangles[c++] = glm::vec2(x+sx, y+sy);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x+sx, y);
+                    triangles.emplace_back(x+sx, y+sy);
+                    triangles.emplace_back(x2, y2);
                 }
             }
 
@@ -249,13 +249,13 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
 
 #pragma omp critical
             {
-                triangles[c++] = glm::vec2(x1, y1);
-                triangles[c++] = glm::vec2(x3, y3);
-                triangles[c++] = glm::vec2(x4, y4);
+                triangles.emplace_back(x1, y1);
+                triangles.emplace_back(x3, y3);
+                triangles.emplace_back(x4, y4);
 
-                triangles[c++] = glm::vec2(x1, y1);
-                triangles[c++] = glm::vec2(x2, y2);
-                triangles[c++] = glm::vec2(x3, y3);
+                triangles.emplace_back(x1, y1);
+                triangles.emplace_back(x2, y2);
+                triangles.emplace_back(x3, y3);
             }
 
         } else if (flags==5 || flags==10) {
@@ -285,38 +285,38 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
             if (u) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x2, y2);
-                    triangles[c++] = glm::vec2(x3, y3);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x2, y2);
+                    triangles.emplace_back(x3, y3);
 
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x3, y3);
-                    triangles[c++] = glm::vec2(x4, y4);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x3, y3);
+                    triangles.emplace_back(x4, y4);
                 }
             }
             
             if (flags==5) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x, y);
-                    triangles[c++] = glm::vec2(x1, y1);
-                    triangles[c++] = glm::vec2(x4, y4);
+                    triangles.emplace_back(x, y);
+                    triangles.emplace_back(x1, y1);
+                    triangles.emplace_back(x4, y4);
 
-                    triangles[c++] = glm::vec2(x+sx, y+sy);
-                    triangles[c++] = glm::vec2(x3, y3);
-                    triangles[c++] = glm::vec2(x2, y2);
+                    triangles.emplace_back(x+sx, y+sy);
+                    triangles.emplace_back(x3, y3);
+                    triangles.emplace_back(x2, y2);
                 }
 
             } else if (flags==10) {
 #pragma omp critical
                 {
-                    triangles[c++] = glm::vec2(x, y+sy);
-                    triangles[c++] = glm::vec2(x4, y4);
-                    triangles[c++] = glm::vec2(x3, y3);
+                    triangles.emplace_back(x, y+sy);
+                    triangles.emplace_back(x4, y4);
+                    triangles.emplace_back(x3, y3);
 
-                    triangles[c++] = glm::vec2(x+sx, y);
-                    triangles[c++] = glm::vec2(x2, y2);
-                    triangles[c++] = glm::vec2(x1, y1);
+                    triangles.emplace_back(x+sx, y);
+                    triangles.emplace_back(x2, y2);
+                    triangles.emplace_back(x1, y1);
                 }
             }
 
@@ -326,23 +326,23 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
             
 #pragma omp critical
             {
-                triangles[c++] = glm::vec2(x,    y);
-                triangles[c++] = glm::vec2(x+sx, y+sy);
-                triangles[c++] = glm::vec2(x,    y+sy);
+                triangles.emplace_back(x,    y);
+                triangles.emplace_back(x+sx, y+sy);
+                triangles.emplace_back(x,    y+sy);
 
-                triangles[c++] = glm::vec2(x,    y);
-                triangles[c++] = glm::vec2(x+sx, y);
-                triangles[c++] = glm::vec2(x+sx, y+sy);
+                triangles.emplace_back(x,    y);
+                triangles.emplace_back(x+sx, y);
+                triangles.emplace_back(x+sx, y+sy);
             }
         }
     }
 
-    vbo_count = c;
+    vbo_count = triangles.size();
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, vbo_count * sizeof(glm::vec2), triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * triangles.size(), triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
-    LOGD << "Created parallel filled contour with " << c / 3 << " triangles" << std::endl;
+    LOGD << "Created parallel filled contour with " << triangles.size() / 3 << " triangles" << std::endl;
 
     return true;
 }

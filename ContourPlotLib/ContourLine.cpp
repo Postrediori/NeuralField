@@ -81,10 +81,10 @@ bool ContourLine::update(matrix_t* points, area_t a, double t) {
         }
     }
 
-    vbo_count = lines.size();
+    vbo_count = lines.size() * 2;
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * lines.size(),
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * lines.size(),
         lines.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
     
     LOGD << "Created filled contour with " << lines.size() / 2 << " lines";
@@ -145,8 +145,7 @@ void MakeCorner(lines_t& lines, flags_t flags,
         break;
     }
 
-    lines.push_back(glm::vec2(x1, y1));
-    lines.push_back(glm::vec2(x2, y2));
+    lines.emplace_back(x1, y1, x2, y2);
 }
 
 void MakeHalf(lines_t& lines, flags_t flags,
@@ -172,8 +171,7 @@ void MakeHalf(lines_t& lines, flags_t flags,
         break;
     }
 
-    lines.push_back(glm::vec2(x1, y1));
-    lines.push_back(glm::vec2(x2, y2));
+    lines.emplace_back(x1, y1, x2, y2);
 }
 
 void MakeAmbiguity(lines_t& lines, flags_t flags, bool u,
@@ -207,8 +205,6 @@ void MakeAmbiguity(lines_t& lines, flags_t flags, bool u,
         y4 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
     }
 
-    lines.push_back(glm::vec2(x1, y1));
-    lines.push_back(glm::vec2(x2, y2));
-    lines.push_back(glm::vec2(x3, y3));
-    lines.push_back(glm::vec2(x4, y4));
+    lines.emplace_back(x1, y1, x2, y2);
+    lines.emplace_back(x3, y3, x4, y4);
 }

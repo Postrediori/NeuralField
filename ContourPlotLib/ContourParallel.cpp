@@ -20,7 +20,7 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
 
     int max_idx = xdiv * ydiv;
 
-    std::vector<glm::vec4> lines;
+    lines_t lines;
     lines.reserve(max_idx * 2);
 
 #pragma omp parallel for shared(lines)
@@ -83,7 +83,7 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
     
 #pragma omp critical
             {
-                lines.push_back(glm::vec4(x1, y1, x2, y2));
+                lines.emplace_back(x1, y1, x2, y2);
             }
 
         } else if (flags==3 || flags==6 || flags==9 || flags==12) {
@@ -111,7 +111,7 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
 
 #pragma omp critical
             {
-                lines.push_back(glm::vec4(x1, y1, x2, y2));
+                lines.emplace_back(x1, y1, x2, y2);
             }
 
         } else if (flags==5 || flags==10) {
@@ -155,8 +155,8 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
 
 #pragma omp critical
             {
-                lines.push_back(glm::vec4(x1, y1, x2, y2));
-                lines.push_back(glm::vec4(x3, y3, x4, y4));
+                lines.emplace_back(x1, y1, x2, y2);
+                lines.emplace_back(x3, y3, x4, y4);
             }
         }
     }
