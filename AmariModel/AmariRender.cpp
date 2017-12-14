@@ -102,10 +102,8 @@ bool AmariRender::init(size_t size) {
         return false;
     }
 
-    // Allocate mem
-    TextureGuard_t new_texture(texture_alloc(size, g_bitsPerPixel),
-        [](texture_t* t) { texture_free(t); });
-    std::swap(tex, new_texture);
+    // Allocate memory
+    tex = TextureGuard_t(texture_alloc(size, g_bitsPerPixel), texture_free);
 
     return true;
 }

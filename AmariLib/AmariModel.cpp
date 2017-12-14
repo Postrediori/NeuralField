@@ -33,21 +33,15 @@ bool AmariModel::init(const char* config_file) {
     pi_k = K_ * M_PI / k;
     pi_m = M_ * M_PI / m;
 
-    KernelGuard_t new_excitement_kernel(kernel_create(sigma_k)
-        , [](kernel_t* k) { kernel_free(k); });
-    KernelGuard_t new_inhibition_kernel(kernel_create(sigma_m)
-        , [](kernel_t* k) { kernel_free(k); });
+    KernelGuard_t new_excitement_kernel(kernel_create(sigma_k, mode), kernel_free);
+    KernelGuard_t new_inhibition_kernel(kernel_create(sigma_m, mode), kernel_free);
     std::swap(excitement_kernel, new_excitement_kernel);
     std::swap(inhibition_kernel, new_inhibition_kernel);
 
-    MatrixGuard_t new_stimulus(matrix_allocate(size, size)
-        , [](matrix_t* m) { matrix_free(m); });
-    MatrixGuard_t new_activity(matrix_allocate(size, size)
-        , [](matrix_t* m) { matrix_free(m); });
-    MatrixGuard_t new_excitement(matrix_allocate(size, size)
-        , [](matrix_t* m) { matrix_free(m); });
-    MatrixGuard_t new_inhibition(matrix_allocate(size, size)
-        , [](matrix_t* m) { matrix_free(m); });
+    MatrixGuard_t new_stimulus(matrix_allocate(size, size), matrix_free);
+    MatrixGuard_t new_activity(matrix_allocate(size, size), matrix_free);
+    MatrixGuard_t new_excitement(matrix_allocate(size, size), matrix_free);
+    MatrixGuard_t new_inhibition(matrix_allocate(size, size), matrix_free);
     std::swap(stimulus, new_stimulus);
     std::swap(activity, new_activity);
     std::swap(excitement, new_excitement);
