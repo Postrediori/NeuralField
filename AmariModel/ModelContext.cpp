@@ -25,10 +25,6 @@ static const char g_configFile[] = "data/amari.conf";
 static const char g_vertexShader[] = "data/plane.vert";
 static const char g_fragmentShader[]  = "data/plane.frag";
 
-/* static const float XMin = -1.f;
-static const float XMax =  1.f;
-static const float YMin = -1.f;
-static const float YMax =  1.f; */
 static const area_t g_area = {-1.0, 1.0, -1.0, 1.0};
 
 static const int g_timerInterval = 10;
@@ -56,11 +52,6 @@ bool AmariModelContext::Init() {
         return false;
     }
     fr_.createAtlas(g_fontSize);
-    //a24_.reset(fr_.createAtlas(g_fontSize));
-    //if (!a24_) {
-    //    LOGE << "Unable to create typeset";
-    //    return false;
-    //}
 
     // Init MVP matrices
     model_ = glm::mat4(1.0f);
