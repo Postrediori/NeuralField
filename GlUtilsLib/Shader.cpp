@@ -32,11 +32,11 @@ static std::string GetProgramInfo(const GLuint shader) {
     if (!blen) {
         str << "no info";
     } else {
-        GLchar* log = new GLchar[blen + 1];
-        glGetProgramInfoLog(shader, blen, &slen, log); LOGOPENGLERROR();
-        str << log;
-        str << "[" << slen << " byte(s)]";
-        delete[] log;
+        std::vector<char> log(blen + 1);
+        glGetProgramInfoLog(shader, blen, &slen, &log[0]); LOGOPENGLERROR();
+        std::string s(log.begin(), log.end());
+        str << s;
+        str << " [" << slen << " byte(s)]";
     }
     
     return str.str();
