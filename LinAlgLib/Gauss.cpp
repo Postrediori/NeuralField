@@ -78,7 +78,7 @@ void kernel_free(kernel_t* k) {
     delete k;
 }
 
-kernel_t* kernel_create(double sigma) {
+kernel_t* kernel_create(double sigma, KernelMode mode) {
     int lw = (int)(4.0 * sigma + 0.5);
     int k_size = lw * 2 + 1;
     if (k_size <= 0) {
@@ -87,6 +87,7 @@ kernel_t* kernel_create(double sigma) {
     }
     
     kernel_t* k = kernel_alloc(k_size);
+    k->mode = mode;
 
     double s = 1.0;
     k->data[lw] = 1.0;
@@ -104,7 +105,7 @@ kernel_t* kernel_create(double sigma) {
     return k;
 }
 
-matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k, KernelMode mode) {
+matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
     if (dst == nullptr || src == nullptr || k == nullptr) {
         LOGE << "kernel null error";;
         return nullptr;
@@ -120,16 +121,10 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k, Kern
         return dst;
     }
     
-    //size_t max_size = a->size * a->size;
     matrix_t* tmp = matrix_allocate(src->rows, src->cols);
     if (!tmp) {
         return dst;
     }
-    
-    //float* tmp = new float[max_size];
-    
-    //int i, j;
-    //float d;
     
     int k2 = k->size / 2;
     
@@ -140,7 +135,7 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k, Kern
 
             for (int n = 0; n < k->size; n++) {
                 int p = i + n - k2;
-                p = normalize_index(p, dst->cols, mode);
+                p = normalize_index(p, dst->cols, k->mode);
                 d += src->data[p + j * src->cols] * k->data[n];
             }
 
@@ -155,7 +150,7 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k, Kern
 
             for (int n = 0; n < k->size; ++n) {
                 int p = i + n - k2;
-                p = normalize_index(p, dst->rows, mode);
+                p = normalize_index(p, dst->rows, k->mode);
                 d += tmp->data[j + p * tmp->cols] * k->data[n];
             }
 
@@ -173,19 +168,19 @@ matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, Kerne
         LOGE << "kernel null error";
         return dst;
     }
-    kernel_t* k = kernel_create(sigma);
+    kernel_t* k = kernel_create(sigma, mode);
     if (!k) {
         return dst;
     }
     
-    kernel_apply_to_matrix(dst, src, k, mode);
+    kernel_apply_to_matrix(dst, src, k);
 
     kernel_free(k);
     
     return dst;
 }
 
-texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k, KernelMode mode) {
+texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
     if (t == nullptr || k == nullptr) {
         LOGE << "kernel null error";
         return t;
@@ -205,7 +200,7 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k, KernelMode mode) {
 
             for (int n = 0; n < k->size; n++) {
                 int p = i + n - k2;
-                p = normalize_index(p, t->size, mode);
+                p = normalize_index(p, t->size, k->mode);
 
                 r += t->data[(p+j*t->size)*t->bpp+0] * k->data[n];
                 g += t->data[(p+j*t->size)*t->bpp+1] * k->data[n];
@@ -225,7 +220,7 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k, KernelMode mode) {
 
             for (int n = 0; n < k->size; ++n) {
                 int p = i + n - k2;
-                p = normalize_index(p, tmp->size, mode);
+                p = normalize_index(p, tmp->size, k->mode);
 
                 r += tmp->data[(j+p*tmp->size)*tmp->bpp+0] * k->data[n];
                 g += tmp->data[(j+p*tmp->size)*tmp->bpp+1] * k->data[n];
@@ -244,12 +239,16 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k, KernelMode mode) {
 }
 
 texture_t* kernel_filter_texture(texture_t* t, double sigma, KernelMode mode) {
-    kernel_t* k = kernel_create(sigma);
+    if (t == nullptr) {
+        LOGE << "texture null error";
+        return nullptr;
+    }
+    kernel_t* k = kernel_create(sigma, mode);
     if (!k) {
         return t;
     }
 
-    kernel_apply_to_texture(t, k, mode);
+    kernel_apply_to_texture(t, k);
 
     kernel_free(k);
     
