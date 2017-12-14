@@ -19,10 +19,6 @@ AmariModel::AmariModel()
     , mode(MODE_REFLECT) {
 }
 
-AmariModel::~AmariModel() {
-    //
-}
-
 bool AmariModel::init(const char* config_file) {
     if (!load_config(config_file)) {
         return false;
