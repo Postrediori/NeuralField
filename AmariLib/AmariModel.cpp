@@ -33,19 +33,13 @@ bool AmariModel::init(const char* config_file) {
     pi_k = K_ * M_PI / k;
     pi_m = M_ * M_PI / m;
 
-    KernelGuard_t new_excitement_kernel(kernel_create(sigma_k, mode), kernel_free);
-    KernelGuard_t new_inhibition_kernel(kernel_create(sigma_m, mode), kernel_free);
-    std::swap(excitement_kernel, new_excitement_kernel);
-    std::swap(inhibition_kernel, new_inhibition_kernel);
+    excitement_kernel = KernelGuard_t(kernel_create(sigma_k, mode), kernel_free);
+    inhibition_kernel = KernelGuard_t(kernel_create(sigma_m, mode), kernel_free);
 
-    MatrixGuard_t new_stimulus(matrix_allocate(size, size), matrix_free);
-    MatrixGuard_t new_activity(matrix_allocate(size, size), matrix_free);
-    MatrixGuard_t new_excitement(matrix_allocate(size, size), matrix_free);
-    MatrixGuard_t new_inhibition(matrix_allocate(size, size), matrix_free);
-    std::swap(stimulus, new_stimulus);
-    std::swap(activity, new_activity);
-    std::swap(excitement, new_excitement);
-    std::swap(inhibition, new_inhibition);
+    stimulus = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    activity = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    excitement = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    inhibition = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
 
     restart();
 
