@@ -107,29 +107,31 @@ GLint ShaderProgram::uniform(const std::string& variable) const {
 
 bool ShaderProgram::load(const std::string& vertexShader,
                          const std::string& fragmentShader) {
-    GLuint glProgram;
-    GLuint vShader, fShader;
+    GLuint glProgram(0);
+    GLuint vShader(0), fShader(0);
+    GLint result(0);
+    
+    const GLchar* vertexSource = vertexShader.c_str();
+    const GLchar* fragmentSource = fragmentShader.c_str();
 
     program_ = 0;
     vertex_ = 0;
     fragment_ = 0;
 
     vShader = glCreateShader(GL_VERTEX_SHADER); LOGOPENGLERROR();
+    if (!vShader) {
+        LOGE << "Unable to create vertex shader";
+        goto error;
+    }
+
     fShader = glCreateShader(GL_FRAGMENT_SHADER); LOGOPENGLERROR();
-    
-    GLchar* vertexSource = new GLchar[vertexShader.size() + 1];
-    strncpy(vertexSource, vertexShader.c_str(), vertexShader.size());
-    
-    GLchar* fragmentSource = new GLchar[fragmentShader.size() + 1];
-    strncpy(fragmentSource, fragmentShader.c_str(), fragmentShader.size());
-    
+    if (!fShader) {
+        LOGE << "Unable to create fragment shader";
+        goto error;
+    }
+
     glShaderSource(vShader, 1, &vertexSource, NULL); LOGOPENGLERROR();
     glShaderSource(fShader, 1, &fragmentSource, NULL); LOGOPENGLERROR();
-    
-    delete[] vertexSource;
-    delete[] fragmentSource;
-
-    GLint result;
 
     glCompileShader(vShader); LOGOPENGLERROR();
     glGetObjectParameterivARB(vShader, GL_COMPILE_STATUS, &result); LOGOPENGLERROR();
@@ -146,6 +148,10 @@ bool ShaderProgram::load(const std::string& vertexShader,
     }
 
     glProgram = glCreateProgram(); LOGOPENGLERROR();
+    if (!glProgram) {
+        LOGE << "Unable to create shader program";
+        goto error;
+    }
 
     glAttachShader(glProgram, vShader); LOGOPENGLERROR();
     glAttachShader(glProgram, fShader); LOGOPENGLERROR();
@@ -218,8 +224,5 @@ bool ShaderFiles::load(const std::string& vertexFile,
         return false;
     }
 
-    const GLchar* sourceVertex = strVert.c_str();
-    const GLchar* sourceFragment = strFrag.c_str();
-
-    return ShaderProgram::load(sourceVertex, sourceFragment);
+    return ShaderProgram::load(strVert, strFrag);
 }
