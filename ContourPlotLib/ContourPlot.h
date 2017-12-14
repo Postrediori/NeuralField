@@ -58,3 +58,5 @@ protected:
     GLuint program;
     GLint a_coord, u_mvp, u_zoom, u_ofs, u_res, u_color;
 };
+
+typedef std::unique_ptr<ContourPlot> ContourPlotGuard_t;

@@ -55,10 +55,10 @@ public:
     AmariRender amariRender_;
     
     ShaderFiles contourProgram_;
-    std::unique_ptr<ContourPlot> contourLines_;
-    std::unique_ptr<ContourPlot> contourFill_;
-    std::unique_ptr<ContourPlot> contourParallel_;
-    //std::unique_ptr<ContourPlot> contourParallelFill_;
+    ContourPlotGuard_t contourLines_;
+    ContourPlotGuard_t contourFill_;
+    ContourPlotGuard_t contourParallel_;
+    // ContourPlotGuard_t contourParallelFill_;
     
     bool showHelp_;
 };

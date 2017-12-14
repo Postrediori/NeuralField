@@ -5,10 +5,10 @@
 #include "AmariModel.h"
 #include "AmariRender.h"
 #include "ContourPlot.h"
-#include "ContourParallel.h"
-//#include "ContourParallelFill.h"
 #include "ContourLine.h"
 #include "ContourFill.h"
+#include "ContourParallel.h"
+// #include "ContourParallelFill.h"
 
 #include "ModelContext.h"
 
@@ -103,20 +103,20 @@ bool AmariModelContext::Init() {
 
     contourParallel_.reset(new ContourParallel(contourProgram_.program()));
     if (!contourParallel_->init()) {
-        LOGE << "Unable to create Parallel Contour";
+        LOGE << "Unable to create Parallel Contour Lines";
         return false;
     }
+
+    // contourParallelFill_.reset(new ContourParallelFill(contourProgram_.program()));
+    // if (!contourParallelFill_->init()) {
+    //     LOGE << "Unable to create Parallel Filled Contour";
+    //     return false;
+    // }
 
     contourLines_->update(amariModel_.activity.get(), g_area, 1.0);
     contourFill_->update(amariModel_.activity.get(), g_area, 1.0);
     contourParallel_->update(amariModel_.activity.get(), g_area, 1.0);
-
-    //gContourParallelFill = new ContourParallelFill(gContourProgram.program());
-    //if (gContourParallelFill->init(gAmariModel->activity,
-    //    gAmariModel->size-1, gAmariModel->size-1,
-    //    XMin, XMax, YMin, YMax, 1.f) != 0) {
-    //    return -1;
-    //}
+    // contourParallelFill_->update(amariModel_.activity.get(), g_area, 1.0);
     
     // Set up OpenGL
     glEnable(GL_TEXTURE_2D); LOGOPENGLERROR();
@@ -155,12 +155,12 @@ void AmariModelContext::Render() {
         static const float zoom = 1.f;
         static const glm::vec2 offset = glm::vec2(0.f, 0.f);
         
-        //glPolygonOffset(1, 0);
-        //glEnable(GL_POLYGON_OFFSET_FILL);
-        //gContourParallelFill->render(mvp, zoom, offset, Foreground);
-        //
-        //glPolygonOffset(0, 0);
-        //glDisable(GL_POLYGON_OFFSET_FILL);
+        // glPolygonOffset(1, 0);
+        // glEnable(GL_POLYGON_OFFSET_FILL);
+        // contourParallelFill_->render(mvp, zoom, offset, g_foreground);
+        
+        // glPolygonOffset(0, 0);
+        // glDisable(GL_POLYGON_OFFSET_FILL);
         contourParallel_->render(mvp, zoom, offset, g_outline);
     }
 
@@ -205,7 +205,7 @@ void AmariModelContext::Resize(int w, int h) {
     contourLines_->resize(w, h);
     contourFill_->resize(w, h);
     contourParallel_->resize(w, h);
-    //contourParallelFill_->resize(w, h);
+    // contourParallelFill_->resize(w, h);
 }
 
 void AmariModelContext::SetActivity(int x, int y) {
@@ -257,12 +257,9 @@ void AmariModelContext::Update() {
             contourParallel_->update(amariModel_.activity.get(), g_area, 0.0);
         }
 
-        //if (gContourParallelFill) {
-        //    gContourParallelFill->release();
-        //    gContourParallelFill->init(gAmariModel->activity,
-        //        gAmariModel->size-1, gAmariModel->size-1,
-        //        XMin, XMax, YMin, YMax, 0.f);
-        //}
+        // if (contourParallelFill_) {
+        //     contourParallelFill_->update(amariModel_.activity.get(), g_area, 0.0);
+        // }
     }
 }
 
