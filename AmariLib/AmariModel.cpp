@@ -105,7 +105,7 @@ bool AmariModel::load_config(const char* config_file) {
 
     std::string line;
     while (std::getline(in, line)) {
-        if (line[0]=='/' || line[0]=='\n' || line[0]=='\r') {
+        if (line.empty() || line.find("#") == 0) {
             continue;
         }
 
