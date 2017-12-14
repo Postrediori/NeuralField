@@ -147,5 +147,5 @@ bool AmariModel::load_config(const char* config_file) {
 }
 
 void AmariModel::set_activity(size_t x, size_t y, float a) {
-    activity->data[y * activity->cols + x] = a;
+    matrix_set(activity.get(), y, x, a);
 }

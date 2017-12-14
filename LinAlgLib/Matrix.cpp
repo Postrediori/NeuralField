@@ -28,6 +28,23 @@ void matrix_free(matrix_t* m) {
     delete m;
 }
 
+matrix_t* matrix_set(matrix_t* a, size_t row, size_t col, double val) {
+    if (a == nullptr) {
+        LOGE << "Matrix NULL Error";
+        return nullptr;
+    }
+    if (a->rows <= row) {
+        LOGE << "Matrix ROWS Error";
+        return a;
+    }
+    if (a->cols <= col) {
+        LOGE << "Matrix COLS Error";
+        return a;
+    }
+    a->data[row * a->cols + col] = val;
+    return a;
+}
+
 /*****************************************************************************
  * Matrix algebra
  ****************************************************************************/
