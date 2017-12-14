@@ -66,9 +66,9 @@ bool ContourLine::update(matrix_t* points, area_t a, double t) {
             case 10:
                 // Ambiguity
                 v = (points->data[(j  )*(xdiv+1)+(i  )]+points->data[(j  )*(xdiv+1)+(i+1)]+
-                     points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )])/4.f;
+                     points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )])/4.0;
                 v -= threshold;
-                u = v>0.f;
+                u = v>0.0;
                 MakeAmbiguity(lines, flags, u, d, vals, v);
                 break;
 

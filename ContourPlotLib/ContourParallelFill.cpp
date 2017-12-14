@@ -18,12 +18,6 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
     double dX = (a.xmax - a.xmin) / (double)xdiv;
     double dY = (a.ymax - a.ymin) / (double)ydiv;
 
-    //unsigned char flags, u;
-    //float x, y;
-    //float vals[4];
-    //float v;
-
-    int c = 0;
     int max_idx = xdiv * ydiv;
 
     triangles_t triangles;
