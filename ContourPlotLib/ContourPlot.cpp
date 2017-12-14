@@ -22,9 +22,9 @@ flags_t CellType(double vals[]) {
 ContourPlot::ContourPlot(GLuint p)
     : w(0)
     , h(0)
+    , threshold(0.0)
     , vbo_count(0)
     , vbo(0)
-    , threshold(0.0)
     , program(p) {
 }
 
