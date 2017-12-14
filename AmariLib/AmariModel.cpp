@@ -74,10 +74,10 @@ void AmariModel::release() {
 void AmariModel::stimulate() {
     matrix_heaviside(activity.get());
 
-    kernel_apply_to_matrix(excitement.get(), activity.get(), excitement_kernel.get(), mode);
+    kernel_apply_to_matrix(excitement.get(), activity.get(), excitement_kernel.get());
     matrix_scalar_mul(excitement.get(), pi_k);
 
-    kernel_apply_to_matrix(inhibition.get(), activity.get(), inhibition_kernel.get(), mode);
+    kernel_apply_to_matrix(inhibition.get(), activity.get(), inhibition_kernel.get());
     matrix_scalar_mul(inhibition.get(), pi_m);
 
     matrix_scalar_set(activity.get(), h);
