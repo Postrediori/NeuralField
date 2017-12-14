@@ -2,21 +2,25 @@
 #include "GlUtils.h"
 #include "ContourPlot.h"
 
-flags_t CellType(double vals[]) {
+flags_t CellType(vals_t vals) {
     flags_t flags = FLAG_NO;
-    if (vals[0] > 0.0) {
+    if (vals.v[0] > 0.0) {
         flags |= FLAG_SW;
     }
-    if (vals[1] > 0.0) {
+    if (vals.v[1] > 0.0) {
         flags |= FLAG_NW;
     }
-    if (vals[2] > 0.0) {
+    if (vals.v[2] > 0.0) {
         flags |= FLAG_NE;
     }
-    if (vals[3] > 0.0) {
+    if (vals.v[3] > 0.0) {
         flags |= FLAG_SE;
     }
     return flags;
+}
+
+double ValuesRatio(vals_t vals, size_t i1, size_t i2) {
+    return fabs(vals.v[i1] / (vals.v[i1] - vals.v[i2]));
 }
 
 ContourPlot::ContourPlot(GLuint p)

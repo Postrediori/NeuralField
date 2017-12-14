@@ -4,9 +4,9 @@
 #include "ContourFill.h"
 
 void MakeFill(triangles_t& triangles, discrete_t d);
-void MakeFillCorner(triangles_t& triangles, flags_t flags, discrete_t d, double vals[]);
-void MakeFillHalf(triangles_t& triangles, flags_t flags, discrete_t d, double vals[]);
-void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u, discrete_t d, double vals[], double v);
+void MakeFillCorner(triangles_t& triangles, flags_t flags, discrete_t d, vals_t vals);
+void MakeFillHalf(triangles_t& triangles, flags_t flags, discrete_t d, vals_t vals);
+void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u, discrete_t d, vals_t vals, double v);
 
 ContourFill::ContourFill(GLuint p)
     : ContourPlot(p) {
@@ -25,20 +25,20 @@ bool ContourFill::update(matrix_t* points, area_t a, double t) {
 
     flags_t flags;
     bool u;
-    double vals[4];
+    vals_t vals;
     double v;
 
-    std::vector<glm::vec2> triangles;
+    triangles_t triangles;
 
     for (int j=0; j<ydiv; j++) {
         double y = a.ymin + j * dY;
         for (int i=0; i<xdiv; i++) {
             double x = a.xmin + i * dX;
             discrete_t d = {x, y, dX, dY};
-            vals[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
-            vals[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
-            vals[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
-            vals[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
+            vals.v[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
+            vals.v[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
+            vals.v[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
+            vals.v[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
             flags = CellType(vals);
 
             switch (flags) {
@@ -126,40 +126,40 @@ void MakeFill(triangles_t& triangles, discrete_t d) {
 }
 
 void MakeFillCorner(triangles_t& triangles, flags_t flags,
-                    discrete_t d, double vals[]) {
+                    discrete_t d, vals_t vals) {
     double x1, y1;
     double x2, y2;
 
     switch (flags) {
     case 1:
     case 14:
-        x1 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
         x2 = d.x;
-        y2 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
+        y2 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         break;
 
     case 2:
     case 13:
         x1 = d.x+d.sx;
-        y1 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
-        x2 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 1, 2);
+        x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y2 = d.y;
         break;
 
     case 4:
     case 11:
-        x1 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        x1 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y1 = d.y+d.sy;
         x2 = d.x+d.sx;
-        y2 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
 
     case 7:
     case 8:
         x1 = d.x;
-        y1 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
-        x2 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
+        x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y2 = d.y+d.sy;
         break;
     }
@@ -242,7 +242,7 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags,
 }
 
 void MakeFillHalf(triangles_t& triangles, flags_t flags,
-                  discrete_t d, double vals[]) {
+                  discrete_t d, vals_t vals) {
     double x1, y1;
     double x2, y2;
     double x3, y3;
@@ -255,16 +255,16 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
         x2 = d.x+d.sx;
         y2 = d.y;
         x3 = d.x+d.sx;
-        y3 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y3 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         x4 = d.x;
-        y4 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
+        y4 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         break;
 
     case 12:
         x1 = d.x;
-        y1 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx;
-        y2 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         x3 = d.x+d.sx;
         y3 = d.y+d.sy;
         x4 = d.x;
@@ -272,22 +272,22 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
         break;
 
     case 6:
-        x1 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
         x2 = d.x+d.sx;
         y2 = d.y;
         x3 = d.x+d.sx;
         y3 = d.y+d.sy;
-        x4 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        x4 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y4 = d.y+d.sy;
         break;
 
     case 9:
         x1 = d.x;
         y1 = d.y;
-        x2 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y2 = d.y;
-        x3 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        x3 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y3 = d.y+d.sy;
         x4 = d.x;
         y4 = d.y+d.sy;
@@ -304,20 +304,20 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
 }
 
 void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u,
-                       discrete_t d, double vals[], double v) {
+                       discrete_t d, vals_t vals, double v) {
     double x1, y1;
     double x2, y2;
     double x3, y3;
     double x4, y4;
 
-    x1 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+    x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
     y1 = d.y;
     x2 = d.x+d.sx;
-    y2 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
-    x3 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+    y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
+    x3 = d.x+d.sx * ValuesRatio(vals, 3, 2);
     y3 = d.y+d.sy;
     x4 = d.x;
-    y4 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
+    y4 = d.y+d.sy * ValuesRatio(vals, 0, 3);
 
     if (u) {
         triangles.push_back(glm::vec2(x1, y1));

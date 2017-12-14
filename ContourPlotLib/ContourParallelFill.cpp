@@ -35,19 +35,19 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
         double y = a.ymin + j * dY;
         double x = a.xmin + i * dX;
         
-        double vals[4];
-        vals[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
-        vals[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
-        vals[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
-        vals[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
+        vals_t vals;
+        vals.v[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
+        vals.v[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
+        vals.v[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
+        vals.v[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
 
         //unsigned char flags;
         //flags = CellType(vals);
         flags_t flags = FLAG_NO;
-        if (vals[0]>0.f) flags |= FLAG_SW;
-        if (vals[1]>0.f) flags |= FLAG_NW;
-        if (vals[2]>0.f) flags |= FLAG_NE;
-        if (vals[3]>0.f) flags |= FLAG_SE;
+        if (vals.v[0]>0.0) flags |= FLAG_SW;
+        if (vals.v[1]>0.0) flags |= FLAG_NW;
+        if (vals.v[2]>0.0) flags |= FLAG_NE;
+        if (vals.v[3]>0.0) flags |= FLAG_SE;
 
         if (flags==1 || flags==2 || flags==4 || flags==7
             || flags==8 || flags==11 || flags==13 || flags==14) {
@@ -59,33 +59,33 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
             switch (flags) {
             case 1:
             case 14:
-                x1 = x+sx*fabs(vals[0]/(vals[0]-vals[1]));
+                x1 = x+sx * ValuesRatio(vals, 0, 1);
                 y1 = y;
                 x2 = x;
-                y2 = y+sy*fabs(vals[0]/(vals[0]-vals[3]));
+                y2 = y+sy * ValuesRatio(vals, 0, 3);
                 break;
 
             case 2:
             case 13:
                 x1 = x+sx;
-                y1 = y+sy*fabs(vals[1]/(vals[1]-vals[2]));
-                x2 = x+sx*fabs(vals[0]/(vals[0]-vals[1]));
+                y1 = y+sy * ValuesRatio(vals, 1, 2);
+                x2 = x+sx * ValuesRatio(vals, 0, 1);
                 y2 = y;
                 break;
 
             case 4:
             case 11:
-                x1 = x+sx*fabs(vals[3]/(vals[3]-vals[2]));
+                x1 = x+sx * ValuesRatio(vals, 3, 2);
                 y1 = y+sy;
                 x2 = x+sx;
-                y2 = y+sy*fabs(vals[1]/(vals[1]-vals[2]));
+                y2 = y+sy * ValuesRatio(vals, 1, 2);
                 break;
 
             case 7:
             case 8:
                 x1 = x;
-                y1 = y+sy*fabs(vals[0]/(vals[0]-vals[3]));
-                x2 = x+sx*fabs(vals[3]/(vals[3]-vals[2]));
+                y1 = y+sy * ValuesRatio(vals, 0, 3);
+                x2 = x+sx * ValuesRatio(vals, 3, 2);
                 y2 = y+sy;
                 break;
             }
@@ -202,16 +202,16 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
                 x2 = x+sx;
                 y2 = y;
                 x3 = x+sx;
-                y3 = y+sy*fabs(vals[1]/(vals[1]-vals[2]));
+                y3 = y+sy * ValuesRatio(vals, 1, 2);
                 x4 = x;
-                y4 = y+sy*fabs(vals[0]/(vals[0]-vals[3]));
+                y4 = y+sy * ValuesRatio(vals, 0, 3);
                 break;
 
             case 12:
                 x1 = x;
-                y1 = y+sy*fabs(vals[0]/(vals[0]-vals[3]));
+                y1 = y+sy * ValuesRatio(vals, 0, 3);
                 x2 = x+sx;
-                y2 = y+sy*fabs(vals[1]/(vals[1]-vals[2]));
+                y2 = y+sy * ValuesRatio(vals, 1, 2);
                 x3 = x+sx;
                 y3 = y+sy;
                 x4 = x;
@@ -219,22 +219,22 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
                 break;
 
             case 6:
-                x1 = x+sx*fabs(vals[0]/(vals[0]-vals[1]));
+                x1 = x+sx * ValuesRatio(vals, 0, 1);
                 y1 = y;
                 x2 = x+sx;
                 y2 = y;
                 x3 = x+sx;
                 y3 = y+sy;
-                x4 = x+sx*fabs(vals[3]/(vals[3]-vals[2]));
+                x4 = x+sx * ValuesRatio(vals, 3, 2);
                 y4 = y+sy;
                 break;
 
             case 9:
                 x1 = x;
                 y1 = y;
-                x2 = x+sx*fabs(vals[0]/(vals[0]-vals[1]));
+                x2 = x+sx * ValuesRatio(vals, 0, 1);
                 y2 = y;
-                x3 = x+sx*fabs(vals[3]/(vals[3]-vals[2]));
+                x3 = x+sx * ValuesRatio(vals, 3, 2);
                 y3 = y+sy;
                 x4 = x;
                 y4 = y+sy;
@@ -267,14 +267,14 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
             float x4, y4;
             float sx = dX, sy = dY;
 
-            x1 = x+sx*fabs(vals[0]/(vals[0]-vals[1]));
+            x1 = x+sx * ValuesRatio(vals, 0, 1);
             y1 = y;
             x2 = x+sx;
-            y2 = y+sy*fabs(vals[1]/(vals[1]-vals[2]));
-            x3 = x+sx*fabs(vals[3]/(vals[3]-vals[2]));
+            y2 = y+sy * ValuesRatio(vals, 1, 2);
+            x3 = x+sx * ValuesRatio(vals, 3, 2);
             y3 = y+sy;
             x4 = x;
-            y4 = y+sy*fabs(vals[0]/(vals[0]-vals[3]));
+            y4 = y+sy * ValuesRatio(vals, 0, 3);
             
             if (u) {
 #pragma omp critical

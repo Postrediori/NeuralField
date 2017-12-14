@@ -3,9 +3,9 @@
 #include "ContourPlot.h"
 #include "ContourLine.h"
 
-void MakeCorner(lines_t& lines, flags_t flags, discrete_t d, double vals[]);
-void MakeHalf(lines_t& lines, flags_t flags, discrete_t d, double vals[]);
-void MakeAmbiguity(lines_t& lines, flags_t flags, bool u, discrete_t d, double vals[], double v);
+void MakeCorner(lines_t& lines, flags_t flags, discrete_t d, vals_t vals);
+void MakeHalf(lines_t& lines, flags_t flags, discrete_t d, vals_t vals);
+void MakeAmbiguity(lines_t& lines, flags_t flags, bool u, discrete_t d, vals_t vals, double v);
 
 ContourLine::ContourLine(GLuint p)
     : ContourPlot(p) {
@@ -24,7 +24,7 @@ bool ContourLine::update(matrix_t* points, area_t a, double t) {
 
     flags_t flags;
     bool u;
-    double vals[4];
+    vals_t vals;
     double v;
     discrete_t d;
 
@@ -35,10 +35,10 @@ bool ContourLine::update(matrix_t* points, area_t a, double t) {
         for (int i=0; i<xdiv; i++) {
             double x = a.xmin + i * dX;
             d = {x, y, dX, dY};
-            vals[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
-            vals[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
-            vals[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
-            vals[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
+            vals.v[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
+            vals.v[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
+            vals.v[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
+            vals.v[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
             flags = CellType(vals);
 
             switch (flags) {
@@ -110,7 +110,7 @@ void ContourLine::render(const glm::mat4& mvp, double zoom, const glm::vec2& off
 }
 
 void MakeCorner(lines_t& lines, flags_t flags,
-                discrete_t d, double vals[]) {
+                discrete_t d, vals_t vals) {
     double x1, y1;
     double x2, y2;
 
@@ -118,29 +118,29 @@ void MakeCorner(lines_t& lines, flags_t flags,
     case 1:
     case 14:
         x1 = d.x;
-        y1 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
-        x2 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
+        x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y2 = d.y;
         break;
     case 2:
     case 13:
-        x1 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
         x2 = d.x+d.sx;
-        y2 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
     case 4:
     case 11:
-        x1 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        x1 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y1 = d.y+d.sy;
         x2 = d.x+d.sx;
-        y2 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
     case 7:
     case 8:
         x1 = d.x;
-        y1 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
-        x2 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
+        x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y2 = d.y+d.sy;
         break;
     }
@@ -149,7 +149,7 @@ void MakeCorner(lines_t& lines, flags_t flags,
 }
 
 void MakeHalf(lines_t& lines, flags_t flags,
-              discrete_t d, double vals[]) {
+              discrete_t d, vals_t vals) {
     double x1, y1;
     double x2, y2;
 
@@ -157,16 +157,16 @@ void MakeHalf(lines_t& lines, flags_t flags,
     case 3:
     case 12:
         x1 = d.x;
-        y1 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx;
-        y2 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
         
     case 6:
     case 9:
-        x1 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
-        x2 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y2 = d.y+d.sy;
         break;
     }
@@ -175,7 +175,7 @@ void MakeHalf(lines_t& lines, flags_t flags,
 }
 
 void MakeAmbiguity(lines_t& lines, flags_t flags, bool u,
-                   discrete_t d, double vals[], double v) {
+                   discrete_t d, vals_t vals, double v) {
     double x1, y1;
     double x2, y2;
     double x3, y3;
@@ -183,26 +183,26 @@ void MakeAmbiguity(lines_t& lines, flags_t flags, bool u,
 
     if ((flags==5 && u) || (flags==10 && !u)) {
         x1 = d.x;
-        y1 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
-        x2 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
+        x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y2 = d.y+d.sy;
 
-        x3 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        x3 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y3 = d.y;
         x4 = d.x+d.sx;
-        y4 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y4 = d.y+d.sy * ValuesRatio(vals, 1, 2);
     }
 
     if ((flags==5 && !u) || (flags==10 && u)) {
         x1 = d.x;
-        y1 = d.y+d.sy*fabs(vals[0]/(vals[0]-vals[3]));
-        x2 = d.x+d.sx*fabs(vals[0]/(vals[0]-vals[1]));
+        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
+        x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y2 = d.y;
 
-        x3 = d.x+d.sx*fabs(vals[3]/(vals[3]-vals[2]));
+        x3 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y3 = d.y+d.sy;
         x4 = d.x+d.sx;
-        y4 = d.y+d.sy*fabs(vals[1]/(vals[1]-vals[2]));
+        y4 = d.y+d.sy * ValuesRatio(vals, 1, 2);
     }
 
     lines.emplace_back(x1, y1, x2, y2);

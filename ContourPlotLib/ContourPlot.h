@@ -9,8 +9,19 @@ typedef unsigned char flags_t;
 #define FLAG_NE (flags_t)(0x04)
 #define FLAG_SE (flags_t)(0x08)
 
-flags_t CellType(double vals[]);
+/*
+ * (1)---(2)
+ *  |     |
+ *  |     |
+ * (0)---(3)
+ */
 
+struct vals_t {
+    double v[4];
+};
+
+flags_t CellType(vals_t vals);
+double ValuesRatio(vals_t vals, size_t i1, size_t i2);
 
 struct area_t {
     double xmin;
