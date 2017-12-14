@@ -7,8 +7,8 @@ class AmariModel {
 public:
     AmariModel();
 
-    bool init(const char* config_file);
-    bool load_config(const char* config_file);
+    bool init(const std::string& config_file);
+    bool load_config(const std::string& config_file);
 
     void release();
 

@@ -19,7 +19,7 @@ AmariModel::AmariModel()
     , mode(MODE_REFLECT) {
 }
 
-bool AmariModel::init(const char* config_file) {
+bool AmariModel::init(const std::string& config_file) {
     if (!load_config(config_file)) {
         return false;
     }
@@ -76,7 +76,7 @@ void AmariModel::stimulate() {
     matrix_add(activity.get(), stimulus.get());
 }
 
-bool AmariModel::load_config(const char* config_file) {
+bool AmariModel::load_config(const std::string& config_file) {
     std::ifstream in(config_file, std::ios::in);
     if (!in) {
         LOGE << "Unable to load Amari Model Config File " << config_file;
