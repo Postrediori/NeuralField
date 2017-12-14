@@ -70,7 +70,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height) {
     int roww = 0, rowh = 0;
 
     // Find minimum size for a texture holding all visible ASCII characters
-    for (int i = g_firstCharacter; i < g_characterCount; i++) {
+    for (size_t i = g_firstCharacter; i < g_characterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             LOGE << "FreeType Error: Loading character " << i << " failed!";
             continue;
@@ -112,7 +112,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height) {
 
     rowh = 0;
 
-    for (int i = g_firstCharacter; i < g_characterCount; i++) {
+    for (size_t i = g_firstCharacter; i < g_characterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             LOGE << "FreeType Error: Loading character " << i << " failed!";
             continue;
@@ -246,7 +246,6 @@ void FontRenderer::createAtlas(const int height) {
 }
 
 void FontRenderer::release() {
-    // program.release();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
@@ -286,7 +285,6 @@ void FontRenderer::renderText(FontSize_t size, FontArea_t area, const std::strin
     size_t len = str.length();
     std::vector<Coord2d_t> coords;
     coords.reserve(6 * len);
-    int c = 0;
 
     // Loop through all characters
     GLfloat tdx, tdy;
