@@ -1,8 +1,8 @@
 project(ProgramsPlanes)
 cmake_minimum_required(VERSION 2.8)
 
-include(cmake/3rdparty.txt)
-include(cmake/config.txt)
+include(cmake/3rdparty.cmake)
+include(cmake/config.cmake)
 
 add_subdirectory(AmariLib)
 add_subdirectory(ContourPlotLib)
