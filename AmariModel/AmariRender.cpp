@@ -45,9 +45,8 @@ static const char g_fragmentShader[] =
     "}";
 
 AmariRender::AmariRender()
- : use_blur(true)
- , blur_sigma(1.0) {
-    //
+ : use_blur(true) {
+    set_blur(1.0);
 }
 
 AmariRender::~AmariRender() {
@@ -147,10 +146,31 @@ void AmariRender::update_texture(matrix_t* m) {
     texture_copy_matrix(tex.get(), m);
 
     if (use_blur) {
-        kernel_filter_texture(tex.get(), blur_sigma, MODE_WRAP);
+        kernel_apply_to_texture(tex.get(), blur_kernel.get());
     }
 
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->size, tex->size, GL_RGBA,
                     GL_UNSIGNED_BYTE, (const GLubyte *)tex->data); LOGOPENGLERROR();
+}
+
+void AmariRender::set_blur(double blur) {
+    blur_sigma = blur;
+    if (blur_sigma > 0.0) {
+        blur_kernel = KernelGuard_t(kernel_create(blur_sigma, MODE_WRAP), kernel_free);
+    }
+}
+
+void AmariRender::add_blur(double dblur) {
+    double new_blur_sigma = blur_sigma + dblur;
+
+    if (new_blur_sigma > 0.0) {
+        use_blur = true;
+        LOGI << "Blur Sigma " << new_blur_sigma;
+    } else if (new_blur_sigma < 0.0) {
+        use_blur = false;
+        LOGI << "Turned Blur Off";
+    }
+
+    set_blur(new_blur_sigma);
 }

@@ -2,6 +2,7 @@
 
 #include "Matrix.h"
 #include "Texture.h"
+#include "Gauss.h"
 #include "Shader.h"
 
 class AmariRender {
@@ -16,6 +17,9 @@ public:
     void resize(unsigned int w, unsigned int h);
 
     void update_texture(matrix_t* m);
+
+    void set_blur(double blur);
+    void add_blur(double dblur);
     
 public:
     unsigned int w, h;
@@ -25,6 +29,8 @@ public:
 
     bool use_blur;
     double blur_sigma;
+
+    KernelGuard_t blur_kernel;
 
     GLuint texture;
 

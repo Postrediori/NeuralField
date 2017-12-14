@@ -268,20 +268,9 @@ void AmariModelContext::SwitchBlur() {
 }
 
 void AmariModelContext::IncreaseBlur() {
-    amariRender_.blur_sigma += g_textureBlurDelta;
-    if (amariRender_.blur_sigma>0.f) {
-        amariRender_.use_blur = true;
-    }
-    LOGI << "Blur Sigma " << amariRender_.blur_sigma;
+    amariRender_.add_blur(g_textureBlurDelta);
 }
 
 void AmariModelContext::DecreaseBlur() {
-    amariRender_.blur_sigma -= g_textureBlurDelta;
-    if (amariRender_.blur_sigma<0.f) {
-        amariRender_.blur_sigma = 0.f;
-        amariRender_.use_blur = false;
-        LOGI << "Turned Blur Off";
-    } else {
-        LOGI << "Blur Sigma " << amariRender_.blur_sigma;
-    }
+    amariRender_.add_blur(-g_textureBlurDelta);
 }
