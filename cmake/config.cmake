@@ -53,3 +53,13 @@ macro(make_library)
         set_target_properties(${PROJECT} PROPERTIES LINKER_LANGUAGE CXX)
     endif ()
 endmacro()
+
+function(add_all_subdirectories)
+    file(GLOB CHILDREN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
+
+    foreach(CHILD ${CHILDREN})
+        if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${CHILD})
+            add_subdirectory(${CHILD})
+        endif ()
+    endforeach ()
+endfunction()
