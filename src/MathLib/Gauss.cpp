@@ -13,47 +13,51 @@ static double gfunc(double x, double sigma) {
 
 static size_t normalize_index(int p, size_t i_size, KernelMode mode) {
     int n = p;
+    int size = static_cast<int>(i_size);
 
     switch (mode){
     case MODE_WRAP:
         if (n<0) {
-            n = i_size - ((-n) % i_size);
+            n = size - ((-n) % size);
         }
-        if (n>=i_size) {
-            n %= i_size;
+        if (n>=size) {
+            n %= size;
         }
         break;
 
     case MODE_REFLECT:
-        while (n<0 || n>=i_size) {
+        while (n<0 || n>=size) {
             if (n==-1) {
                 n = 0;
             }
             if (n<-1) {
                 n = 1;
             }
-            if (n==i_size) {
-                n = i_size - 2;
+            if (n==size) {
+                n = size - 2;
             }
-            if (n>i_size) {
-                n = i_size - 3;
+            if (n>size) {
+                n = size - 3;
             }
         }
         break;
 
     case MODE_MIRROR:
-        while (n<0 || n>=i_size) {
+        while (n<0 || n>=size) {
             if (n<0) {
                 n = -n;
             }
-            if (n>=i_size) {
-                n = 2 * i_size - n;
+            if (n==size) {
+                n = 2 * size - n - 1;
+            }
+            if (n>size) {
+                n = 2 * size - n;
             }
         }
         break;
     }
 
-    return (size_t)n;
+    return static_cast<size_t>(n);
 }
 
 kernel_t* kernel_alloc(size_t size) {

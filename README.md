@@ -118,7 +118,7 @@ m = 0.025
 # M = 0.05..0.07, 0.0625 - optimal
 M = 0.065
 
-# mode = wrap | reflect
+# mode = wrap | reflect | mirror
 mode = wrap
 ```
 
