@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ContourPlot.h"
+class ContourPlot;
 
 /*****************************************************************************
  * ContourLine - level lines

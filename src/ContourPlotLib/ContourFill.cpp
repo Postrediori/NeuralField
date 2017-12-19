@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Matrix.h"
 #include "GlUtils.h"
 #include "ContourPlot.h"
 #include "ContourFill.h"

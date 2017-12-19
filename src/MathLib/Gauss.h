@@ -1,8 +1,5 @@
 #pragma once
 
-#include <functional>
-#include "Texture.h"
-
 enum KernelMode {
     MODE_WRAP,
     MODE_REFLECT,

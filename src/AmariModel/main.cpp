@@ -1,5 +1,12 @@
 #include "stdafx.h"
+#include "Matrix.h"
+#include "Texture.h"
+#include "Gauss.h"
 #include "GlUtils.h"
+#include "FreeType.h"
+#include "AmariModel.h"
+#include "AmariRender.h"
+#include "ContourPlot.h"
 #include "ModelContext.h"
 
 /*****************************************************************************

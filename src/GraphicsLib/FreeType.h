@@ -1,19 +1,17 @@
-#pragma once
-
-#include <map>
-#include "GlUtils.h"
-#include "Shader.h"
-
-typedef int FontSize_t;
+// FreeType.h
+#ifndef FTYPE_H
+#define FTYPE_H
 
 /*****************************************************************************
  * FontAtlas
  ****************************************************************************/
+const int FirstDisplayedCharacter = 32;
+const int CharacterCount = 128;
+const int MaxWidth = 1024;
 
-static const size_t g_characterCount = 128;
-static const int g_maxWidth = 1024;
+typedef int FontSize_t;
 
-struct CharInfo_t {
+struct CharInfo {
     float ax, ay; // advance x and y
     float bw, bh; // bitmap width and height
     float bl, bt; // bitmap left and top
@@ -24,53 +22,65 @@ class FontAtlas {
 public:
     FontAtlas(FT_Face face, FontSize_t height);
     ~FontAtlas();
-    
+
 public:
-    GLuint tex;
     int w, h;
-    CharInfo_t characters[g_characterCount];
+    GLuint tex;
+    CharInfo characters[CharacterCount];
 };
 
 /*****************************************************************************
  * FontRenderer
  ****************************************************************************/
-struct FontArea_t {
-    float x, y;
+struct Coord2d {
+    GLfloat x, y;
+    GLfloat s, t;
+};
+
+struct FontArea {
+    float textx, texty;
     float sx, sy;
 };
 
+typedef unsigned int FontHandle_t;
+
 typedef std::unique_ptr<FontAtlas> FontAtlasGuard_t;
-typedef std::map<FontSize_t, FontAtlasGuard_t> Fonts_t;
+typedef std::map<FontHandle_t, FontAtlasGuard_t> Fonts_t;
 
 class FontRenderer {
 public:
     FontRenderer();
-    
+
     bool init();
-    bool init(const char* vertex_shader, const char* fragment_shader);
-    bool load(const char* filename);
-    void createAtlas(int height);
+    bool init(const std::string& vertex_shader, const std::string& fragment_shader);
+    bool load(const std::string& filename);
+    FontHandle_t createAtlas(FontSize_t height);
 
     void release();
 
     void renderStart();
     void renderEnd();
-    void renderColor(const GLfloat* c);
-    void renderText(FontSize_t size, FontArea_t area, const std::string& str);
+    void renderColor(const GLfloat *c);
+    void renderText(FontHandle_t typeset,
+                    FontArea area,
+                    const std::string& text);
 
 private:
-    bool init_renderer();
-    bool init_shader();
+    bool initObjects();
+    bool initShader();
 
 public:
-    GLuint vbo;
-
+    GLuint glProgram, glShaderV, glShaderF;
     GLint aCoord;
     GLint uTex, uColor;
 
-    ShaderProgram program;
+    GLuint vbo;
+
     FT_Library ft;
     FT_Face face;
-    
+
     Fonts_t fonts;
 };
+
+#endif
+/* FTYPE_H */

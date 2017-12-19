@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Matrix.h"
-
 typedef unsigned char flags_t;
 #define FLAG_NO (flags_t)(0x00)
 #define FLAG_SW (flags_t)(0x01)

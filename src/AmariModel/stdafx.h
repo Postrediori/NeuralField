@@ -1,8 +1,5 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GL/freeglut.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,6 +15,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <map>
 
 #include <ctime>
 #include <cstddef>
@@ -25,3 +23,13 @@
 #include <cstdio>
 #include <cmath>
 #include <cstring>
+
+#include <GL/glew.h>
+#include <GL/freeglut.h>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+#ifdef _MSC_VER
+# pragma warning(disable: 4786)
+#endif

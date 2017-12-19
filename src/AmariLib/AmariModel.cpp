@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Matrix.h"
+#include "Texture.h"
 #include "Gauss.h"
 #include "AmariModel.h"
 

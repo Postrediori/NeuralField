@@ -1,4 +1,5 @@
 make_executable()
+
 include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${FREEGLUT_INCLUDE_DIRS}
@@ -14,11 +15,20 @@ target_link_libraries(${PROJECT}
     ${FREETYPE_LIBRARIES}
     AmariLib
     ContourPlotLib
-    GlUtilsLib
-    LinAlgLib
+    GraphicsLib
+    MathLib
     plog
     )
 
+if(MSVC)
+    add_definitions(
+        -D_USE_MATH_DEFINES
+        -DFREEGLUT_LIB_PRAGMAS=0
+        -DFREEGLUT_STATIC
+        -DGLEW_STATIC
+        )
+endif()
+    
 # Data files
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/amari.conf

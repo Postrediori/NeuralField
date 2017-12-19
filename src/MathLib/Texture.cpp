@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Matrix.h"
 #include "Texture.h"
 
 texture_t* texture_alloc(size_t size, size_t bpp) {

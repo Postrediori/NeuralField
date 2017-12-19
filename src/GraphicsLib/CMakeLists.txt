@@ -1,3 +1,5 @@
+make_library()
+
 include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${FREEGLUT_INCLUDE_DIRS}
@@ -5,7 +7,7 @@ include_directories(
     ${GLM_INCLUDE_DIRS}
     ${FREETYPE_INCLUDE_DIRS}
     )
-make_library()
+
 target_link_libraries(${PROJECT}
     ${OPENGL_LIBRARIES}
     ${FREEGLUT_LIBRARIES}

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ContourPlot.h"
+class ContourPlot;
 
 /*****************************************************************************
  * ContourParallelFill - level filles plot that uses OpenMP

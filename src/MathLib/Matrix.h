@@ -1,7 +1,5 @@
 #pragma once
 
-#include <functional>
-
 struct matrix_t {
     size_t rows;
     size_t cols;

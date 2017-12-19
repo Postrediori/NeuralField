@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ContourPlot.h"
+class ContourPlot;
 
 /*****************************************************************************
  * ContourParallel - level lines plot that uses OpenMP

@@ -1,8 +1,5 @@
 #pragma once
 
-#include "Matrix.h"
-#include "Gauss.h"
-
 class AmariModel {
 public:
     AmariModel();

@@ -1,3 +1,5 @@
+make_library()
+
 include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${FREEGLUT_INCLUDE_DIRS}
@@ -5,14 +7,23 @@ include_directories(
     ${GLM_INCLUDE_DIRS}
     ${FREETYPE_INCLUDE_DIRS}
     )
-make_library()
+
 target_link_libraries(${PROJECT}
     ${OPENGL_LIBRARIES}
     ${FREEGLUT_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${FREETYPE_LIBRARIES}
-    GlUtilsLib
-    LinAlgLib
+    GraphicsLib
+    MathLib
     plog
     )
 
+if(MSVC)
+    add_definitions(
+        -D_USE_MATH_DEFINES
+        -DFREEGLUT_LIB_PRAGMAS=0
+        -DFREEGLUT_STATIC
+        -DGLEW_STATIC
+        )
+endif()
+    

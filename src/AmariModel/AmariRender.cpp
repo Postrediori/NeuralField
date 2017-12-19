@@ -1,6 +1,9 @@
 #include "stdafx.h"
+#include "Matrix.h"
+#include "Texture.h"
 #include "Gauss.h"
 #include "GlUtils.h"
+#include "Shader.h"
 #include "AmariRender.h"
 
 static const size_t g_bitsPerPixel = 4;
@@ -85,16 +88,16 @@ bool AmariRender::init(size_t size) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices), g_quadVertices, GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init shader
-    if (!program.load(g_vertexShader, g_fragmentShader)) {
+    if (!Shader::createProgramSource(program, vertex, fragment, g_vertexShader, g_fragmentShader)) {
         LOGE << "Unable to load shader for Amari Renderer";
         return false;
     }
 
-    aCoord = program.attrib("coord");
-    aTexCoord = program.attrib("tex_coord");
-    uTex = program.uniform("tex");
-    uResolution = program.uniform("iRes");
-    uMVP = program.uniform("mvp");
+    aCoord = glGetAttribLocation(program, "coord");
+    aTexCoord = glGetAttribLocation(program, "tex_coord");
+    uTex = glGetUniformLocation(program, "tex");
+    uResolution = glGetUniformLocation(program, "iRes");
+    uMVP = glGetUniformLocation(program, "mvp");
     if (aCoord == -1 || aTexCoord == -1 || uTex == -1
         || uResolution == -1 || uMVP == -1) {
         LOGE << "Invalid shader program";
@@ -109,13 +112,15 @@ bool AmariRender::init(size_t size) {
 
 void AmariRender::release() {
     tex.reset();
+
+    Shader::releaseProgram(program, vertex, fragment);
     
     glDeleteTextures(1, &texture); LOGOPENGLERROR();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
 void AmariRender::render(const glm::mat4& mvp) {
-    glUseProgram(program.program()); LOGOPENGLERROR();
+    glUseProgram(program); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();

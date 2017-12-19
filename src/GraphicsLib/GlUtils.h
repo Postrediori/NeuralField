@@ -1,15 +1,5 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GL/freeglut.h>
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
-#ifdef _MSC_VER
-# pragma warning(disable: 4786)
-#endif
-
 #ifdef NDEBUG
 # define LOGOPENGLERROR()
 #else

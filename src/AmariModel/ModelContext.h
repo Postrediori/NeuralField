@@ -1,13 +1,7 @@
 #pragma once
 
-#include "FreeType.h"
-#include "AmariModel.h"
-#include "AmariRender.h"
-#include "ContourPlot.h"
-
 static const int Width = 512;
 static const int Height = 512;
-
 
 enum RenderMode {
     RENDER_TEXTURE,
@@ -15,10 +9,6 @@ enum RenderMode {
     RENDER_PARALLEL,
 
     RENDER_MAXIMAL
-};
-
-static const char* const g_renderModeLabels[] = {
-    "Texture", "Contour", "Contour (Parallel)"
 };
 
 class AmariModelContext {
@@ -44,21 +34,22 @@ public:
     float scaleX_, scaleY_;
 
     RenderMode renderMode_;
+
+    GLuint program_, vertex_, fragment_;
     
     FPSCounter fpsCounter_;
         
     glm::mat4 model_, view_, projection_;
     
     FontRenderer fr_;
+    FontHandle_t a24;
     
     AmariModel amariModel_;
     AmariRender amariRender_;
-    
-    ShaderFiles contourProgram_;
+
     ContourPlotGuard_t contourLines_;
     ContourPlotGuard_t contourFill_;
     ContourPlotGuard_t contourParallel_;
-    // ContourPlotGuard_t contourParallelFill_;
     
     bool showHelp_;
 };

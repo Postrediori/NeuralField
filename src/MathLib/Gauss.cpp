@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "Texture.h"
 #include "Matrix.h"
+#include "Texture.h"
 #include "Gauss.h"
 
 /*****************************************************************************

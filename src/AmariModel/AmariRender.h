@@ -1,10 +1,5 @@
 #pragma once
 
-#include "Matrix.h"
-#include "Texture.h"
-#include "Gauss.h"
-#include "Shader.h"
-
 class AmariRender {
 public:
     AmariRender();
@@ -36,7 +31,7 @@ public:
 
     GLuint vbo;
 
-    ShaderProgram program;
+    GLuint program, vertex, fragment;
     GLint aCoord, aTexCoord;
     GLint uMVP, uResolution, uTex;
 };

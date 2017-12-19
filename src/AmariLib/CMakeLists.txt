@@ -1,5 +1,6 @@
 make_library()
+
 target_link_libraries(${PROJECT}
-    LinAlgLib
+    MathLib
     plog
     )

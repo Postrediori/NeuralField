@@ -1,9 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <cstddef>
-#include "Matrix.h"
-
 struct texture_t {
     size_t size;
     size_t bpp;
