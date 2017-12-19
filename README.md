@@ -1,6 +1,11 @@
 ## Introduction
 
-This program is a 2D plane simulation of neural system using the Amari Model.
+Neural field model describes evolution of activity rate in neurons. The dynamics
+of neural activity on 2D plane is implemented using the Amari Model. Model
+of excitatory and inhibitory neurons with connectivities use scalar equation lattice
+for the activity function `u(x, t)`.
+
+![Neural Field Simulation screenshot](images/neuralField.png)
 
 ## Prerequisites
 
@@ -116,17 +121,18 @@ mode = wrap
 
 ## Controls
 
-* **F1** - Toggle fullscreen mode.
-* **F2** - Show/hide help on the screen.
-* **Space** - Clear the model.
-* **Left Mouse Click** - Initiate the activity in a pointunder cursor.
-* **1** - Toggle textured mode.
-* **2** - Toggle filled contour mode.
-* **3** - Toggle outline mode.
-* **B** - Toggle blurring for the textured mode.
+* `F1` - Toggle fullscreen mode.
+* `F2` - Show/hide help on the screen.
+* `Space` - Clear the model.
+* `Left Mouse Click` - Initiate the activity in a pointunder cursor.
+* `1` - Toggle textured mode.
+* `2` - Toggle filled contour mode.
+* `3` - Toggle outline mode.
+* `B` - Toggle blurring for the textured mode.
 
 ## Links
 
+* [https://habrahabr.ru/post/181265/](https://habrahabr.ru/post/181265/).
 * Konstantin Doubrovinski, Dynamics, [Stability and Bifurcation Phenomena in the Nonlocal Model of Cortical Activity](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.8688&rep=rep1&type=pdf), 2005.
 * Dequan Jin, Dong Liang, Jigen Peng, [Existence and Properties of Stationary Solution of Dynamical Neural Field](http://gr.xjtu.edu.cn/c/document_library/get_file?folderId=29529&name=DLFE-2974.pdf), 2011.
 * Stephen Coombes, Helmut Schmidt, Ingo Bojak, [Interface Dynamics in Planar Neural Field Models](http://www.mathematical-neuroscience.com/content/2/1/9), 2012.
