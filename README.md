@@ -2,8 +2,11 @@
 
 Neural field model describes evolution of activity rate in neurons. The dynamics
 of neural activity on 2D plane is implemented using the Amari Model. Model
-of excitatory and inhibitory neurons with connectivities use scalar equation lattice
+of excitatory and inhibitory neurons with connectivities use scalar equation
 for the activity function `u(x, t)`.
+
+Marching square algorithm is used to create vectorized ontline of the activite
+neural area.
 
 ![Neural Field Simulation screenshot](images/neuralField.png)
 
@@ -115,9 +118,23 @@ m = 0.025
 # M = 0.05..0.07, 0.0625 - optimal
 M = 0.065
 
-# mode = wrap | reflect | mirror
+# mode = wrap | reflect
 mode = wrap
 ```
+
+* `size` - Size of discrete neural field.
+* `M` - Activation spread parameter. Smaller values stand for easily activated naural field,
+larger values lead to smaller activity spread from the same activity initiator.
+* `h` - Discrepancy parameter. Zero stands for no discrepancies and leads to symmetric model.
+Smaller values lead to unsymmetric development of an activity.
+* `mode` - Behavior on the neural field boundaries. `wrap` stands for the possibility of
+boundary neurons to influence the opposite boundary. `reflect` stands for boundary as the line
+of an active neurons.
+
+![Neural Field With h=0](images/neuralField1.png)
+![Neural Field With h=-0.15](images/neuralField2.png)
+![Neural Field With h=-0.3](images/neuralField3.png)
+
 
 ## Controls
 
