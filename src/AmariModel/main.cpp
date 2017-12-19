@@ -16,7 +16,6 @@ static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
 
 bool gKeys[255];
 bool gFullscreen = false;
-bool gGamemode = true;
 
 AmariModelContext gContext;
 
@@ -156,7 +155,7 @@ int main(int argc, char* argv[]) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE);
     glutInitWindowSize(Width, Height);
-    glutCreateWindow("glutAmari");
+    glutCreateWindow(Title);
 
     if (!Init()) {
         LOGE << "Init Failed";

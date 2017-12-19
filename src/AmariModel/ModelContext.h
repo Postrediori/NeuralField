@@ -1,7 +1,8 @@
 #pragma once
 
-static const int Width = 512;
-static const int Height = 512;
+const int Width = 512;
+const int Height = 512;
+const char Title[] = "Amari Model of Neural Field";
 
 enum RenderMode {
     RENDER_TEXTURE,
