@@ -8,11 +8,12 @@
 #include "AmariRender.h"
 #include "ContourPlot.h"
 #include "ModelContext.h"
+#include "GlFormatter.h"
 
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
-static plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 
 bool gKeys[255];
 bool gFullscreen = false;
