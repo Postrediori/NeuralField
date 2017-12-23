@@ -10,12 +10,16 @@
 #include "ModelContext.h"
 #include "GlFormatter.h"
 
+const int Width = 512;
+const int Height = 512;
+
+const char Title[] = "Amari Model of Neural Field";
+
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
 static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 
-bool gKeys[255];
 bool gFullscreen = false;
 
 AmariModelContext gContext;
@@ -30,17 +34,7 @@ bool Init() {
     LOGI << "OpenGL Vendor : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
-    LOGI << "GLEW Version : " << glewGetString(GLEW_VERSION);
-
-    // Init GLEW
-    glewExperimental = GL_TRUE;
-
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-        LOGE << "GL Loading Error: " << glewGetErrorString(err);
-        return false;
-    }
-
+    
     // Init scene
     gFullscreen = false;
 
@@ -49,7 +43,17 @@ bool Init() {
         return false;
     }
 
+    gContext.Resize(Width, Height);
+
     return true;
+}
+
+void Deinit() {
+    gContext.Release();
+}
+
+void Error(int /*error*/, const char* description) {
+    LOGE << "Error: " << description;
 }
 
 /*****************************************************************************
@@ -59,119 +63,144 @@ void Display() {
     glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
 
     gContext.Render();
-    
-    glutSwapBuffers();
 }
 
-void Reshape(GLint w, GLint h) {
-    glViewport(0, 0, w, h); LOGOPENGLERROR();
+void Reshape(GLFWwindow* /*window*/, int width, int height) {
+    glViewport(0, 0, width, height); LOGOPENGLERROR();
 
-    gContext.Resize(w, h);
+    gContext.Resize(width, height);
 }
 
-void Keyboard(unsigned char key, int x, int y) {
-    switch (key) {
-    case 27:
-        exit(0);
-        break;
+void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
+    if (action == GLFW_PRESS) {
+        switch (key) {
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
 
-    case 'b':
-    case 'B':
-        gContext.SwitchBlur();
-        break;
+        case GLFW_KEY_F1:
+            gFullscreen = !gFullscreen;
+            if (gFullscreen) {
+                GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+                glfwSetWindowMonitor(window, monitor, 0, 0,
+                    mode->width, mode->height, mode->refreshRate);
+            }
+            else {
+                glfwSetWindowMonitor(window, nullptr, 0, 0,
+                    Width, Height, GLFW_DONT_CARE);
+            }
+            break;
 
-    case '+':
-        gContext.IncreaseBlur();
-        break;
+        case GLFW_KEY_F2:
+            gContext.showHelp_ = !gContext.showHelp_;
+            break;
 
-    case '-':
-        gContext.DecreaseBlur();
-        break;
+        case GLFW_KEY_B:
+            gContext.SwitchBlur();
+            break;
 
-    case '1':
-        gContext.SetRenderMode(RENDER_TEXTURE);
-        break;
+        case GLFW_KEY_EQUAL:
+            gContext.IncreaseBlur();
+            break;
 
-    case '2':
-        gContext.SetRenderMode(RENDER_CONTOUR);
-        break;
+        case GLFW_KEY_MINUS:
+            gContext.DecreaseBlur();
+            break;
 
-    case '3':
-        gContext.SetRenderMode(RENDER_PARALLEL);
-        break;
+        case GLFW_KEY_1:
+            gContext.SetRenderMode(RENDER_TEXTURE);
+            break;
 
-    case ' ':
-        gContext.Restart();
-        break;
-    }
-}
+        case GLFW_KEY_2:
+            gContext.SetRenderMode(RENDER_CONTOUR);
+            break;
 
-void SpecialKeys(int key, int x, int y) {
-    switch (key) {
-    case GLUT_KEY_F1:
-        gFullscreen = !gFullscreen;
-        if (gFullscreen) {
-            glutFullScreen();
-        } else {
-            glutReshapeWindow(Width, Height);
+        case GLFW_KEY_3:
+            gContext.SetRenderMode(RENDER_PARALLEL);
+            break;
+
+        case GLFW_KEY_SPACE:
+            gContext.Restart();
+            break;
         }
-        break;
-
-    case GLUT_KEY_F2:
-        gContext.showHelp_ = !gContext.showHelp_;
-        break;
-
-    default:
-        gKeys[key] = true;
     }
 }
 
-void SpecialKeysUp(int key, int x, int y) {
-    gKeys[key] = false;
-}
 
-void MouseButton(int button, int state, int x, int y) {
-    if (state != GLUT_DOWN) {
-        return;
-    }
-    
-    if (button == GLUT_LEFT_BUTTON) {
-        gContext.SetActivity(x, y);
-    } else if (button == GLUT_RIGHT_BUTTON) {
-        gContext.Restart();
+void Mouse(GLFWwindow* window, int button, int action, int /*mods*/) {
+    if (action == GLFW_PRESS) {
+        if (button == GLFW_MOUSE_BUTTON_1) {
+            double x, y;
+            glfwGetCursorPos(window, &x, &y);
+            gContext.SetActivity(x, y);
+        }
+        else if (button == GLFW_MOUSE_BUTTON_2) {
+            gContext.Restart();
+        }
     }
 }
 
-void Idle() {
+void Update(GLFWwindow* window) {
     gContext.Update();
-    glutPostRedisplay();
 }
+
 
 /*****************************************************************************
  * Main program
  ****************************************************************************/
-int main(int argc, char* argv[]) {
+int main(int /*argc*/, char** /*argv*/) {
+    int status = EXIT_SUCCESS;
     plog::init(plog::debug, &consoleAppender);
     
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE);
-    glutInitWindowSize(Width, Height);
-    glutCreateWindow(Title);
+    glfwSetErrorCallback(Error);
 
-    if (!Init()) {
-        LOGE << "Init Failed";
-        return -1;
+    if (!glfwInit()) {
+        LOGE << "Failed to load GLFW";
+        return EXIT_FAILURE;
     }
 
-    glutDisplayFunc(Display);
-    glutReshapeFunc(Reshape);
-    glutKeyboardFunc(Keyboard);
-    glutSpecialFunc(SpecialKeys);
-    glutSpecialUpFunc(SpecialKeysUp);
-    glutMouseFunc(MouseButton);
-    glutIdleFunc(Idle);
+    LOGI << "Init window context with OpenGL 2.0";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
+    if (!window) {
+        LOGE << "Unable to Create OpenGL 2.0 Context";
+        status = EXIT_FAILURE;
+        goto finish;
+    }
 
-    glutMainLoop();
+    glfwSetKeyCallback(window, Keyboard);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-    return 0;
+    glfwSetMouseButtonCallback(window, Mouse);
+    glfwSetWindowSizeCallback(window, Reshape);
+
+    glfwMakeContextCurrent(window);
+    gladLoadGL();
+
+    if (!Init()) {
+        LOGE << "Initialization failed";
+        status = EXIT_FAILURE;
+        goto finish;
+    }
+
+    while (!glfwWindowShouldClose(window)) {
+        Display();
+
+        Update(window);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+finish:
+    Deinit();
+    if (window) {
+        glfwDestroyWindow(window);
+    }
+    glfwTerminate();
+
+    return status;
 }

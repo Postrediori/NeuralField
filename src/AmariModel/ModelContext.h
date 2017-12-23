@@ -1,9 +1,5 @@
 #pragma once
 
-const int Width = 512;
-const int Height = 512;
-const char Title[] = "Amari Model of Neural Field";
-
 enum RenderMode {
     RENDER_TEXTURE,
     RENDER_CONTOUR,
@@ -18,6 +14,7 @@ public:
     ~AmariModelContext();
     
     bool Init();
+    void Release();
     
     void Render();
     void Resize(int w, int h);

@@ -44,13 +44,11 @@ AmariModelContext::AmariModelContext()
 }
 
 AmariModelContext::~AmariModelContext() {
-    Shader::releaseProgram(program_, vertex_, fragment_);
+    Release();
 }
 
 bool AmariModelContext::Init() {
     showHelp_ = true;
-    windowWidth_ = Width;
-    windowHeight_ = Height;
     
     // Init font
     if (!fr_.init()) {
@@ -79,7 +77,6 @@ bool AmariModelContext::Init() {
         return false;
     }
     
-    amariRender_.resize(Width, Height);
     amariRender_.update_texture(amariModel_.activity.get());
 
     // Init contour lines
@@ -124,6 +121,15 @@ bool AmariModelContext::Init() {
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); LOGOPENGLERROR();
     
     return true;
+}
+
+void AmariModelContext::Release() {
+    if (program_) {
+        Shader::releaseProgram(program_, vertex_, fragment_);
+        program_ = 0;
+        vertex_ = 0;
+        fragment_ = 0;
+    }
 }
 
 void AmariModelContext::Render() {
@@ -173,7 +179,7 @@ void AmariModelContext::Render() {
         fr_.renderEnd();
     }
     
-    fpsCounter_.update(glutGet(GLUT_ELAPSED_TIME));
+    fpsCounter_.update(glfwGetTime());
 }
 
 void AmariModelContext::Resize(int w, int h) {

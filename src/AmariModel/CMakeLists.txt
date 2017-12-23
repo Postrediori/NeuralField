@@ -3,30 +3,22 @@ make_executable()
 include_directories(
     ${PLOG_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
-    ${FREEGLUT_INCLUDE_DIRS}
-    ${GLEW_INCLUDE_DIRS}
-    ${GLM_INCLUDE_DIRS}
+    ${GLFW_INCLUDE_DIR}
+    ${GLAD_INCLUDE_DIR}
+    ${GLM_INCLUDE_DIR}
     ${FREETYPE_INCLUDE_DIRS}
     )
 
 target_link_libraries(${PROJECT}
     ${OPENGL_LIBRARIES}
-    ${FREEGLUT_LIBRARIES}
-    ${GLEW_LIBRARIES}
+    ${GLFW_LIBRARIES}
+    ${GLAD_LIBRARIES}
     ${FREETYPE_LIBRARIES}
     AmariLib
     ContourPlotLib
     GraphicsLib
     MathLib
     )
-
-if(MSVC)
-    add_definitions(
-        -DFREEGLUT_LIB_PRAGMAS=0
-        -DFREEGLUT_STATIC
-        -DGLEW_STATIC
-        )
-endif()
     
 # Data files
 configure_file(

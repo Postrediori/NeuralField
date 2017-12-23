@@ -12,10 +12,10 @@ class FPSCounter {
 public:
     FPSCounter();
 
-    void update(int t);
-    
+    void update(float t);
+
 public:
     int frame;
-    int timePrev;
-    float fps;
+    float timePrev;
+    int fps;
 };
