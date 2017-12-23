@@ -13,7 +13,13 @@ neural area.
 ## Prerequisites
 
 Compiling and running the sample project requires GCC, CMake, GNU Make
-as well as some graphics libraries installed.
+as well as FreeType library for text rendering. Most of the dependencies needed
+are bundled with the repository. This includes:
+
+* [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
+* [glfw](https://github.com/glfw/glfw) - Windowing and Input.
+* [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
+* [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 
 ## Environment Setup
 
@@ -28,9 +34,7 @@ The following instructions are applied to these operating systems:
 sudo apt-get install -y \
     build-essential \
     cmake \
-    freeglut3-dev \
-    libglew-dev \
-    libglm-dev \
+    xorg-dev \
     libfreetype6-dev
 ```
 
@@ -41,12 +45,12 @@ The following instructions are applied to these operating systems:
 * Fedora >=22
 
 ```
-sudo dnf groupinstall -y "Development Tools"
+sudo dnf groupinstall -y \
+    "Development Tools" \
+    "Development Libraries" \
+    "X Software Development"
 sudo dnf install -y \
     cmake \
-    freeglut-devel \
-    glew-devel \
-    glm-devel \
     freetype-devel
 ```
 
@@ -106,7 +110,7 @@ The parameters of the model can be adjusted in the `data/amari.conf` file:
 
 ```
 # size = 128 | 256 | 512
-size = 256
+size = 128
 
 # h = 0..-0.3
 h = -0.2
@@ -131,9 +135,9 @@ Smaller values lead to unsymmetric development of an activity.
 boundary neurons to influence the opposite boundary. `reflect` stands for boundary as the line
 of an active neurons.
 
-![Neural Field With h=0](images/neuralField1.png)
-![Neural Field With h=-0.15](images/neuralField2.png)
-![Neural Field With h=-0.3](images/neuralField3.png)
+h=0  | h=-0.15 | h=-0.3
+---- | ------- | ------
+![Neural Field With h=0](images/neural1.gif) | ![Neural Field With h=-0.15](images/neural2.gif) | ![Neural Field With h=-0.3](images/neural3.gif)
 
 
 ## Controls
