@@ -1,6 +1,7 @@
 make_library()
 
 include_directories(
+    ${PLOG_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${FREEGLUT_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
@@ -15,15 +16,12 @@ target_link_libraries(${PROJECT}
     ${FREETYPE_LIBRARIES}
     GraphicsLib
     MathLib
-    plog
     )
 
 if(MSVC)
     add_definitions(
-        -D_USE_MATH_DEFINES
         -DFREEGLUT_LIB_PRAGMAS=0
         -DFREEGLUT_STATIC
         -DGLEW_STATIC
         )
 endif()
-    

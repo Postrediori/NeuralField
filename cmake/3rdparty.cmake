@@ -8,7 +8,10 @@ find_package(OpenMP REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
+set(PLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty)
 file(GLOB_RECURSE PLOG_HEADERS ${CMAKE_SOURCE_DIR}/3rdparty/*.h)
+if (NOT MSVC)
 add_library(plog STATIC ${PLOG_HEADERS})
 set_target_properties(plog PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(plog PROPERTIES FOLDER Include)
+set_target_properties(plog PROPERTIES FOLDER 3rdparty)
+endif (NOT MSVC)

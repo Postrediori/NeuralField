@@ -22,3 +22,4 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <memory>

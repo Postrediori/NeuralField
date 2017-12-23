@@ -5,7 +5,19 @@ macro(make_project_)
 
     project(${PROJECT} CXX)
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -Wall -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
+    if (MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W4")
+    else ()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+    endif ()
+    
+    if (MSVC)
+        add_definitions(
+            -D_USE_MATH_DEFINES
+            )
+    endif ()
 
     if (NOT DEFINED HEADERS)
         file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
@@ -33,6 +45,8 @@ macro(make_library)
     make_project_()
     add_library(${PROJECT} STATIC ${HEADERS} ${SOURCES})
     target_include_directories(${PROJECT} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+    set_target_properties(${PROJECT} PROPERTIES FOLDER Libraries)
 
     if (NOT SOURCES)
         set_target_properties(${PROJECT} PROPERTIES LINKER_LANGUAGE CXX)

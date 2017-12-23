@@ -16,6 +16,7 @@
 #include <memory>
 #include <functional>
 #include <map>
+#include <cmath>
 
 #include <ctime>
 #include <cstddef>

@@ -9,3 +9,4 @@
 #include <cstring>
 #include <cmath>
 #include <functional>
+#include <memory>
