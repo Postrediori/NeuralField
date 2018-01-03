@@ -7,4 +7,4 @@ if(NOT MSVC)
     set_target_properties(plog PROPERTIES FOLDER Include)
 endif(NOT MSVC)
 
-set(PLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty)
+set(PLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty/plog/include)
