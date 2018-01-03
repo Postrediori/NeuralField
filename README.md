@@ -11,7 +11,7 @@ Marching square algorithm is used to create vectorized outline of the active neu
 
 Amari model uses the solution of the Cauchy problem for integro-differential equation
 
-![](https://www.codecogs.com/eqnedit.php?latex=\begin{cases}&space;\frac{\partial&space;u}{\partial&space;x}&space;(x,t)&space;=&space;-u(x,t)&space;&plus;&space;h&space;\int_{\Omega}&space;w(x&space;-&space;y)&space;H\big(&space;u(y,t)&space;\big)&space;dy&space;&plus;&space;s(x,t),&space;x&space;\in&space;\Omega,&space;t>0&space;\\&space;u(x,0)&space;=&space;\varphi(x),&space;x&space;\in&space;\Omega&space;\end{cases})
+![Amari equation](images/amariEquation.png)
 
 * `u(x,t)` - activity function,
 * `h` - equilibrium potential,
