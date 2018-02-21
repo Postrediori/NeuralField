@@ -36,7 +36,7 @@ are bundled with the repository. This includes:
 
 ### Debian-based Systems
 
-The following instructions are applied to these operating systems:
+The following instructions apply to:
 
 * Ubuntu 16.04
 * Debian 9
@@ -52,9 +52,9 @@ apt-get install \
 
 ### RedHat-based Systems
 
-The following instructions are applied to these operating systems:
+The following instructions apply to:
 
-* Fedora >=22
+* Fedora 22 and higher
 
 ```
 dnf groupinstall \
