@@ -19,7 +19,34 @@ static const GLfloat g_quadVertices[] = {
     1.0f,  1.0f, 1.f, 1.f,
 };
 
-static const char g_vertexShader[] = 
+static const char g_vertexShader110[] = 
+    "#version 110\n"
+    "attribute vec2 coord;"
+    "attribute vec2 tex_coord;"
+    "varying vec2 xy_coord;"
+    "uniform vec2 iRes;"
+    "uniform mat4 mvp;"
+    "void main(void){"
+    "    xy_coord=coord.xy;"
+    "    if (iRes.x>iRes.y){"
+    "        xy_coord.x*=iRes.y/iRes.x;"
+    "    }else{"
+    "        xy_coord.y*=iRes.x/iRes.y;"
+    "    }"
+    "    gl_Position=mvp*vec4(xy_coord,0.,1.);"
+    "    xy_coord=tex_coord.xy;"
+    "}";
+
+static const char g_fragmentShader110[] =
+    "#version 110\n"
+    "varying vec2 xy_coord;"
+    "uniform sampler2D tex;"
+    "const vec4 col0=vec4(.5,.5,1.,1.);"
+    "void main(void){"
+    "   gl_FragColor=texture2D(tex,xy_coord)*col0;"
+    "}";
+
+static const char g_vertexShader130[] = 
     "#version 130\n"
     "in vec2 coord;"
     "in vec2 tex_coord;"
@@ -36,7 +63,7 @@ static const char g_vertexShader[] =
     "    xy_coord=tex_coord.xy;"
     "}";
 
-static const char g_fragmentShader[] =
+static const char g_fragmentShader130[] =
     "#version 130\n"
     "in vec2 xy_coord;"
     "out vec4 frag_color;"
@@ -88,7 +115,7 @@ bool AmariRender::init(size_t size) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices), g_quadVertices, GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init shader
-    if (!Shader::createProgramSource(program, vertex, fragment, g_vertexShader, g_fragmentShader)) {
+    if (!Shader::createProgramSource(program, vertex, fragment, g_vertexShader110, g_fragmentShader110)) {
         LOGE << "Unable to load shader for Amari Renderer";
         return false;
     }
