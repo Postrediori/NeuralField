@@ -87,8 +87,8 @@ yum install \
 Cloning the repository requires passing the `--recursive` flag to load dependencies
 
 ```
-git clone --recursive https://github.com/Postrediori/NeuralField.git
-cd NeuralField
+git clone --recursive https://github.com/Postrediori/AmariNeuralField
+cd AmariNeuralField
 ```
 
 ## Building Project
