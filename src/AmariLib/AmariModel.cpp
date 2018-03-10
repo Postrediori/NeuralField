@@ -115,7 +115,7 @@ bool AmariModel::load_config(const std::string& config_file) {
             this->M_ = fval;
 
         } else if (line.find("mode = ")==0) {
-            sscanf(line.c_str(), "mode = %s\n", &sval);
+            sscanf(line.c_str(), "mode = %s\n", sval);
             if (strcmp(sval, "wrap")==0) {
                 this->mode = MODE_WRAP;
                 

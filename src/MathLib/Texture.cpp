@@ -50,7 +50,7 @@ texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
     } 
     
 #pragma omp parallel for
-    for (int idx = 0; idx < t->size * t->size; ++idx) {
+    for (size_t idx = 0; idx < t->size * t->size; ++idx) {
         uint8_t k = m->data[idx] > 0.0 ? 0xff : 0x00;
         t->data[idx * t->bpp + 0] = k;
         t->data[idx * t->bpp + 1] = k;

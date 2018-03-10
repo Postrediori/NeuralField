@@ -141,7 +141,7 @@ void Mouse(GLFWwindow* window, int button, int action, int /*mods*/) {
     }
 }
 
-void Update(GLFWwindow* window) {
+void Update(GLFWwindow* /*window*/) {
     gContext.Update();
 }
 

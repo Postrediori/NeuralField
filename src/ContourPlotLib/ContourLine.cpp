@@ -176,7 +176,7 @@ void MakeHalf(lines_t& lines, flags_t flags,
 }
 
 void MakeAmbiguity(lines_t& lines, flags_t flags, bool u,
-                   discrete_t d, vals_t vals, double v) {
+                   discrete_t d, vals_t vals, double /*v*/) {
     double x1, y1;
     double x2, y2;
     double x3, y3;

@@ -51,10 +51,10 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 
     memset(characters, 0, sizeof(characters));
 
-    int roww = 0, rowh = 0;
+    unsigned int roww = 0, rowh = 0;
 
     // Find minimum size for a texture holding all visible ASCII characters
-    for (int i=FirstDisplayedCharacter; i<CharacterCount; i++) {
+    for (int i = FirstDisplayedCharacter; i < CharacterCount; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             LOGE << "Loading character " << i << " failed!";
             continue;
@@ -313,7 +313,7 @@ void FontRenderer::renderText(FontHandle_t typeset,
 
     // Loop through all characters
     for (const char c : text) {
-        CharInfo inf = a->characters[c];
+        CharInfo inf = a->characters[size_t(c)];
 
         // Calculate vertex and texture coordinates
         x2 = x + inf.bl * area.sx;

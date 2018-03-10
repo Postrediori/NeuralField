@@ -24,7 +24,7 @@ public:
     ~FontAtlas();
 
 public:
-    int w, h;
+    unsigned int w, h;
     GLuint tex;
     CharInfo characters[CharacterCount];
 };
