@@ -17,40 +17,40 @@ static size_t normalize_index(int p, size_t i_size, KernelMode mode) {
 
     switch (mode){
     case MODE_WRAP:
-        if (n<0) {
+        if (n < 0) {
             n = size - ((-n) % size);
         }
-        if (n>=size) {
+        if (n >= size) {
             n %= size;
         }
         break;
 
     case MODE_REFLECT:
-        while (n<0 || n>=size) {
-            if (n==-1) {
+        while (n < 0 || n >= size) {
+            if (n == -1) {
                 n = 0;
             }
-            if (n<-1) {
+            if (n < -1) {
                 n = 1;
             }
-            if (n==size) {
+            if (n == size) {
                 n = size - 2;
             }
-            if (n>size) {
+            if (n > size) {
                 n = size - 3;
             }
         }
         break;
 
     case MODE_MIRROR:
-        while (n<0 || n>=size) {
-            if (n<0) {
+        while (n < 0 || n >= size) {
+            if (n < 0) {
                 n = -n;
             }
-            if (n==size) {
+            if (n == size) {
                 n = 2 * size - n - 1;
             }
-            if (n>size) {
+            if (n > size) {
                 n = 2 * size - n;
             }
         }
@@ -95,14 +95,14 @@ kernel_t* kernel_create(double sigma, KernelMode mode) {
 
     double s = 1.0;
     k->data[lw] = 1.0;
-    for (int i=1; i <= lw; i++) {
+    for (int i = 1; i <= lw; i++) {
         double f = gfunc((double)(i), sigma);
         k->data[lw-i] = f;
         k->data[lw+i] = f;
         s += f * 2.0;
     }
 
-    for (int i=0; i < k_size; i++) {
+    for (int i = 0; i < k_size; i++) {
         k->data[i] /= s;
     }
     
@@ -130,14 +130,14 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
         return dst;
     }
     
-    int k2 = k->size / 2;
+    size_t k2 = k->size / 2;
     
 //#pragma omp parallel for private(i,j,d) shared(src,tmp,k)
-    for (int j = 0; j < dst->cols; ++j) {
-        for (int i = 0; i < dst->rows; ++i) {
+    for (size_t j = 0; j < dst->cols; ++j) {
+        for (size_t i = 0; i < dst->rows; ++i) {
             double d = 0.0;
 
-            for (int n = 0; n < k->size; n++) {
+            for (size_t n = 0; n < k->size; n++) {
                 int p = i + n - k2;
                 p = normalize_index(p, dst->cols, k->mode);
                 d += src->data[p + j * src->cols] * k->data[n];
@@ -148,11 +148,11 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
     }
     
 //#pragma omp parallel for private(i,j,d) shared(tmp,dst,k)
-    for (int j = 0; j < dst->cols; ++j) {
-        for (int i = 0; i < dst->rows; ++i) {
+    for (size_t j = 0; j < dst->cols; ++j) {
+        for (size_t i = 0; i < dst->rows; ++i) {
             double d = 0.0;
 
-            for (int n = 0; n < k->size; ++n) {
+            for (size_t n = 0; n < k->size; ++n) {
                 int p = i + n - k2;
                 p = normalize_index(p, dst->rows, k->mode);
                 d += tmp->data[j + p * tmp->cols] * k->data[n];
@@ -195,14 +195,14 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
         return t;
     }
     
-    int k2 = k->size / 2;
+    size_t k2 = k->size / 2;
     
 //#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
-    for (int j = 0; j < t->size; ++j) {
-        for (int i = 0; i < t->size; ++i) {
+    for (size_t j = 0; j < t->size; ++j) {
+        for (size_t i = 0; i < t->size; ++i) {
             double r = 0.0, g = 0.0, b = 0.0;
 
-            for (int n = 0; n < k->size; n++) {
+            for (size_t n = 0; n < k->size; n++) {
                 int p = i + n - k2;
                 p = normalize_index(p, t->size, k->mode);
 
@@ -218,11 +218,11 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
     }
     
 //#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
-    for (int j = 0; j < t->size; ++j) {
-        for (int i = 0; i < t->size; ++i) {
+    for (size_t j = 0; j < t->size; ++j) {
+        for (size_t i = 0; i < t->size; ++i) {
             double r = 0.0, g = 0.0, b = 0.0;
 
-            for (int n = 0; n < k->size; ++n) {
+            for (size_t n = 0; n < k->size; ++n) {
                 int p = i + n - k2;
                 p = normalize_index(p, tmp->size, k->mode);
 
