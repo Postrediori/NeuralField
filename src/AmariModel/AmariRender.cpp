@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Matrix.h"
 #include "Texture.h"
+#include "MathUtils.h"
 #include "Gauss.h"
 #include "GlUtils.h"
 #include "Shader.h"
@@ -146,13 +147,13 @@ void AmariRender::release() {
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
-void AmariRender::render(const glm::mat4& mvp) {
+void AmariRender::render(const Math::mat4f& mvp) {
     glUseProgram(program); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(uMVP, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
+    glUniformMatrix4fv(uMVP, 1, GL_FALSE, (const GLfloat *)(&mvp)); LOGOPENGLERROR();
     glUniform2f(uResolution, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform1i(uTex, 0); LOGOPENGLERROR();
 

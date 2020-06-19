@@ -36,8 +36,8 @@ public:
     GLuint program_, vertex_, fragment_;
     
     FPSCounter fpsCounter_;
-        
-    glm::mat4 model_, view_, projection_;
+    
+    Math::mat4f mvp_;
     
     FontRenderer fr_;
     FontHandle_t a24;

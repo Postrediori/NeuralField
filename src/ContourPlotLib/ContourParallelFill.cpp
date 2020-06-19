@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Matrix.h"
+#include "MathUtils.h"
 #include "GlUtils.h"
 #include "ContourPlot.h"
 #include "ContourParallelFill.h"
@@ -335,22 +336,22 @@ bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {
     vbo_count = triangles.size();
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * triangles.size(), triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Math::vec2f) * triangles.size(), triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     LOGD << "Created parallel filled contour with " << triangles.size() / 3 << " triangles" << std::endl;
 
     return true;
 }
 
-void ContourParallelFill::render(const glm::mat4& mvp,
+void ContourParallelFill::render(const Math::mat4f& mvp,
                                  double zoom,
-                                 const glm::vec2& offset,
+                                 const Math::vec2f& offset,
                                  const GLfloat c[]) {
     glUseProgram(program); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(u_mvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
+    glUniformMatrix4fv(u_mvp, 1, GL_FALSE, (const GLfloat *)(&mvp)); LOGOPENGLERROR();
     glUniform1f(u_zoom, zoom); LOGOPENGLERROR();
-    glUniform2fv(u_ofs, 1, glm::value_ptr(offset)); LOGOPENGLERROR();
+    glUniform2fv(u_ofs, 1, (const GLfloat *)(&offset)); LOGOPENGLERROR();
     glUniform2f(u_res, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform4fv(u_color, 1, c); LOGOPENGLERROR();
 

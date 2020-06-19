@@ -8,7 +8,7 @@ public:
     bool init(size_t size);
     void release();
 
-    void render(const glm::mat4& mvp);
+    void render(const Math::mat4f& mvp);
     void resize(unsigned int w, unsigned int h);
 
     void update_texture(matrix_t* m);

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Matrix.h"
 #include "Texture.h"
+#include "MathUtils.h"
 #include "Gauss.h"
 #include "GlUtils.h"
 #include "Shader.h"
@@ -61,9 +62,7 @@ bool AmariModelContext::Init() {
     a24 = fr_.createAtlas(g_fontSize);
 
     // Init MVP matrices
-    model_ = glm::mat4(1.0f);
-    view_ = glm::mat4(1.0f);
-    projection_ = glm::ortho(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
+    mvp_ = Math::GetOrthoProjection(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
 
     // Init model
     if (!amariModel_.init(g_configFile)) {
@@ -133,28 +132,26 @@ void AmariModelContext::Release() {
 }
 
 void AmariModelContext::Render() {
-    glm::mat4 mvp = projection_ * view_ * model_;
-
     if (renderMode_ == RENDER_TEXTURE) {
-        amariRender_.render(mvp);
+        amariRender_.render(mvp_);
 
     } else if (renderMode_ == RENDER_CONTOUR) {
         static const float zoom = 1.f;
-        static const glm::vec2 offset = glm::vec2(0.f, 0.f);
+        static const Math::vec2f offset(0.f, 0.f);
 
         glPolygonOffset(1, 0); LOGOPENGLERROR();
         glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourFill_->render(mvp, zoom, offset, g_foreground);
+        contourFill_->render(mvp_, zoom, offset, g_foreground);
         
         glPolygonOffset(0, 0); LOGOPENGLERROR();
         glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourLines_->render(mvp, zoom, offset, g_outline);
+        contourLines_->render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_PARALLEL) {
         static const float zoom = 1.f;
-        static const glm::vec2 offset = glm::vec2(0.f, 0.f);
+        static const Math::vec2f offset(0.f, 0.f);
 
-        contourParallel_->render(mvp, zoom, offset, g_outline);
+        contourParallel_->render(mvp_, zoom, offset, g_outline);
     }
 
     if (showHelp_) {

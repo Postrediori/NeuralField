@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Matrix.h"
+#include "MathUtils.h"
 #include "GlUtils.h"
 #include "ContourPlot.h"
 #include "ContourFill.h"
@@ -89,7 +90,7 @@ bool ContourFill::update(matrix_t* points, area_t a, double t) {
     vbo_count = triangles.size();
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * triangles.size(),
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Math::vec2f) * triangles.size(),
         triangles.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
     
     LOGD << "Created outline contour with " << triangles.size() / 3 << " triangles";
@@ -97,13 +98,13 @@ bool ContourFill::update(matrix_t* points, area_t a, double t) {
     return true;
 }
 
-void ContourFill::render(const glm::mat4& mvp, double zoom, const glm::vec2& offset,
+void ContourFill::render(const Math::mat4f& mvp, double zoom, const Math::vec2f& offset,
                          const GLfloat c[]) {
     glUseProgram(program); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(u_mvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
+    glUniformMatrix4fv(u_mvp, 1, GL_FALSE, (const GLfloat *)(&mvp)); LOGOPENGLERROR();
     glUniform1f(u_zoom, zoom); LOGOPENGLERROR();
-    glUniform2fv(u_ofs, 1, glm::value_ptr(offset)); LOGOPENGLERROR();
+    glUniform2fv(u_ofs, 1, (const GLfloat *)(&offset)); LOGOPENGLERROR();
     glUniform2f(u_res, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform4fv(u_color, 1, c); LOGOPENGLERROR();
 
@@ -117,13 +118,13 @@ void ContourFill::render(const glm::mat4& mvp, double zoom, const glm::vec2& off
 }
 
 void MakeFill(triangles_t& triangles, discrete_t d) {
-    triangles.push_back(glm::vec2(d.x,      d.y));
-    triangles.push_back(glm::vec2(d.x+d.sx, d.y+d.sy));
-    triangles.push_back(glm::vec2(d.x,      d.y+d.sy));
+    triangles.emplace_back(d.x, d.y);
+    triangles.emplace_back(d.x + d.sx, d.y + d.sy);
+    triangles.emplace_back(d.x, d.y + d.sy);
 
-    triangles.push_back(glm::vec2(d.x,      d.y));
-    triangles.push_back(glm::vec2(d.x+d.sx, d.y));
-    triangles.push_back(glm::vec2(d.x+d.sx, d.y+d.sy));
+    triangles.emplace_back(d.x, d.y);
+    triangles.emplace_back(d.x + d.sx, d.y);
+    triangles.emplace_back(d.x + d.sx, d.y + d.sy);
 }
 
 void MakeFillCorner(triangles_t& triangles, flags_t flags,
@@ -165,8 +166,8 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags,
         break;
     }
     
-    glm::vec2 v(d.x, d.y), v1(x1, y1), v2(x2, y2);
-    glm::vec2 sx(d.sx, 0), sy(0, d.sy), s(d.sx, d.sy);
+    Math::vec2f v(d.x, d.y), v1(x1, y1), v2(x2, y2);
+    Math::vec2f sx(d.sx, 0.0f), sy(0.0f, d.sy), s(d.sx, d.sy);
 
     if (flags==1) {
         triangles.push_back(v);
@@ -295,13 +296,13 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
         break;
     }
 
-    triangles.push_back(glm::vec2(x1, y1));
-    triangles.push_back(glm::vec2(x3, y3));
-    triangles.push_back(glm::vec2(x4, y4));
+    triangles.emplace_back(x1, y1);
+    triangles.emplace_back(x3, y3);
+    triangles.emplace_back(x4, y4);
 
-    triangles.push_back(glm::vec2(x1, y1));
-    triangles.push_back(glm::vec2(x2, y2));
-    triangles.push_back(glm::vec2(x3, y3));
+    triangles.emplace_back(x1, y1);
+    triangles.emplace_back(x2, y2);
+    triangles.emplace_back(x3, y3);
 }
 
 void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u,
@@ -321,31 +322,31 @@ void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u,
     y4 = d.y+d.sy * ValuesRatio(vals, 0, 3);
 
     if (u) {
-        triangles.push_back(glm::vec2(x1, y1));
-        triangles.push_back(glm::vec2(x2, y2));
-        triangles.push_back(glm::vec2(x3, y3));
+        triangles.emplace_back(x1, y1);
+        triangles.emplace_back(x2, y2);
+        triangles.emplace_back(x3, y3);
 
-        triangles.push_back(glm::vec2(x1, y1));
-        triangles.push_back(glm::vec2(x3, y3));
-        triangles.push_back(glm::vec2(x4, y4));
+        triangles.emplace_back(x1, y1);
+        triangles.emplace_back(x3, y3);
+        triangles.emplace_back(x4, y4);
     }
 
     if (flags==5) {
-        triangles.push_back(glm::vec2(d.x, d.y));
-        triangles.push_back(glm::vec2(x1, y1));
-        triangles.push_back(glm::vec2(x4, y4));
+        triangles.emplace_back(d.x, d.y);
+        triangles.emplace_back(x1, y1);
+        triangles.emplace_back(x4, y4);
 
-        triangles.push_back(glm::vec2(d.x+d.sx, d.y+d.sy));
-        triangles.push_back(glm::vec2(x3, y3));
-        triangles.push_back(glm::vec2(x2, y2));
+        triangles.emplace_back(d.x + d.sx, d.y + d.sy);
+        triangles.emplace_back(x3, y3);
+        triangles.emplace_back(x2, y2);
 
     } else if (flags==10) {
-        triangles.push_back(glm::vec2(d.x, d.y+d.sy));
-        triangles.push_back(glm::vec2(x4, y4));
-        triangles.push_back(glm::vec2(x3, y3));
+        triangles.emplace_back(d.x, d.y + d.sy);
+        triangles.emplace_back(x4, y4);
+        triangles.emplace_back(x3, y3);
 
-        triangles.push_back(glm::vec2(d.x+d.sx, d.y));
-        triangles.push_back(glm::vec2(x2, y2));
-        triangles.push_back(glm::vec2(x1, y1));
+        triangles.emplace_back(d.x + d.sx, d.y);
+        triangles.emplace_back(x2, y2);
+        triangles.emplace_back(x1, y1);
     }
 }

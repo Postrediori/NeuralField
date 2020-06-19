@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Matrix.h"
+#include "MathUtils.h"
 #include "GlUtils.h"
 #include "ContourPlot.h"
 
@@ -67,8 +68,8 @@ bool ContourPlot::init() {
 
 bool ContourPlot::update(matrix_t* /*points*/, area_t /*a*/, double /*t*/) { return true; }
 
-void ContourPlot::render(const glm::mat4& /*mvp*/, double /*zoom*/,
-                         const glm::vec2& /*offset*/, const GLfloat /*c*/[]) { }
+void ContourPlot::render(const Math::mat4f& /*mvp*/, double /*zoom*/,
+                         const Math::vec2f& /*offset*/, const GLfloat /*c*/[]) { }
 
 void ContourPlot::release() {
     if (vbo) {

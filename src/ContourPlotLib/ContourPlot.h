@@ -37,8 +37,8 @@ struct discrete_t {
 };
 
 
-typedef std::vector<glm::vec2> triangles_t;
-typedef std::vector<glm::vec4> lines_t;
+typedef std::vector<Math::vec2f> triangles_t;
+typedef std::vector<Math::vec4f> lines_t;
 
 /*****************************************************************************
  * ContourPlot
@@ -50,7 +50,7 @@ public:
 
     bool init();
     virtual bool update(matrix_t* points, area_t a, double t);
-    virtual void render(const glm::mat4& mvp, double zoom, const glm::vec2& offset,
+    virtual void render(const Math::mat4f& mvp, double zoom, const Math::vec2f& offset,
                         const GLfloat c[]);
 
     void release();

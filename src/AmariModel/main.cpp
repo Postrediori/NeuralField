@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Matrix.h"
 #include "Texture.h"
+#include "MathUtils.h"
 #include "Gauss.h"
 #include "GlUtils.h"
 #include "FreeType.h"
