@@ -132,12 +132,12 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
     
     size_t k2 = k->size / 2;
     
-//#pragma omp parallel for private(i,j,d) shared(src,tmp,k)
-    for (size_t j = 0; j < dst->cols; ++j) {
-        for (size_t i = 0; i < dst->rows; ++i) {
+#pragma omp parallel for
+    for (int j = 0; j < dst->cols; ++j) {
+        for (int i = 0; i < dst->rows; ++i) {
             double d = 0.0;
 
-            for (size_t n = 0; n < k->size; n++) {
+            for (int n = 0; n < k->size; n++) {
                 int p = i + n - k2;
                 p = normalize_index(p, dst->cols, k->mode);
                 d += src->data[p + j * src->cols] * k->data[n];
@@ -147,12 +147,12 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
         }
     }
     
-//#pragma omp parallel for private(i,j,d) shared(tmp,dst,k)
-    for (size_t j = 0; j < dst->cols; ++j) {
-        for (size_t i = 0; i < dst->rows; ++i) {
+#pragma omp parallel for
+    for (int j = 0; j < dst->cols; ++j) {
+        for (int i = 0; i < dst->rows; ++i) {
             double d = 0.0;
 
-            for (size_t n = 0; n < k->size; ++n) {
+            for (int n = 0; n < k->size; ++n) {
                 int p = i + n - k2;
                 p = normalize_index(p, dst->rows, k->mode);
                 d += tmp->data[j + p * tmp->cols] * k->data[n];
@@ -197,12 +197,12 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
     
     size_t k2 = k->size / 2;
     
-//#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
-    for (size_t j = 0; j < t->size; ++j) {
-        for (size_t i = 0; i < t->size; ++i) {
+#pragma omp parallel for
+    for (int j = 0; j < t->size; ++j) {
+        for (int i = 0; i < t->size; ++i) {
             double r = 0.0, g = 0.0, b = 0.0;
 
-            for (size_t n = 0; n < k->size; n++) {
+            for (int n = 0; n < k->size; n++) {
                 int p = i + n - k2;
                 p = normalize_index(p, t->size, k->mode);
 
@@ -217,12 +217,12 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
         }
     }
     
-//#pragma omp parallel for private(i,j,r,g,b) shared(tmp,texture,k)
-    for (size_t j = 0; j < t->size; ++j) {
-        for (size_t i = 0; i < t->size; ++i) {
+#pragma omp parallel for
+    for (int j = 0; j < t->size; ++j) {
+        for (int i = 0; i < t->size; ++i) {
             double r = 0.0, g = 0.0, b = 0.0;
 
-            for (size_t n = 0; n < k->size; ++n) {
+            for (int n = 0; n < k->size; ++n) {
                 int p = i + n - k2;
                 p = normalize_index(p, tmp->size, k->mode);
 
