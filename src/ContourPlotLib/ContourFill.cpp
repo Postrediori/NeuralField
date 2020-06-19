@@ -44,44 +44,44 @@ bool ContourFill::update(matrix_t* points, area_t a, double t) {
             flags = CellType(vals);
 
             switch (flags) {
-            case 1:
-            case 2:
-            case 4:
-            case 7:
-            case 8:
-            case 11:
-            case 13:
-            case 14:
+            case FLAG_SW:
+            case FLAG_NW:
+            case FLAG_NE:
+            case FLAG_SE:
+            case (FLAG_ALL ^ FLAG_SW):
+            case (FLAG_ALL ^ FLAG_NW):
+            case (FLAG_ALL ^ FLAG_NE):
+            case (FLAG_ALL ^ FLAG_SE):
                 // One corner
                 MakeFillCorner(triangles, flags, d, vals);
                 break;
 
-            case 3:
-            case 6:
-            case 9:
-            case 12:
+            case (FLAG_SW | FLAG_NW):
+            case (FLAG_NW | FLAG_NE):
+            case (FLAG_NE | FLAG_SE):
+            case (FLAG_SE | FLAG_SW):
                 // Half
                 MakeFillHalf(triangles, flags, d, vals);
                 break;
 
-            case 5:
-            case 10:
+            case (FLAG_SW | FLAG_NE):
+            case (FLAG_NW | FLAG_SE):
                 // Ambiguity
-                v = (points->data[(j  )*(xdiv+1)+(i  )]+points->data[(j  )*(xdiv+1)+(i+1)]+
-                     points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )]) / 4.0;
-                v -= threshold;
+                v = (vals.v[0] + vals.v[1] + vals.v[2] + vals.v[3]) / 4.0 - threshold;
                 u = v > 0.0;
                 MakeFillAmbiguity(triangles, flags, u, d, vals, v);
                 break;
 
-            case 15:
+            case FLAG_ALL:
                 // Full fill
                 MakeFill(triangles, d);
                 break;
 
-            case 0:
-            default:
+            case FLAG_NO:
                 // No lines
+                break;
+
+            default:
                 break;
             }
         }
@@ -133,32 +133,32 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags,
     double x2, y2;
 
     switch (flags) {
-    case 1:
-    case 14:
+    case FLAG_SW:
+    case (FLAG_ALL ^ FLAG_SW):
         x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
         x2 = d.x;
         y2 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         break;
 
-    case 2:
-    case 13:
+    case FLAG_NW:
+    case (FLAG_ALL ^ FLAG_NW):
         x1 = d.x+d.sx;
         y1 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y2 = d.y;
         break;
 
-    case 4:
-    case 11:
+    case FLAG_NE:
+    case (FLAG_ALL ^ FLAG_NE):
         x1 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y1 = d.y+d.sy;
         x2 = d.x+d.sx;
         y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
 
-    case 7:
-    case 8:
+    case FLAG_SE:
+    case (FLAG_ALL ^ FLAG_SE):
         x1 = d.x;
         y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
@@ -169,12 +169,12 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags,
     Math::vec2f v(d.x, d.y), v1(x1, y1), v2(x2, y2);
     Math::vec2f sx(d.sx, 0.0f), sy(0.0f, d.sy), s(d.sx, d.sy);
 
-    if (flags==1) {
+    if (flags == FLAG_SW) {
         triangles.push_back(v);
         triangles.push_back(v1);
         triangles.push_back(v2);
 
-    } else if (flags==14) {
+    } else if (flags == (FLAG_ALL ^ FLAG_SW)) {
         triangles.push_back(v1);
         triangles.push_back(v + sx);
         triangles.push_back(v + s);
@@ -187,12 +187,12 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags,
         triangles.push_back(v + s);
         triangles.push_back(v + sy);
 
-    } else if (flags==2) {
+    } else if (flags == FLAG_NW) {
         triangles.push_back(v + sx);
         triangles.push_back(v1);
         triangles.push_back(v2);
 
-    } else if (flags==13) {
+    } else if (flags == (FLAG_ALL ^ FLAG_NW)) {
         triangles.push_back(v);
         triangles.push_back(v2);
         triangles.push_back(v + sy);
@@ -205,12 +205,12 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags,
         triangles.push_back(v1);
         triangles.push_back(v + s);
 
-    } else if (flags==4) {
+    } else if (flags == FLAG_NE) {
         triangles.push_back(v + s);
         triangles.push_back(v1);
         triangles.push_back(v2);
 
-    } else if (flags==11) {
+    } else if (flags == (FLAG_ALL ^ FLAG_NE)) {
         triangles.push_back(v);
         triangles.push_back(v + sx);
         triangles.push_back(v2);
@@ -223,12 +223,12 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags,
         triangles.push_back(v1);
         triangles.push_back(v + sy);
 
-    } else if (flags==8) {
+    } else if (flags == FLAG_SE) {
         triangles.push_back(v + sy);
         triangles.push_back(v1);
         triangles.push_back(v2);
 
-    } else if (flags==7) {
+    } else if (flags == (FLAG_ALL ^ FLAG_SE)) {
         triangles.push_back(v);
         triangles.push_back(v + sx);
         triangles.push_back(v1);
@@ -249,9 +249,9 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
     double x2, y2;
     double x3, y3;
     double x4, y4;
-
+    
     switch (flags) {
-    case 3:
+    case (FLAG_SW | FLAG_NW):
         x1 = d.x;
         y1 = d.y;
         x2 = d.x+d.sx;
@@ -262,7 +262,7 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
         y4 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         break;
 
-    case 12:
+    case (FLAG_NE | FLAG_SE):
         x1 = d.x;
         y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx;
@@ -273,7 +273,7 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
         y4 = d.y+d.sy;
         break;
 
-    case 6:
+    case (FLAG_NW | FLAG_NE):
         x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
         x2 = d.x+d.sx;
@@ -284,7 +284,7 @@ void MakeFillHalf(triangles_t& triangles, flags_t flags,
         y4 = d.y+d.sy;
         break;
 
-    case 9:
+    case (FLAG_SE | FLAG_SW):
         x1 = d.x;
         y1 = d.y;
         x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
@@ -331,7 +331,7 @@ void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u,
         triangles.emplace_back(x4, y4);
     }
 
-    if (flags==5) {
+    if (flags == (FLAG_SW | FLAG_NE)) {
         triangles.emplace_back(d.x, d.y);
         triangles.emplace_back(x1, y1);
         triangles.emplace_back(x4, y4);
@@ -340,7 +340,7 @@ void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u,
         triangles.emplace_back(x3, y3);
         triangles.emplace_back(x2, y2);
 
-    } else if (flags==10) {
+    } else if (flags == (FLAG_NW | FLAG_SE)) {
         triangles.emplace_back(d.x, d.y + d.sy);
         triangles.emplace_back(x4, y4);
         triangles.emplace_back(x3, y3);

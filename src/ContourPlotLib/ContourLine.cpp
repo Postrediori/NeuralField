@@ -44,40 +44,40 @@ bool ContourLine::update(matrix_t* points, area_t a, double t) {
             flags = CellType(vals);
 
             switch (flags) {
-            case 1:
-            case 2:
-            case 4:
-            case 7:
-            case 8:
-            case 11:
-            case 13:
-            case 14:
+            case FLAG_SW:
+            case FLAG_NW:
+            case FLAG_NE:
+            case FLAG_SE:
+            case (FLAG_ALL ^ FLAG_SW):
+            case (FLAG_ALL ^ FLAG_NW):
+            case (FLAG_ALL ^ FLAG_NE):
+            case (FLAG_ALL ^ FLAG_SE):
                 // One corner
                 MakeCorner(lines, flags, d, vals);
                 break;
 
-            case 3:
-            case 6:
-            case 9:
-            case 12:
+            case (FLAG_SW | FLAG_NW):
+            case (FLAG_NW | FLAG_NE):
+            case (FLAG_NE | FLAG_SE):
+            case (FLAG_SE | FLAG_SW):
                 // Half
                 MakeHalf(lines, flags, d, vals);
                 break;
 
-            case 5:
-            case 10:
+            case (FLAG_SW | FLAG_NE):
+            case (FLAG_NW | FLAG_SE):
                 // Ambiguity
-                v = (points->data[(j  )*(xdiv+1)+(i  )]+points->data[(j  )*(xdiv+1)+(i+1)]+
-                     points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )])/4.0;
-                v -= threshold;
-                u = v>0.0;
+                v = (vals.v[0] + vals.v[1] + vals.v[2] + vals.v[3]) / 4.0 - threshold;
+                u = v > 0.0;
                 MakeAmbiguity(lines, flags, u, d, vals, v);
                 break;
 
-            case 0:
-            case 15:
-            default:
+            case FLAG_ALL:
+            case FLAG_NO:
                 // No lines
+                break;
+
+            default:
                 break;
             }
         }
@@ -117,29 +117,32 @@ void MakeCorner(lines_t& lines, flags_t flags,
     double x2, y2;
 
     switch (flags) {
-    case 1:
-    case 14:
+    case FLAG_SW:
+    case (FLAG_ALL ^ FLAG_SW):
         x1 = d.x;
         y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y2 = d.y;
         break;
-    case 2:
-    case 13:
+
+    case FLAG_NW:
+    case (FLAG_ALL ^ FLAG_NW):
         x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
         x2 = d.x+d.sx;
         y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
-    case 4:
-    case 11:
+
+    case FLAG_NE:
+    case (FLAG_ALL ^ FLAG_NE):
         x1 = d.x+d.sx * ValuesRatio(vals, 3, 2);
         y1 = d.y+d.sy;
         x2 = d.x+d.sx;
         y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
-    case 7:
-    case 8:
+
+    case FLAG_SE:
+    case (FLAG_ALL ^ FLAG_SE):
         x1 = d.x;
         y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
@@ -156,16 +159,16 @@ void MakeHalf(lines_t& lines, flags_t flags,
     double x2, y2;
 
     switch (flags) {
-    case 3:
-    case 12:
+    case (FLAG_SW | FLAG_NW):
+    case (FLAG_NE | FLAG_SE):
         x1 = d.x;
         y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx;
         y2 = d.y+d.sy * ValuesRatio(vals, 1, 2);
         break;
         
-    case 6:
-    case 9:
+    case (FLAG_NW | FLAG_NE):
+    case (FLAG_SE | FLAG_SW):
         x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
         y1 = d.y;
         x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
@@ -183,7 +186,7 @@ void MakeAmbiguity(lines_t& lines, flags_t flags, bool u,
     double x3, y3;
     double x4, y4;
 
-    if ((flags==5 && u) || (flags==10 && !u)) {
+    if ((flags == (FLAG_SW | FLAG_NE) && u) || (flags == (FLAG_NW | FLAG_SE) && !u)) {
         x1 = d.x;
         y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
@@ -195,7 +198,7 @@ void MakeAmbiguity(lines_t& lines, flags_t flags, bool u,
         y4 = d.y+d.sy * ValuesRatio(vals, 1, 2);
     }
 
-    if ((flags==5 && !u) || (flags==10 && u)) {
+    if ((flags == (FLAG_SW | FLAG_NE) && !u) || (flags == (FLAG_NW | FLAG_SE) && u)) {
         x1 = d.x;
         y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
         x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);

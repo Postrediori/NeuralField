@@ -9,7 +9,7 @@ namespace Math
         vec2f() : x(0.0f), y(0.0f) { }
         vec2f(float x, float y) : x(x), y(y) { }
 
-        vec2f& operator+(const vec2f& a)
+        vec2f operator+(const vec2f& a)
         {
             vec2f n(x + a.x, y + a.y);
             return n;
@@ -22,6 +22,14 @@ namespace Math
 
         vec4f() { s[0] = 0.0f; s[1] = 0.0f; s[2] = 0.0f; s[3] = 0.0f; }
         vec4f(float x, float y, float z, float w) { s[0] = x; s[1] = y; s[2] = z; s[3] = w; }
+    };
+
+    struct vec4d
+    {
+        double v[4];
+
+        vec4d() { v[0] = 0.0; v[1] = 0.0; v[2] = 0.0; v[3] = 0.0; }
+        vec4d(double x, double y, double z, double w) { v[0] = x; v[1] = y; v[2] = z; v[3] = w; }
     };
 
     struct mat4f

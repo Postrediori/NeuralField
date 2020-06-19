@@ -1,11 +1,13 @@
 #pragma once
 
-enum RenderMode {
-    RENDER_TEXTURE,
+enum RenderMode : uint32_t {
+    RENDER_TEXTURE = 0,
     RENDER_CONTOUR,
     RENDER_PARALLEL,
+    RENDER_FILL,
+    RENDER_PARALLEL_FILL,
 
-    RENDER_MAXIMAL
+    RENDER_MODES
 };
 
 class AmariModelContext {
@@ -48,6 +50,7 @@ public:
     ContourPlotGuard_t contourLines_;
     ContourPlotGuard_t contourFill_;
     ContourPlotGuard_t contourParallel_;
+    ContourPlotGuard_t contourParallelFill_;
     
     bool showHelp_;
 };

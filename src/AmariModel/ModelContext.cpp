@@ -12,6 +12,7 @@
 #include "ContourLine.h"
 #include "ContourFill.h"
 #include "ContourParallel.h"
+#include "ContourParallelFill.h"
 #include "ModelContext.h"
 
 
@@ -22,8 +23,8 @@ static const GLfloat g_textColor[] = {1.00f, 1.00f, 1.00f, 1.00f};
 
 static const FontSize_t g_fontSize = 24;
 
-static const char* const g_renderModeLabels[] = {
-    "Texture", "Filled Contour", "Contour Outline"
+static const char* const g_renderModeLabels[RENDER_MODES] = {
+    "Texture", "Contour", "Contour Parallel", "Fill", "Filled Parallel"
 };
 
 static const char g_fontFile[] = "data/font.ttf";
@@ -90,7 +91,6 @@ bool AmariModelContext::Init() {
         return false;
     }
 
-
     contourFill_.reset(new ContourFill(program_));
     if (!contourFill_->init()) {
         LOGE << "Unable to create Filled Contour";
@@ -103,8 +103,15 @@ bool AmariModelContext::Init() {
         return false;
     }
 
+    contourParallelFill_.reset(new ContourParallelFill(program_));
+    if (!contourParallelFill_->init()) {
+        LOGE << "Unable to create Parallel Contour Lines";
+        return false;
+    }
+
     contourLines_->update(amariModel_.activity.get(), g_area, 1.0);
     contourFill_->update(amariModel_.activity.get(), g_area, 1.0);
+    contourParallelFill_->update(amariModel_.activity.get(), g_area, 1.0);
     contourParallel_->update(amariModel_.activity.get(), g_area, 1.0);
     
     // Set up OpenGL
@@ -139,12 +146,6 @@ void AmariModelContext::Render() {
         static const float zoom = 1.f;
         static const Math::vec2f offset(0.f, 0.f);
 
-        glPolygonOffset(1, 0); LOGOPENGLERROR();
-        glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourFill_->render(mvp_, zoom, offset, g_foreground);
-        
-        glPolygonOffset(0, 0); LOGOPENGLERROR();
-        glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
         contourLines_->render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_PARALLEL) {
@@ -152,13 +153,37 @@ void AmariModelContext::Render() {
         static const Math::vec2f offset(0.f, 0.f);
 
         contourParallel_->render(mvp_, zoom, offset, g_outline);
+
+    } else if (renderMode_ == RENDER_FILL) {
+        static const float zoom = 1.f;
+        static const Math::vec2f offset(0.f, 0.f);
+
+        glPolygonOffset(1, 0); LOGOPENGLERROR();
+        glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
+        contourFill_->render(mvp_, zoom, offset, g_foreground);
+
+        glPolygonOffset(0, 0); LOGOPENGLERROR();
+        glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
+        contourLines_->render(mvp_, zoom, offset, g_outline);
+
+    } else if (renderMode_ == RENDER_PARALLEL_FILL) {
+        static const float zoom = 1.f;
+        static const Math::vec2f offset(0.f, 0.f);
+
+        glPolygonOffset(1, 0); LOGOPENGLERROR();
+        glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
+        contourParallelFill_->render(mvp_, zoom, offset, g_foreground);
+
+        glPolygonOffset(0, 0); LOGOPENGLERROR();
+        glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
+        contourParallel_->render(mvp_, zoom, offset, g_outline);
     }
 
     if (showHelp_) {
         fr_.renderStart();
         fr_.renderColor(g_textColor);
 
-        fr_.renderText(a24, {-1+8*scaleX_, -1+200*scaleY_, scaleX_, scaleY_}, "1-3 ... Choose plot mode");
+        fr_.renderText(a24, {-1+8*scaleX_, -1+200*scaleY_, scaleX_, scaleY_}, "1-5 ... Choose plot mode");
         fr_.renderText(a24, {-1+8*scaleX_, -1+175*scaleY_, scaleX_, scaleY_}, "B ... Turn texture blur on/off");
         fr_.renderText(a24, {-1+8*scaleX_, -1+150*scaleY_, scaleX_, scaleY_}, "LMB ... Activate model");
         fr_.renderText(a24, {-1+8*scaleX_, -1+125*scaleY_, scaleX_, scaleY_}, "RMB ... Clear model");
@@ -196,6 +221,7 @@ void AmariModelContext::Resize(int w, int h) {
     contourLines_->resize(w, h);
     contourFill_->resize(w, h);
     contourParallel_->resize(w, h);
+    contourParallelFill_->resize(w, h);
 }
 
 void AmariModelContext::SetActivity(int x, int y) {
@@ -230,10 +256,24 @@ void AmariModelContext::Restart() {
 void AmariModelContext::Update() {
     amariModel_.stimulate();
 
-    if (renderMode_ == RENDER_TEXTURE) {
+    switch (renderMode_) {
+    case RENDER_TEXTURE:
         amariRender_.update_texture(amariModel_.activity.get());
+        break;
 
-    } else if (renderMode_ == RENDER_CONTOUR) {
+    case RENDER_CONTOUR:
+        if (contourLines_) {
+            contourLines_->update(amariModel_.activity.get(), g_area, 0.0);
+        }
+        break;
+
+    case RENDER_PARALLEL:
+        if (contourParallel_) {
+            contourParallel_->update(amariModel_.activity.get(), g_area, 0.0);
+        }
+        break;
+
+    case RENDER_FILL:
         if (contourLines_) {
             contourLines_->update(amariModel_.activity.get(), g_area, 0.0);
         }
@@ -241,11 +281,20 @@ void AmariModelContext::Update() {
         if (contourFill_) {
             contourFill_->update(amariModel_.activity.get(), g_area, 0.0);
         }
+        break;
 
-    } else if (renderMode_ == RENDER_PARALLEL) {
+    case RENDER_PARALLEL_FILL:
         if (contourParallel_) {
             contourParallel_->update(amariModel_.activity.get(), g_area, 0.0);
         }
+
+        if (contourParallelFill_) {
+            contourParallelFill_->update(amariModel_.activity.get(), g_area, 0.0);
+        }
+        break;
+
+    default:
+        break;
     }
 }
 

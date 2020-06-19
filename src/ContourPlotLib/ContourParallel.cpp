@@ -25,140 +25,147 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
     lines_t lines;
     lines.reserve(max_idx * 2);
 
-#pragma omp parallel for shared(lines)
-    for (int idx=0; idx<max_idx; idx++) {
-        int i = idx % xdiv;
-        int j = idx / xdiv;
+#pragma omp parallel
+    {
+        lines_t iter_lines;
 
-        double y = a.ymin + j * dY;
-        double x = a.xmin + i * dX;
-        
-        vals_t vals;
-        vals.v[0] = points->data[(j  )*(xdiv+1)+(i  )] - threshold;
-        vals.v[1] = points->data[(j  )*(xdiv+1)+(i+1)] - threshold;
-        vals.v[2] = points->data[(j+1)*(xdiv+1)+(i+1)] - threshold;
-        vals.v[3] = points->data[(j+1)*(xdiv+1)+(i  )] - threshold;
+#pragma omp for nowait
+        for (int idx = 0; idx < max_idx; idx++) {
 
-        flags_t flags = FLAG_NO;
-        if (vals.v[0]>0.0) flags |= FLAG_SW;
-        if (vals.v[1]>0.0) flags |= FLAG_NW;
-        if (vals.v[2]>0.0) flags |= FLAG_NE;
-        if (vals.v[3]>0.0) flags |= FLAG_SE;
+            int i = idx % xdiv;
+            int j = idx / xdiv;
 
-        if (flags==1 || flags==2 || flags==4 || flags==7
-            || flags==8 || flags==11 || flags==13 || flags==14) {
-            // One corner
-            double x1, y1;
-            double x2, y2;
-            double sx = dX, sy = dY;
+            double y = a.ymin + j * dY;
+            double x = a.xmin + i * dX;
 
-            switch (flags) {
-            case 1:
-            case 14:
-                x1 = x;
-                y1 = y+sy * ValuesRatio(vals, 0, 3);
-                x2 = x+sx * ValuesRatio(vals, 0, 1);
-                y2 = y;
-                break;
-            case 2:
-            case 13:
-                x1 = x+sx * ValuesRatio(vals, 0, 1);
-                y1 = y;
-                x2 = x+sx;
-                y2 = y+sy * ValuesRatio(vals, 1, 2);
-                break;
-            case 4:
-            case 11:
-                x1 = x+sx * ValuesRatio(vals, 3, 2);
-                y1 = y+sy;
-                x2 = x+sx;
-                y2 = y+sy * ValuesRatio(vals, 1, 2);
-                break;
-            case 7:
-            case 8:
-                x1 = x;
-                y1 = y+sy * ValuesRatio(vals, 0, 3);
-                x2 = x+sx * ValuesRatio(vals, 3, 2);
-                y2 = y+sy;
-                break;
+            vals_t vals;
+            vals.v[0] = points->data[(j)*(xdiv + 1) + (i)] - threshold;
+            vals.v[1] = points->data[(j)*(xdiv + 1) + (i + 1)] - threshold;
+            vals.v[2] = points->data[(j + 1)*(xdiv + 1) + (i + 1)] - threshold;
+            vals.v[3] = points->data[(j + 1)*(xdiv + 1) + (i)] - threshold;
+
+            flags_t flags = CellType(vals);
+
+            if (flags == FLAG_SW || flags == FLAG_NW || flags == FLAG_NE || flags == FLAG_SE
+                || flags == (FLAG_ALL ^ FLAG_SW)
+                || flags == (FLAG_ALL ^ FLAG_NW)
+                || flags == (FLAG_ALL ^ FLAG_NE)
+                || flags == (FLAG_ALL ^ FLAG_SE)) {
+                // One corner
+                double x1, y1;
+                double x2, y2;
+                double sx = dX, sy = dY;
+
+                switch (flags) {
+                case FLAG_SW:
+                case (FLAG_ALL ^ FLAG_SW):
+                    x1 = x;
+                    y1 = y + sy * ValuesRatio(vals, 0, 3);
+                    x2 = x + sx * ValuesRatio(vals, 0, 1);
+                    y2 = y;
+                    break;
+
+                case FLAG_NW:
+                case (FLAG_ALL ^ FLAG_NW):
+                    x1 = x + sx * ValuesRatio(vals, 0, 1);
+                    y1 = y;
+                    x2 = x + sx;
+                    y2 = y + sy * ValuesRatio(vals, 1, 2);
+                    break;
+
+                case FLAG_NE:
+                case (FLAG_ALL ^ FLAG_NE):
+                    x1 = x + sx * ValuesRatio(vals, 3, 2);
+                    y1 = y + sy;
+                    x2 = x + sx;
+                    y2 = y + sy * ValuesRatio(vals, 1, 2);
+                    break;
+
+                case FLAG_SE:
+                case (FLAG_ALL ^ FLAG_SE):
+                    x1 = x;
+                    y1 = y + sy * ValuesRatio(vals, 0, 3);
+                    x2 = x + sx * ValuesRatio(vals, 3, 2);
+                    y2 = y + sy;
+                    break;
+                }
+
+                iter_lines.emplace_back(x1, y1, x2, y2);
+
             }
-    
+            else if (flags == (FLAG_SW | FLAG_NW)
+                || flags == (FLAG_NW | FLAG_NE)
+                || flags == (FLAG_NE | FLAG_SE)
+                || flags == (FLAG_SE | FLAG_SW)) {
+                // Half
+                double x1, y1;
+                double x2, y2;
+                double sx = dX, sy = dY;
+
+                if (flags == (FLAG_SW | FLAG_NW) || flags == (FLAG_SE | FLAG_NE)) {
+                    x1 = x;
+                    y1 = y + sy * ValuesRatio(vals, 0, 3);
+                    x2 = x + sx;
+                    y2 = y + sy * ValuesRatio(vals, 1, 2);
+                }
+                else if (flags == (FLAG_NW | FLAG_NE) || flags == (FLAG_SW | FLAG_SE)) {
+                    x1 = x + sx * ValuesRatio(vals, 0, 1);
+                    y1 = y;
+                    x2 = x + sx * ValuesRatio(vals, 3, 2);
+                    y2 = y + sy;
+                }
+
+                iter_lines.emplace_back(x1, y1, x2, y2);
+
+            }
+            else if (flags == (FLAG_SW | FLAG_NE) || flags == (FLAG_NW | FLAG_SE)) {
+                // Ambiguity
+                double v;
+                bool u;
+                v = (vals.v[0] + vals.v[1] + vals.v[2] + vals.v[3]) / 4.0 - threshold;
+                u = v > 0.0;
+
+                double x1, y1;
+                double x2, y2;
+                double x3, y3;
+                double x4, y4;
+                double sx = dX, sy = dY;
+
+                if ((flags == (FLAG_SW | FLAG_NE) && u) || (flags == (FLAG_NW | FLAG_SE) && !u)) {
+                    x1 = x;
+                    y1 = y + sy * ValuesRatio(vals, 0, 3);
+                    x2 = x + sx * ValuesRatio(vals, 3, 2);
+                    y2 = y + sy;
+
+                    x3 = x + sx * ValuesRatio(vals, 0, 1);
+                    y3 = y;
+                    x4 = x + sx;
+                    y4 = y + sy * ValuesRatio(vals, 1, 2);
+                }
+                if ((flags == (FLAG_SW | FLAG_NE) && !u) || (flags == (FLAG_NW | FLAG_SE) && u)) {
+                    x1 = x;
+                    y1 = y + sy * ValuesRatio(vals, 0, 3);
+                    x2 = x + sx * ValuesRatio(vals, 0, 1);
+                    y2 = y;
+
+                    x3 = x + sx * ValuesRatio(vals, 3, 2);
+                    y3 = y + sy;
+                    x4 = x + sx;
+                    y4 = y + sy * ValuesRatio(vals, 1, 2);
+                }
+
+                iter_lines.emplace_back(x1, y1, x2, y2);
+                iter_lines.emplace_back(x3, y3, x4, y4);
+            }
+        }
+
 #pragma omp critical
+        {
+            if (!iter_lines.empty())
             {
-                lines.emplace_back(x1, y1, x2, y2);
-            }
-
-        } else if (flags==3 || flags==6 || flags==9 || flags==12) {
-            // Half
-            double x1, y1;
-            double x2, y2;
-            double sx = dX, sy = dY;
-
-            switch (flags) {
-            case 3:
-            case 12:
-                x1 = x;
-                y1 = y+sy * ValuesRatio(vals, 0, 3);
-                x2 = x+sx;
-                y2 = y+sy * ValuesRatio(vals, 1, 2);
-                break;
-            case 6:
-            case 9:
-                x1 = x+sx * ValuesRatio(vals, 0, 1);
-                y1 = y;
-                x2 = x+sx * ValuesRatio(vals, 3, 2);
-                y2 = y+sy;
-                break;
-            }
-
-#pragma omp critical
-            {
-                lines.emplace_back(x1, y1, x2, y2);
-            }
-
-        } else if (flags==5 || flags==10) {
-            // Ambiguity
-            double v;
-            bool u;
-            v = (points->data[(j  )*(xdiv+1)+(i  )]+points->data[(j  )*(xdiv+1)+(i+1)]+
-                 points->data[(j+1)*(xdiv+1)+(i+1)]+points->data[(j+1)*(xdiv+1)+(i  )])/4.0;
-            v -= threshold;
-            u = v > 0.0;
-
-            double x1, y1;
-            double x2, y2;
-            double x3, y3;
-            double x4, y4;
-            double sx = dX, sy = dY;
-
-            if ((flags==5 && u) || (flags==10 && !u)) {
-                x1 = x;
-                y1 = y+sy * ValuesRatio(vals, 0, 3);
-                x2 = x+sx * ValuesRatio(vals, 3, 2);
-                y2 = y+sy;
-
-                x3 = x+sx * ValuesRatio(vals, 0, 1);
-                y3 = y;
-                x4 = x+sx;
-                y4 = y+sy * ValuesRatio(vals, 1, 2);
-            }
-
-            if ((flags==5 && !u) || (flags==10 && u)) {
-                x1 = x;
-                y1 = y+sy * ValuesRatio(vals, 0, 3);
-                x2 = x+sx * ValuesRatio(vals, 0, 1);
-                y2 = y;
-
-                x3 = x+sx * ValuesRatio(vals, 3, 2);
-                y3 = y+sy;
-                x4 = x+sx;
-                y4 = y+sy * ValuesRatio(vals, 1, 2);
-            }
-
-#pragma omp critical
-            {
-                lines.emplace_back(x1, y1, x2, y2);
-                lines.emplace_back(x3, y3, x4, y4);
+                lines.insert(lines.end(),
+                    iter_lines.begin(),
+                    iter_lines.end());
             }
         }
     }

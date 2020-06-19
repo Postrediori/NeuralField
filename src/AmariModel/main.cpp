@@ -121,6 +121,14 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
             gContext.SetRenderMode(RENDER_PARALLEL);
             break;
 
+        case GLFW_KEY_4:
+            gContext.SetRenderMode(RENDER_FILL);
+            break;
+
+        case GLFW_KEY_5:
+            gContext.SetRenderMode(RENDER_PARALLEL_FILL);
+            break;
+
         case GLFW_KEY_SPACE:
             gContext.Restart();
             break;

@@ -1,11 +1,12 @@
 #pragma once
 
-typedef unsigned char flags_t;
+typedef uint8_t flags_t;
 #define FLAG_NO (flags_t)(0x00)
 #define FLAG_SW (flags_t)(0x01)
 #define FLAG_NW (flags_t)(0x02)
 #define FLAG_NE (flags_t)(0x04)
 #define FLAG_SE (flags_t)(0x08)
+#define FLAG_ALL (flags_t)(0x0f)
 
 /*
  * (1)---(2)
@@ -17,6 +18,8 @@ typedef unsigned char flags_t;
 struct vals_t {
     double v[4];
 };
+
+//typedef Math::vec4d vals_t;
 
 flags_t CellType(vals_t vals);
 double ValuesRatio(vals_t vals, size_t i1, size_t i2);
