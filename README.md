@@ -29,7 +29,6 @@ are bundled with the repository. This includes:
 
 * [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
 * [glfw](https://github.com/glfw/glfw) - Windowing and Input.
-* [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
 * [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 
 ## Environment Setup
@@ -199,6 +198,7 @@ h=0  | h=-0.15 | h=-0.3
 ## Links
 
 * [https://habrahabr.ru/post/181265/](https://habrahabr.ru/post/181265/).
+* S. Amari, [Dynamics of pattern formation in lateral-inhibition type neural filed](http://www.math.pitt.edu/~troy/sflood/amari.pdf), 1977.
 * Konstantin Doubrovinski, Dynamics, [Stability and Bifurcation Phenomena in the Nonlocal Model of Cortical Activity](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.8688&rep=rep1&type=pdf), 2005.
 * Dequan Jin, Dong Liang, Jigen Peng, [Existence and Properties of Stationary Solution of Dynamical Neural Field](http://gr.xjtu.edu.cn/c/document_library/get_file?folderId=29529&name=DLFE-2974.pdf), 2011.
 * Stephen Coombes, Helmut Schmidt, Ingo Bojak, [Interface Dynamics in Planar Neural Field Models](http://www.mathematical-neuroscience.com/content/2/1/9), 2012.
