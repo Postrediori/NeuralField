@@ -35,7 +35,7 @@ public:
 
     RenderMode renderMode_;
 
-    GLuint program_, vertex_, fragment_;
+    GLuint program_;
     
     FPSCounter fpsCounter_;
     

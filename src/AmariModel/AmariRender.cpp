@@ -78,14 +78,10 @@ bool AmariRender::init(size_t size) {
                  GL_UNSIGNED_BYTE, NULL); LOGOPENGLERROR();
 
     // Init shader
-    GLuint vertex(0), fragment(0);
-    if (!Shader::createProgramSource(program, vertex, fragment, g_vertexShaderSrc, g_fragmentShaderSrc)) {
+    if (!Shader::createProgramSource(program, g_vertexShaderSrc, g_fragmentShaderSrc)) {
         LOGE << "Unable to load shader for Amari Renderer";
         return false;
     }
-
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
 
     uTex = glGetUniformLocation(program, "tex");
     uResolution = glGetUniformLocation(program, "iRes");

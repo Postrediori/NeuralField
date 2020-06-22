@@ -181,14 +181,11 @@ bool FontRenderer::initObjects() {
 }
 
 bool FontRenderer::initShaderProgram() {
-    GLuint vShader(0), fShader(0);
-    if (!Shader::createProgramSource(glProgram, vShader, fShader,
+    if (!Shader::createProgramSource(glProgram,
                                      vertex_src_3_30, fragment_src_3_30)) {
         LOGI << "Failed to init shader for Font Rendering";
         return false;
     }
-    glDeleteShader(vShader); LOGOPENGLERROR();
-    glDeleteShader(fShader); LOGOPENGLERROR();
 
     uTex = glGetUniformLocation(glProgram, "tex"); LOGOPENGLERROR();
     uColor = glGetUniformLocation(glProgram, "color"); LOGOPENGLERROR();

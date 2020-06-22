@@ -40,9 +40,7 @@ static const float g_textureBlurDelta = 0.1f;
 
 AmariModelContext::AmariModelContext()
     : renderMode_(RENDER_CONTOUR)
-    , program_(0)
-    , vertex_(0)
-    , fragment_(0) {
+    , program_(0) {
 }
 
 AmariModelContext::~AmariModelContext() {
@@ -80,7 +78,7 @@ bool AmariModelContext::Init() {
     amariRender_.update_texture(amariModel_.activity.get());
 
     // Init contour lines
-    if (!Shader::createProgram(program_, vertex_, fragment_, g_vertexShader, g_fragmentShader)) {
+    if (!Shader::createProgram(program_, g_vertexShader, g_fragmentShader)) {
         LOGE << "Unable to create shader for contour lines";
         return false;
     }
@@ -124,10 +122,8 @@ bool AmariModelContext::Init() {
 
 void AmariModelContext::Release() {
     if (program_) {
-        Shader::releaseProgram(program_, vertex_, fragment_);
+        glDeleteProgram(program_);
         program_ = 0;
-        vertex_ = 0;
-        fragment_ = 0;
     }
 }
 
