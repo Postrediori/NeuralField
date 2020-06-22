@@ -52,7 +52,6 @@ public:
     FontRenderer();
 
     bool init();
-    bool init(const std::string& vertex_shader, const std::string& fragment_shader);
     bool load(const std::string& filename);
     FontHandle_t createAtlas(FontSize_t height);
 
@@ -68,13 +67,12 @@ public:
 private:
     bool initObjects();
     bool initShaderProgram();
-    bool initShaderVariables();
 
 public:
-    GLuint glProgram, glShaderV, glShaderF;
-    GLint aCoord;
+    GLuint glProgram;
     GLint uTex, uColor;
 
+    GLuint vao;
     GLuint vbo;
 
     FT_Library ft;

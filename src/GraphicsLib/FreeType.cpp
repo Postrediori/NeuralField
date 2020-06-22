@@ -1,38 +1,21 @@
 // FreeType.cpp
 #include "stdafx.h"
+#include "GlUtils.h"
 #include "Shader.h"
 #include "FreeType.h"
 
 #define max(a,b) ((a)>(b)?(a):(b))
 
-static const char vertex_src_1_10[] =
-    "#version 110\n"
-    "attribute vec4 coord;"
-    "varying vec2 tex_coord;"
-    "void main(){"
-    "    gl_Position=vec4(coord.xy,0.,1.);"
-    "    tex_coord=coord.zw;"
-    "}";
-static const char fragment_src_1_10[] =
-    "#version 110\n"
-    "varying vec2 tex_coord;"
-    "uniform vec4 color;"
-    "uniform sampler2D tex;"
-    "void main(){"
-    "    float a=texture2D(tex,tex_coord).r;"
-    "    gl_FragColor=vec4(1.,1.,1.,a)*color;"
-    "}";
-
-static const char vertex_src_1_30[] =
-    "#version 130\n"
+static const char vertex_src_3_30[] =
+    "#version 330 core\n"
     "in vec4 coord;"
     "out vec2 tex_coord;"
     "void main(){"
     "    gl_Position=vec4(coord.xy,0.,1.);"
     "    tex_coord=coord.zw;"
     "}";
-static const char fragment_src_1_30[] =
-    "#version 130\n"
+static const char fragment_src_3_30[] =
+    "#version 330 core\n"
     "in vec2 tex_coord;"
     "out vec4 frag_color;"
     "uniform vec4 color;"
@@ -75,21 +58,21 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
     h += rowh;
 
     // Create texture for all ASCII glyphs
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
+    glGenTextures(1, &tex); LOGOPENGLERROR();
+    glBindTexture(GL_TEXTURE_2D, tex); LOGOPENGLERROR();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, 0); LOGOPENGLERROR();
 
     // 1-byte alignment required when uploading texture data
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); LOGOPENGLERROR();
 
     // Clamping edges is important to prevent artifacts
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); LOGOPENGLERROR();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); LOGOPENGLERROR();
 
     // Linear filtering
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); LOGOPENGLERROR();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); LOGOPENGLERROR();
 
     // Paste all glyph bitmaps into the texture, remembering offset
     int ox = 0, oy = 0;
@@ -110,7 +93,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 
         glTexSubImage2D(GL_TEXTURE_2D, 0, ox, oy,
                         g->bitmap.width, g->bitmap.rows,
-                        GL_RED, GL_UNSIGNED_BYTE, g->bitmap.buffer);
+                        GL_RED, GL_UNSIGNED_BYTE, g->bitmap.buffer); LOGOPENGLERROR();
 
         CharInfo inf;
         inf.ax = g->advance.x >> 6;
@@ -136,7 +119,7 @@ FontAtlas::FontAtlas(FT_Face face, FontSize_t height)
 
 FontAtlas::~FontAtlas() {
     if (tex) {
-        glDeleteTextures(1, &tex);
+        glDeleteTextures(1, &tex); LOGOPENGLERROR();
         tex = 0;
     }
 }
@@ -146,42 +129,17 @@ FontAtlas::~FontAtlas() {
  ****************************************************************************/
 FontRenderer::FontRenderer()
     : glProgram(0)
-    , glShaderV(0)
-    , glShaderF(0)
-    , aCoord(0)
     , uTex(0)
     , uColor(0)
     , vbo(0) {
 }
 
-bool FontRenderer::init(const std::string& vertex_shader, const std::string& fragment_shader) {
-    if (!initObjects()) {
-        return false;
-    }
-
-    // Init shader
-    if (!Shader::createProgram(glProgram, glShaderV, glShaderF,
-                               vertex_shader, fragment_shader)) {
-        return false;
-    }
-
-    if (!initShaderVariables()) {
-        return false;
-    }
-
-    return true;
-}
-
 bool FontRenderer::init() {
-    if (!initObjects()) {
-        return false;
-    }
-
     if (!initShaderProgram()) {
         return false;
     }
 
-    if (!initShaderVariables()) {
+    if (!initObjects()) {
         return false;
     }
 
@@ -192,54 +150,55 @@ bool FontRenderer::init() {
 bool FontRenderer::initObjects() {
     // Init FreeType
     if (FT_Init_FreeType(&ft)) {
+        LOGI << "Failed to init FreeType";
         return false;
     }
 
-    // Init VBO
-    glGenBuffers(1, &vbo);
-    if (!vbo) {
+    // Init VAO
+    glGenVertexArrays(1, &vao); LOGOPENGLERROR();
+    if (!vao) {
+        LOGI << "Failed to init VAO for Font Rendering";
         return false;
     }
+    glBindVertexArray(vao); LOGOPENGLERROR();
+
+    // Init VBO
+    glGenBuffers(1, &vbo); LOGOPENGLERROR();
+    if (!vbo) {
+        LOGI << "Failed to init VBO for Font Rendering";
+        return false;
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
+
+    GLint aCoord = glGetAttribLocation(glProgram, "coord"); LOGOPENGLERROR();
+
+    glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
+    glVertexAttribPointer(aCoord, 4, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
+
+    glBindVertexArray(0); LOGOPENGLERROR();
 
     return true;
 }
 
 bool FontRenderer::initShaderProgram() {
-#ifdef __APPLE__
-    // Use OpenGL 2.1 shader
-    return Shader::createProgramSource(glProgram, glShaderV, glShaderF,
-                                       vertex_src_1_10, fragment_src_1_10);
-#else
-    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
-                                     vertex_src_1_30, fragment_src_1_30)) {
-        LOGI << "Using GLSL 1.30 for Font Rendering";
-        return true;
-    }
-
-    // ok, try and use OpenGL 2.1 then
-    if (Shader::createProgramSource(glProgram, glShaderV, glShaderF,
-                                     vertex_src_1_10, fragment_src_1_10)) {
-        LOGI << "Using GLSL 1.10 for Font Rendering";
-        return true;
-    }
-
-    return false;
-#endif
-}
-
-bool FontRenderer::initShaderVariables() {
-    aCoord = glGetAttribLocation(glProgram, "coord");
-    uTex   = glGetUniformLocation(glProgram, "tex");
-    uColor = glGetUniformLocation(glProgram, "color");
-
-    if (aCoord==-1 || uTex==-1 || uColor==-1) {
+    GLuint vShader(0), fShader(0);
+    if (!Shader::createProgramSource(glProgram, vShader, fShader,
+                                     vertex_src_3_30, fragment_src_3_30)) {
+        LOGI << "Failed to init shader for Font Rendering";
         return false;
     }
+    glDeleteShader(vShader); LOGOPENGLERROR();
+    glDeleteShader(fShader); LOGOPENGLERROR();
+
+    uTex = glGetUniformLocation(glProgram, "tex"); LOGOPENGLERROR();
+    uColor = glGetUniformLocation(glProgram, "color"); LOGOPENGLERROR();
+
     return true;
 }
 
 bool FontRenderer::load(const std::string& filename) {
     if (FT_New_Face(ft, filename.c_str(), 0, &face)) {
+        LOGE << "Failed to load font from file " << filename;
         return false;
     }
     return true;
@@ -256,31 +215,36 @@ FontHandle_t FontRenderer::createAtlas(FontSize_t height) {
 void FontRenderer::release() {
     fonts.clear();
     if (vbo) {
-        glDeleteBuffers(1, &vbo);
+        glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
         vbo = 0;
     }
+    if (vao) {
+        glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
+        vao = 0;
+    }
     if (glProgram) {
-        Shader::releaseProgram(glProgram, glShaderV, glShaderF);
+        glDeleteProgram(glProgram); LOGOPENGLERROR();
         glProgram = 0;
-        glShaderV = 0;
-        glShaderF = 0;
     }
 }
 
 void FontRenderer::renderStart() {
-    glPushAttrib(GL_COLOR_BUFFER_BIT); // Push GL_BLEND and Blending function
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glUseProgram(glProgram);
+    glPushAttrib(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR(); // Push GL_BLEND and Blending function
+    glEnable(GL_BLEND); LOGOPENGLERROR();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); LOGOPENGLERROR();
+    glUseProgram(glProgram); LOGOPENGLERROR();
+    glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
+    glBindVertexArray(vao); LOGOPENGLERROR();
 }
 
 void FontRenderer::renderEnd() {
-    glUseProgram(0);
-    glPopAttrib();
+    glBindVertexArray(0); LOGOPENGLERROR();
+    glUseProgram(0); LOGOPENGLERROR();
+    glPopAttrib(); LOGOPENGLERROR();
 }
 
 void FontRenderer::renderColor(const GLfloat c[]) {
-    glUniform4fv(uColor, 1, c);
+    glUniform4fv(uColor, 1, c); LOGOPENGLERROR();
 }
 
 void FontRenderer::renderText(FontHandle_t typeset,
@@ -295,13 +259,8 @@ void FontRenderer::renderText(FontHandle_t typeset,
 
     const auto& a = fonts[typeset];
 
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(uTex, 0);
-    glBindTexture(GL_TEXTURE_2D, a->tex);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glEnableVertexAttribArray(aCoord);
-    glVertexAttribPointer(aCoord, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    glUniform1i(uTex, 0); LOGOPENGLERROR();
+    glBindTexture(GL_TEXTURE_2D, a->tex); LOGOPENGLERROR();
 
     size_t len = text.length();
     std::vector<Coord2d> coords(6 * len);
@@ -342,7 +301,8 @@ void FontRenderer::renderText(FontHandle_t typeset,
         coords.push_back({x2+w, -y2, inf.tx+tdx, inf.ty});
     }
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Coord2d)*coords.size(), coords.data(), GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR(); // Even though VAO is active now, we need to bind VBO here to be able to update it
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Coord2d)*coords.size(), coords.data(), GL_DYNAMIC_DRAW); LOGOPENGLERROR();
 
-    glDrawArrays(GL_TRIANGLES, 0, coords.size());
+    glDrawArrays(GL_TRIANGLES, 0, coords.size()); LOGOPENGLERROR();
 }
