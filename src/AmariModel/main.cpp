@@ -30,12 +30,12 @@ AmariModelContext gContext;
  ****************************************************************************/
 bool Init() {
     srand(time(0));
-    
+
     LOGI << "OpenGL Renderer : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
-    
+
     // Init scene
     gFullscreen = false;
 
@@ -160,8 +160,12 @@ void Update(GLFWwindow* /*window*/) {
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
     int status = EXIT_SUCCESS;
+#ifdef NDEBUG
+    plog::init(plog::info, &consoleAppender);
+#else
     plog::init(plog::debug, &consoleAppender);
-    
+#endif
+
     glfwSetErrorCallback(Error);
 
     if (!glfwInit()) {
