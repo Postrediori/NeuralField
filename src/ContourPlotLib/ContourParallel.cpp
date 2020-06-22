@@ -186,6 +186,7 @@ void ContourParallel::render(const Math::mat4f& mvp,
                              const Math::vec2f& offset,
                              const GLfloat c[]) {
     glUseProgram(program); LOGOPENGLERROR();
+    glBindVertexArray(vao); LOGOPENGLERROR();
 
     glUniformMatrix4fv(u_mvp, 1, GL_FALSE, (const GLfloat *)(&mvp)); LOGOPENGLERROR();
     glUniform1f(u_zoom, (GLfloat)zoom); LOGOPENGLERROR();
@@ -193,11 +194,8 @@ void ContourParallel::render(const Math::mat4f& mvp,
     glUniform2f(u_res, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform4fv(u_color, 1, c); LOGOPENGLERROR();
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glEnableVertexAttribArray(a_coord); LOGOPENGLERROR();
-    glVertexAttribPointer(a_coord, 2, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
-
     glDrawArrays(GL_LINES, 0, vbo_count); LOGOPENGLERROR();
 
     glUseProgram(0); LOGOPENGLERROR();
+    glBindVertexArray(0); LOGOPENGLERROR();
 }

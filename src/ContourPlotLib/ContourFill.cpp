@@ -101,6 +101,7 @@ bool ContourFill::update(matrix_t* points, area_t a, double t) {
 void ContourFill::render(const Math::mat4f& mvp, double zoom, const Math::vec2f& offset,
                          const GLfloat c[]) {
     glUseProgram(program); LOGOPENGLERROR();
+    glBindVertexArray(vao); LOGOPENGLERROR();
 
     glUniformMatrix4fv(u_mvp, 1, GL_FALSE, (const GLfloat *)(&mvp)); LOGOPENGLERROR();
     glUniform1f(u_zoom, zoom); LOGOPENGLERROR();
@@ -108,13 +109,10 @@ void ContourFill::render(const Math::mat4f& mvp, double zoom, const Math::vec2f&
     glUniform2f(u_res, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform4fv(u_color, 1, c); LOGOPENGLERROR();
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glEnableVertexAttribArray(a_coord); LOGOPENGLERROR();
-    glVertexAttribPointer(a_coord, 2, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
-
     glDrawArrays(GL_TRIANGLES, 0, vbo_count); LOGOPENGLERROR();
 
     glUseProgram(0); LOGOPENGLERROR();
+    glBindVertexArray(0); LOGOPENGLERROR();
 }
 
 void MakeFill(triangles_t& triangles, discrete_t d) {

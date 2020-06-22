@@ -39,6 +39,13 @@ ContourPlot::~ContourPlot() {
 }
 
 bool ContourPlot::init() {
+    glGenVertexArrays(1, &vao); LOGOPENGLERROR();
+    if (!vao) {
+        LOGE << "Failed to create vertex array object";
+        return false;
+    }
+    glBindVertexArray(vao); LOGOPENGLERROR();
+
     GLuint genbuf[1];
     glGenBuffers(1, genbuf); LOGOPENGLERROR();
     vbo = genbuf[0];
@@ -46,8 +53,16 @@ bool ContourPlot::init() {
         LOGE << "Unable to initialize VBO for parallel contour plot";
         return false;
     }
+    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
 
+    GLint a_coord(0);
     a_coord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
+
+    glEnableVertexAttribArray(a_coord); LOGOPENGLERROR();
+    glVertexAttribPointer(a_coord, 2, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
+
+    glBindVertexArray(0); LOGOPENGLERROR();
+
     u_mvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
     u_zoom = glGetUniformLocation(program, "zoom"); LOGOPENGLERROR();
     u_ofs = glGetUniformLocation(program, "ofs"); LOGOPENGLERROR();
@@ -75,6 +90,10 @@ void ContourPlot::release() {
     if (vbo) {
         glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
         vbo = 0;
+    }
+    if (vao) {
+        glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
+        vao = 0;
     }
 }
 
