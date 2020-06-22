@@ -20,35 +20,8 @@ static const GLfloat g_quadVertices[] = {
     1.0f,  1.0f, 1.f, 1.f,
 };
 
-static const char g_vertexShader110[] = 
-    "#version 110\n"
-    "attribute vec2 coord;"
-    "attribute vec2 tex_coord;"
-    "varying vec2 xy_coord;"
-    "uniform vec2 iRes;"
-    "uniform mat4 mvp;"
-    "void main(void){"
-    "    xy_coord=coord.xy;"
-    "    if (iRes.x>iRes.y){"
-    "        xy_coord.x*=iRes.y/iRes.x;"
-    "    }else{"
-    "        xy_coord.y*=iRes.x/iRes.y;"
-    "    }"
-    "    gl_Position=mvp*vec4(xy_coord,0.,1.);"
-    "    xy_coord=tex_coord.xy;"
-    "}";
-
-static const char g_fragmentShader110[] =
-    "#version 110\n"
-    "varying vec2 xy_coord;"
-    "uniform sampler2D tex;"
-    "const vec4 col0=vec4(.5,.5,1.,1.);"
-    "void main(void){"
-    "   gl_FragColor=texture2D(tex,xy_coord)*col0;"
-    "}";
-
-static const char g_vertexShader130[] = 
-    "#version 130\n"
+static const char g_vertexShaderSrc[] = 
+    "#version 330 core\n"
     "in vec2 coord;"
     "in vec2 tex_coord;"
     "out vec2 xy_coord;"
@@ -64,8 +37,8 @@ static const char g_vertexShader130[] =
     "    xy_coord=tex_coord.xy;"
     "}";
 
-static const char g_fragmentShader130[] =
-    "#version 130\n"
+static const char g_fragmentShaderSrc[] =
+    "#version 330 core\n"
     "in vec2 xy_coord;"
     "out vec4 frag_color;"
     "uniform sampler2D tex;"
@@ -104,7 +77,28 @@ bool AmariRender::init(size_t size) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, NULL); LOGOPENGLERROR();
 
-    // Init VBO
+    // Init shader
+    GLuint vertex(0), fragment(0);
+    if (!Shader::createProgramSource(program, vertex, fragment, g_vertexShaderSrc, g_fragmentShaderSrc)) {
+        LOGE << "Unable to load shader for Amari Renderer";
+        return false;
+    }
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    uTex = glGetUniformLocation(program, "tex");
+    uResolution = glGetUniformLocation(program, "iRes");
+    uMVP = glGetUniformLocation(program, "mvp");
+
+    // Init buffers
+    glGenVertexArrays(1, &vao); LOGOPENGLERROR();
+    if (!vao) {
+        LOGE << "Failed to create vertex array object";
+        return false;
+    }
+    glBindVertexArray(vao); LOGOPENGLERROR();
+
     glGenBuffers(1, genbuf); LOGOPENGLERROR();
     vbo = genbuf[0];
     if (!vbo) {
@@ -115,22 +109,19 @@ bool AmariRender::init(size_t size) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices), g_quadVertices, GL_STATIC_DRAW); LOGOPENGLERROR();
 
-    // Init shader
-    if (!Shader::createProgramSource(program, vertex, fragment, g_vertexShader110, g_fragmentShader110)) {
-        LOGE << "Unable to load shader for Amari Renderer";
-        return false;
-    }
-
+    GLint aCoord(0), aTexCoord(0);
     aCoord = glGetAttribLocation(program, "coord");
     aTexCoord = glGetAttribLocation(program, "tex_coord");
-    uTex = glGetUniformLocation(program, "tex");
-    uResolution = glGetUniformLocation(program, "iRes");
-    uMVP = glGetUniformLocation(program, "mvp");
-    if (aCoord == -1 || aTexCoord == -1 || uTex == -1
-        || uResolution == -1 || uMVP == -1) {
-        LOGE << "Invalid shader program";
-        return false;
-    }
+
+    glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
+    glVertexAttribPointer(aCoord, 2, GL_FLOAT, GL_FALSE,
+        sizeof(GLfloat) * 4, 0); LOGOPENGLERROR();
+
+    glEnableVertexAttribArray(aTexCoord); LOGOPENGLERROR();
+    glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE,
+        sizeof(GLfloat) * 4, (void *)(sizeof(GLfloat) * 2)); LOGOPENGLERROR();
+
+    glBindVertexArray(0); LOGOPENGLERROR();
 
     // Allocate memory
     tex = TextureGuard_t(texture_alloc(size, g_bitsPerPixel), texture_free);
@@ -141,14 +132,15 @@ bool AmariRender::init(size_t size) {
 void AmariRender::release() {
     tex.reset();
 
-    Shader::releaseProgram(program, vertex, fragment);
-    
     glDeleteTextures(1, &texture); LOGOPENGLERROR();
+    glDeleteProgram(program); LOGOPENGLERROR();
+    glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
 void AmariRender::render(const Math::mat4f& mvp) {
     glUseProgram(program); LOGOPENGLERROR();
+    glBindVertexArray(vao); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
@@ -157,17 +149,10 @@ void AmariRender::render(const Math::mat4f& mvp) {
     glUniform2f(uResolution, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform1i(uTex, 0); LOGOPENGLERROR();
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
-    glVertexAttribPointer(aCoord, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(GLfloat)*4, 0); LOGOPENGLERROR();
-    glEnableVertexAttribArray(aTexCoord); LOGOPENGLERROR();
-    glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(GLfloat)*4, (void *)(sizeof(GLfloat)*2)); LOGOPENGLERROR();
-
     glDrawArrays(GL_TRIANGLE_STRIP, 0, g_quadVerticesCount); LOGOPENGLERROR();
 
     glUseProgram(0); LOGOPENGLERROR();
+    glBindVertexArray(0); LOGOPENGLERROR();
 }
 
 void AmariRender::resize(unsigned int w, unsigned int h) {

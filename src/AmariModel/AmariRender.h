@@ -29,9 +29,9 @@ public:
 
     GLuint texture;
 
+    GLuint vao;
     GLuint vbo;
 
-    GLuint program, vertex, fragment;
-    GLint aCoord, aTexCoord;
+    GLuint program;
     GLint uMVP, uResolution, uTex;
 };
