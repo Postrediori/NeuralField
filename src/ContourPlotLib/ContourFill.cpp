@@ -129,8 +129,8 @@ void MakeFill(triangles_t& triangles, discrete_t d) {
 
 void MakeFillCorner(triangles_t& triangles, flags_t flags,
                     discrete_t d, vals_t vals) {
-    double x1, y1;
-    double x2, y2;
+    double x1(0.0), y1(0.0);
+    double x2(0.0), y2(0.0);
 
     switch (flags) {
     case FLAG_SW:
