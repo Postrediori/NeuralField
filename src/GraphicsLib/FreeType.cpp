@@ -229,7 +229,6 @@ void FontRenderer::release() {
 }
 
 void FontRenderer::renderStart() {
-    glPushAttrib(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR(); // Push GL_BLEND and Blending function
     glEnable(GL_BLEND); LOGOPENGLERROR();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); LOGOPENGLERROR();
     glUseProgram(glProgram); LOGOPENGLERROR();
@@ -240,7 +239,6 @@ void FontRenderer::renderStart() {
 void FontRenderer::renderEnd() {
     glBindVertexArray(0); LOGOPENGLERROR();
     glUseProgram(0); LOGOPENGLERROR();
-    glPopAttrib(); LOGOPENGLERROR();
 }
 
 void FontRenderer::renderColor(const GLfloat c[]) {

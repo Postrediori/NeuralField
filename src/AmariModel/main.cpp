@@ -173,13 +173,14 @@ int main(int /*argc*/, char** /*argv*/) {
         return EXIT_FAILURE;
     }
 
-    LOGI << "Init window context with OpenGL 2.0";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    LOGI << "Init window context with OpenGL 3.3";
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
     if (!window) {
-        LOGE << "Unable to Create OpenGL 2.0 Context";
+        LOGE << "Unable to Create OpenGL 3.3 Context";
         status = EXIT_FAILURE;
         goto finish;
     }

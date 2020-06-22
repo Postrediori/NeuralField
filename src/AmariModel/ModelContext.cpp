@@ -115,16 +115,9 @@ bool AmariModelContext::Init() {
     contourParallel_->update(amariModel_.activity.get(), g_area, 1.0);
     
     // Set up OpenGL
-    glEnable(GL_TEXTURE_2D); LOGOPENGLERROR();
-    glShadeModel(GL_SMOOTH); LOGOPENGLERROR();
-
     glClearColor(g_background[0], g_background[1],
                  g_background[2], g_background[3]); LOGOPENGLERROR();
     glClearDepth(1.); LOGOPENGLERROR();
-
-    glEnable(GL_MULTISAMPLE_ARB); LOGOPENGLERROR();
-
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); LOGOPENGLERROR();
     
     return true;
 }
