@@ -64,18 +64,18 @@ bool NeuralFieldContext::Init() {
     mvp_ = Math::GetOrthoProjection(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
 
     // Init model
-    if (!amariModel_.init(g_configFile)) {
+    if (!model_.init(g_configFile)) {
         LOGE << "Unable to load Amari Model Config from file " << g_configFile;
         return false;
     }
 
     // Init render
-    if (!amariRender_.init(amariModel_.size)) {
+    if (!renderer_.init(model_.size)) {
         LOGE << "Unable to init Amari Model Renderer";
         return false;
     }
     
-    amariRender_.update_texture(amariModel_.activity.get());
+    renderer_.update_texture(model_.activity.get());
 
     // Init contour lines
     if (!Shader::createProgram(program_, g_vertexShader, g_fragmentShader)) {
@@ -107,10 +107,10 @@ bool NeuralFieldContext::Init() {
         return false;
     }
 
-    contourLines_->update(amariModel_.activity.get(), g_area, 1.0);
-    contourFill_->update(amariModel_.activity.get(), g_area, 1.0);
-    contourParallelFill_->update(amariModel_.activity.get(), g_area, 1.0);
-    contourParallel_->update(amariModel_.activity.get(), g_area, 1.0);
+    contourLines_->update(model_.activity.get(), g_area, 1.0);
+    contourFill_->update(model_.activity.get(), g_area, 1.0);
+    contourParallelFill_->update(model_.activity.get(), g_area, 1.0);
+    contourParallel_->update(model_.activity.get(), g_area, 1.0);
     
     // Set up OpenGL
     glClearColor(g_background[0], g_background[1],
@@ -129,7 +129,7 @@ void NeuralFieldContext::Release() {
 
 void NeuralFieldContext::Render() {
     if (renderMode_ == RENDER_TEXTURE) {
-        amariRender_.render(mvp_);
+        renderer_.render(mvp_);
 
     } else if (renderMode_ == RENDER_CONTOUR) {
         static const float zoom = 1.f;
@@ -206,7 +206,7 @@ void NeuralFieldContext::Resize(int w, int h) {
         size_ = w;
     }
 
-    amariRender_.resize(w, h);
+    renderer_.resize(w, h);
     contourLines_->resize(w, h);
     contourFill_->resize(w, h);
     contourParallel_->resize(w, h);
@@ -229,56 +229,56 @@ void NeuralFieldContext::SetActivity(int x, int y) {
     }
 
     int n, m;
-    n = (int)((float)cx/(float)size_ * amariModel_.size);
-    m = (int)((1.f - (float)cy/(float)size_) * amariModel_.size);
+    n = (int)((float)cx/(float)size_ * model_.size);
+    m = (int)((1.f - (float)cy/(float)size_) * model_.size);
 
-    amariModel_.set_activity(n, m, 1.f);
+    model_.set_activity(n, m, 1.f);
 
     LOGI << "Set Activity at [" << n << "," << m << "]";
 }
 
 void NeuralFieldContext::Restart() {
-    amariModel_.restart();
+    model_.restart();
     LOGI << "Reset Model";
 }
 
 void NeuralFieldContext::Update() {
-    amariModel_.stimulate();
+    model_.stimulate();
 
     switch (renderMode_) {
     case RENDER_TEXTURE:
-        amariRender_.update_texture(amariModel_.activity.get());
+        renderer_.update_texture(model_.activity.get());
         break;
 
     case RENDER_CONTOUR:
         if (contourLines_) {
-            contourLines_->update(amariModel_.activity.get(), g_area, 0.0);
+            contourLines_->update(model_.activity.get(), g_area, 0.0);
         }
         break;
 
     case RENDER_PARALLEL:
         if (contourParallel_) {
-            contourParallel_->update(amariModel_.activity.get(), g_area, 0.0);
+            contourParallel_->update(model_.activity.get(), g_area, 0.0);
         }
         break;
 
     case RENDER_FILL:
         if (contourLines_) {
-            contourLines_->update(amariModel_.activity.get(), g_area, 0.0);
+            contourLines_->update(model_.activity.get(), g_area, 0.0);
         }
 
         if (contourFill_) {
-            contourFill_->update(amariModel_.activity.get(), g_area, 0.0);
+            contourFill_->update(model_.activity.get(), g_area, 0.0);
         }
         break;
 
     case RENDER_PARALLEL_FILL:
         if (contourParallel_) {
-            contourParallel_->update(amariModel_.activity.get(), g_area, 0.0);
+            contourParallel_->update(model_.activity.get(), g_area, 0.0);
         }
 
         if (contourParallelFill_) {
-            contourParallelFill_->update(amariModel_.activity.get(), g_area, 0.0);
+            contourParallelFill_->update(model_.activity.get(), g_area, 0.0);
         }
         break;
 
@@ -292,8 +292,8 @@ void NeuralFieldContext::SetRenderMode(RenderMode mode) {
 }
 
 void NeuralFieldContext::SwitchBlur() {
-    amariRender_.use_blur = !amariRender_.use_blur;
-    if (amariRender_.use_blur) {
+    renderer_.use_blur = !renderer_.use_blur;
+    if (renderer_.use_blur) {
         LOGI << "Turned Blur On";
     } else {
         LOGI << "Turned Blur Off";
@@ -301,11 +301,11 @@ void NeuralFieldContext::SwitchBlur() {
 }
 
 void NeuralFieldContext::IncreaseBlur() {
-    amariRender_.add_blur(g_textureBlurDelta);
+    renderer_.add_blur(g_textureBlurDelta);
 }
 
 void NeuralFieldContext::DecreaseBlur() {
-    amariRender_.add_blur(-g_textureBlurDelta);
+    renderer_.add_blur(-g_textureBlurDelta);
 }
 
 void NeuralFieldContext::ToggleUi() {

@@ -10,11 +10,12 @@
 #include "ContourPlot.h"
 #include "NeuralFieldContext.h"
 #include "GlFormatter.h"
+#include "ScopeGuard.h"
 
-const int Width = 512;
-const int Height = 512;
+static const int Width = 512;
+static const int Height = 512;
 
-const char Title[] = "Model of Planar Neural Field";
+static const std::string Title = "Model of Planar Neural Field";
 
 /*****************************************************************************
  * Main variables
@@ -34,9 +35,7 @@ bool Init() {
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-    // Init scene
-    gFullscreen = false;
-
+    // Init simulation
     if (!gContext.Init()) {
         LOGE << "Unable to initialize context";
         return false;
@@ -157,7 +156,6 @@ void Update(GLFWwindow* /*window*/) {
  * Main program
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
-    int status = EXIT_SUCCESS;
 
     static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 #ifdef NDEBUG
@@ -172,18 +170,25 @@ int main(int /*argc*/, char** /*argv*/) {
         LOGE << "Failed to load GLFW";
         return EXIT_FAILURE;
     }
+    ScopeGuard glfwGuard([]() {
+        glfwTerminate();
+        LOGD << "Cleanup : GLFW context";
+    });
 
     LOGI << "Init window context with OpenGL 3.3";
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    auto window = glfwCreateWindow(Width, Height, Title, nullptr, nullptr);
+    auto window = glfwCreateWindow(Width, Height, Title.c_str(), nullptr, nullptr);
     if (!window) {
         LOGE << "Unable to Create OpenGL 3.3 Context";
-        status = EXIT_FAILURE;
-        goto finish;
+        return EXIT_FAILURE;
     }
+    ScopeGuard windowGuard([window]() {
+        glfwDestroyWindow(window);
+        LOGD << "Cleanup : GLFW window";
+    });
 
     glfwSetKeyCallback(window, Keyboard);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
@@ -196,9 +201,12 @@ int main(int /*argc*/, char** /*argv*/) {
 
     if (!Init()) {
         LOGE << "Initialization failed";
-        status = EXIT_FAILURE;
-        goto finish;
+        return EXIT_FAILURE;
     }
+    ScopeGuard scopeGuard([]() {
+        Deinit();
+        LOGD << "Cleanup : Simulation";
+    });
 
     while (!glfwWindowShouldClose(window)) {
         Display();
@@ -209,12 +217,7 @@ int main(int /*argc*/, char** /*argv*/) {
         glfwPollEvents();
     }
 
-finish:
-    Deinit();
-    if (window) {
-        glfwDestroyWindow(window);
-    }
-    glfwTerminate();
+    // Cleanup is done by scope guards
 
-    return status;
+    return EXIT_SUCCESS;
 }

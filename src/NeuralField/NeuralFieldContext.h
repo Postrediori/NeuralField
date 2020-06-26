@@ -46,8 +46,8 @@ private:
     FontRenderer fr_;
     FontHandle_t a24;
     
-    NeuralFieldModel amariModel_;
-    TextureRenderer amariRender_;
+    NeuralFieldModel model_;
+    TextureRenderer renderer_;
 
     ContourPlotGuard_t contourLines_;
     ContourPlotGuard_t contourFill_;
