@@ -1,9 +1,9 @@
 #pragma once
 
-class AmariRender {
+class TextureRenderer {
 public:
-    AmariRender();
-    ~AmariRender();
+    TextureRenderer();
+    ~TextureRenderer();
 
     bool init(size_t size);
     void release();

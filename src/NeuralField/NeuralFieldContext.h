@@ -10,10 +10,10 @@ enum RenderMode : uint32_t {
     RENDER_MODES
 };
 
-class AmariModelContext {
+class NeuralFieldContext {
 public:
-    AmariModelContext();
-    ~AmariModelContext();
+    NeuralFieldContext();
+    ~NeuralFieldContext();
     
     bool Init();
     void Release();
@@ -28,8 +28,10 @@ public:
     void SwitchBlur();
     void IncreaseBlur();
     void DecreaseBlur();
-    
-public:
+
+    void ToggleUi();
+
+private:
     int windowWidth_, windowHeight_, size_;
     float scaleX_, scaleY_;
 
@@ -44,8 +46,8 @@ public:
     FontRenderer fr_;
     FontHandle_t a24;
     
-    AmariModel amariModel_;
-    AmariRender amariRender_;
+    NeuralFieldModel amariModel_;
+    TextureRenderer amariRender_;
 
     ContourPlotGuard_t contourLines_;
     ContourPlotGuard_t contourFill_;

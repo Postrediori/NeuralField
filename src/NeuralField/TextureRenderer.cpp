@@ -5,12 +5,12 @@
 #include "Gauss.h"
 #include "GlUtils.h"
 #include "Shader.h"
-#include "AmariRender.h"
+#include "TextureRenderer.h"
 
 static const size_t g_bitsPerPixel = 4;
 
 /*****************************************************************************
- * AmariRender
+ * TextureRenderer
  ****************************************************************************/
 static const GLsizei g_quadVerticesCount = 4;
 static const GLfloat g_quadVertices[] = {
@@ -48,16 +48,16 @@ static const char g_fragmentShaderSrc[] =
     "   frag_color.a=1.;"
     "}";
 
-AmariRender::AmariRender()
+TextureRenderer::TextureRenderer()
  : use_blur(true) {
     set_blur(1.0);
 }
 
-AmariRender::~AmariRender() {
+TextureRenderer::~TextureRenderer() {
     release();
 }
 
-bool AmariRender::init(size_t size) {
+bool TextureRenderer::init(size_t size) {
     this->size = size;
     
     GLuint genbuf[1];
@@ -125,7 +125,7 @@ bool AmariRender::init(size_t size) {
     return true;
 }
 
-void AmariRender::release() {
+void TextureRenderer::release() {
     tex.reset();
 
     glDeleteTextures(1, &texture); LOGOPENGLERROR();
@@ -134,7 +134,7 @@ void AmariRender::release() {
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
-void AmariRender::render(const Math::mat4f& mvp) {
+void TextureRenderer::render(const Math::mat4f& mvp) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();
 
@@ -151,12 +151,12 @@ void AmariRender::render(const Math::mat4f& mvp) {
     glBindVertexArray(0); LOGOPENGLERROR();
 }
 
-void AmariRender::resize(unsigned int w, unsigned int h) {
+void TextureRenderer::resize(unsigned int w, unsigned int h) {
     this->w = w;
     this->h = h;
 }
 
-void AmariRender::update_texture(matrix_t* m) {
+void TextureRenderer::update_texture(matrix_t* m) {
     texture_copy_matrix(tex.get(), m);
 
     if (use_blur) {
@@ -168,14 +168,14 @@ void AmariRender::update_texture(matrix_t* m) {
                     GL_UNSIGNED_BYTE, (const GLubyte *)tex->data); LOGOPENGLERROR();
 }
 
-void AmariRender::set_blur(double blur) {
+void TextureRenderer::set_blur(double blur) {
     blur_sigma = blur;
     if (blur_sigma > 0.0) {
         blur_kernel = KernelGuard_t(kernel_create(blur_sigma, MODE_WRAP), kernel_free);
     }
 }
 
-void AmariRender::add_blur(double dblur) {
+void TextureRenderer::add_blur(double dblur) {
     double new_blur_sigma = blur_sigma + dblur;
 
     if (new_blur_sigma > 0.0) {

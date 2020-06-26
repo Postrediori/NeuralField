@@ -2,7 +2,7 @@
 #include "Matrix.h"
 #include "Texture.h"
 #include "Gauss.h"
-#include "AmariModel.h"
+#include "NeuralFieldModel.h"
 
 inline float frand1000() {
      return (float)(rand() % 1000) / 1000.f;
@@ -11,7 +11,7 @@ inline float frand1000() {
 /*****************************************************************************
  * Amari model
  ****************************************************************************/
-AmariModel::AmariModel()
+NeuralFieldModel::NeuralFieldModel()
     : h(-0.1)
     , k(0.05)
     , K_(0.125)
@@ -20,7 +20,7 @@ AmariModel::AmariModel()
     , mode(MODE_REFLECT) {
 }
 
-bool AmariModel::init(const std::string& config_file) {
+bool NeuralFieldModel::init(const std::string& config_file) {
     if (!load_config(config_file)) {
         return false;
     }
@@ -43,7 +43,7 @@ bool AmariModel::init(const std::string& config_file) {
     return true;
 }
 
-void AmariModel::restart() {
+void NeuralFieldModel::restart() {
     matrix_random_f(stimulus.get());
     matrix_scalar_mul(stimulus.get(), -h);
 
@@ -52,7 +52,7 @@ void AmariModel::restart() {
     matrix_scalar_set(inhibition.get(), 0.0);
 }
 
-void AmariModel::release() {
+void NeuralFieldModel::release() {
     stimulus.release();
     activity.release();
     excitement.release();
@@ -62,7 +62,7 @@ void AmariModel::release() {
     inhibition_kernel.release();
 }
 
-void AmariModel::stimulate() {
+void NeuralFieldModel::stimulate() {
     matrix_heaviside(activity.get());
 
     kernel_apply_to_matrix(excitement.get(), activity.get(), excitement_kernel.get());
@@ -77,7 +77,7 @@ void AmariModel::stimulate() {
     matrix_add(activity.get(), stimulus.get());
 }
 
-bool AmariModel::load_config(const std::string& config_file) {
+bool NeuralFieldModel::load_config(const std::string& config_file) {
     std::ifstream in(config_file, std::ios::in);
     if (!in) {
         LOGE << "Unable to load Amari Model Config File " << config_file;
@@ -137,6 +137,6 @@ bool AmariModel::load_config(const std::string& config_file) {
     return true;
 }
 
-void AmariModel::set_activity(size_t x, size_t y, float a) {
+void NeuralFieldModel::set_activity(size_t x, size_t y, float a) {
     matrix_set(activity.get(), y, x, a);
 }

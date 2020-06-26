@@ -1,8 +1,8 @@
 #pragma once
 
-class AmariModel {
+class NeuralFieldModel {
 public:
-    AmariModel();
+    NeuralFieldModel();
 
     bool init(const std::string& config_file);
     bool load_config(const std::string& config_file);

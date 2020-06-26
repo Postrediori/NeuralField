@@ -5,25 +5,23 @@
 #include "Gauss.h"
 #include "GlUtils.h"
 #include "FreeType.h"
-#include "AmariModel.h"
-#include "AmariRender.h"
+#include "NeuralFieldModel.h"
+#include "TextureRenderer.h"
 #include "ContourPlot.h"
-#include "ModelContext.h"
+#include "NeuralFieldContext.h"
 #include "GlFormatter.h"
 
 const int Width = 512;
 const int Height = 512;
 
-const char Title[] = "Amari Model of Neural Field";
+const char Title[] = "Model of Planar Neural Field";
 
 /*****************************************************************************
  * Main variables
  ****************************************************************************/
-static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
-
 bool gFullscreen = false;
 
-AmariModelContext gContext;
+NeuralFieldContext gContext;
 
 /*****************************************************************************
  * Graphics functions
@@ -94,7 +92,7 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
             break;
 
         case GLFW_KEY_F2:
-            gContext.showHelp_ = !gContext.showHelp_;
+            gContext.ToggleUi();
             break;
 
         case GLFW_KEY_B:
@@ -160,6 +158,8 @@ void Update(GLFWwindow* /*window*/) {
  ****************************************************************************/
 int main(int /*argc*/, char** /*argv*/) {
     int status = EXIT_SUCCESS;
+
+    static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 #ifdef NDEBUG
     plog::init(plog::info, &consoleAppender);
 #else

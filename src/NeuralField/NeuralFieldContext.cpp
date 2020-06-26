@@ -6,14 +6,14 @@
 #include "GlUtils.h"
 #include "Shader.h"
 #include "FreeType.h"
-#include "AmariModel.h"
-#include "AmariRender.h"
+#include "NeuralFieldModel.h"
+#include "TextureRenderer.h"
 #include "ContourPlot.h"
 #include "ContourLine.h"
 #include "ContourFill.h"
 #include "ContourParallel.h"
 #include "ContourParallelFill.h"
-#include "ModelContext.h"
+#include "NeuralFieldContext.h"
 
 
 static const GLfloat g_background[] = {0.00f, 0.00f, 0.00f, 1.00f};
@@ -38,16 +38,16 @@ static const int g_timerInterval = 10;
 static const float g_textureBlurDelta = 0.1f;
 
 
-AmariModelContext::AmariModelContext()
+NeuralFieldContext::NeuralFieldContext()
     : renderMode_(RENDER_CONTOUR)
     , program_(0) {
 }
 
-AmariModelContext::~AmariModelContext() {
+NeuralFieldContext::~NeuralFieldContext() {
     Release();
 }
 
-bool AmariModelContext::Init() {
+bool NeuralFieldContext::Init() {
     showHelp_ = true;
     
     // Init font
@@ -120,14 +120,14 @@ bool AmariModelContext::Init() {
     return true;
 }
 
-void AmariModelContext::Release() {
+void NeuralFieldContext::Release() {
     if (program_) {
         glDeleteProgram(program_);
         program_ = 0;
     }
 }
 
-void AmariModelContext::Render() {
+void NeuralFieldContext::Render() {
     if (renderMode_ == RENDER_TEXTURE) {
         amariRender_.render(mvp_);
 
@@ -193,7 +193,7 @@ void AmariModelContext::Render() {
     fpsCounter_.update(glfwGetTime());
 }
 
-void AmariModelContext::Resize(int w, int h) {
+void NeuralFieldContext::Resize(int w, int h) {
     windowWidth_ = w;
     windowHeight_ = h;
 
@@ -213,7 +213,7 @@ void AmariModelContext::Resize(int w, int h) {
     contourParallelFill_->resize(w, h);
 }
 
-void AmariModelContext::SetActivity(int x, int y) {
+void NeuralFieldContext::SetActivity(int x, int y) {
     int cx, cy;
 
     if (windowWidth_ > windowHeight_) {
@@ -237,12 +237,12 @@ void AmariModelContext::SetActivity(int x, int y) {
     LOGI << "Set Activity at [" << n << "," << m << "]";
 }
 
-void AmariModelContext::Restart() {
+void NeuralFieldContext::Restart() {
     amariModel_.restart();
     LOGI << "Reset Model";
 }
 
-void AmariModelContext::Update() {
+void NeuralFieldContext::Update() {
     amariModel_.stimulate();
 
     switch (renderMode_) {
@@ -287,11 +287,11 @@ void AmariModelContext::Update() {
     }
 }
 
-void AmariModelContext::SetRenderMode(RenderMode mode) {
+void NeuralFieldContext::SetRenderMode(RenderMode mode) {
     renderMode_ = mode;
 }
 
-void AmariModelContext::SwitchBlur() {
+void NeuralFieldContext::SwitchBlur() {
     amariRender_.use_blur = !amariRender_.use_blur;
     if (amariRender_.use_blur) {
         LOGI << "Turned Blur On";
@@ -300,10 +300,14 @@ void AmariModelContext::SwitchBlur() {
     }
 }
 
-void AmariModelContext::IncreaseBlur() {
+void NeuralFieldContext::IncreaseBlur() {
     amariRender_.add_blur(g_textureBlurDelta);
 }
 
-void AmariModelContext::DecreaseBlur() {
+void NeuralFieldContext::DecreaseBlur() {
     amariRender_.add_blur(-g_textureBlurDelta);
+}
+
+void NeuralFieldContext::ToggleUi() {
+    showHelp_ = !showHelp_;
 }
