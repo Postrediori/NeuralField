@@ -1,7 +1,5 @@
 #pragma once
 
-#include <omp.h>
-
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
@@ -34,10 +32,3 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
-#ifdef _MSC_VER
-# pragma warning(disable: 4786)
-#endif

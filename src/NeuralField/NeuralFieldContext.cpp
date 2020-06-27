@@ -5,7 +5,6 @@
 #include "Gauss.h"
 #include "GlUtils.h"
 #include "Shader.h"
-#include "FreeType.h"
 #include "NeuralFieldModel.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
@@ -20,24 +19,23 @@ static const GLfloat g_background[] = {0.00f, 0.00f, 0.00f, 1.00f};
 static const GLfloat g_foreground[] = {0.50f, 0.50f, 1.00f, 1.00f};
 static const GLfloat g_outline[] = {1.00f, 1.00f, 1.00f, 1.00f};
 
-static const FontSize_t g_fontSize = 24;
-
-static const char* const g_renderModeLabels[RENDER_MODES] = {
-    "Texture", "Contour", "Contour Parallel", "Fill", "Filled Parallel"
+static const std::vector<std::string> g_renderModeLabels = {
+    "Texture",
+    "Contour",
+    "Contour Parallel",
+    "Fill",
+    "Filled Parallel"
 };
 
-static const char g_fontFile[] = "data/font.ttf";
-static const char g_configFile[] = "data/amari.conf";
-static const char g_vertexShader[] = "data/plane.vert";
-static const char g_fragmentShader[]  = "data/plane.frag";
+static const std::string g_configFile = "data/amari.conf";
+static const std::string g_vertexShader = "data/plane.vert";
+static const std::string g_fragmentShader = "data/plane.frag";
 
 static const area_t g_area = {-1.0, 1.0, -1.0, 1.0};
 
-static const int g_timerInterval = 10;
 static const float g_textureBlurDelta = 0.1f;
 
 static const float g_UiWidth = 250.0f;
-static const float g_UiMargin = 0.0f;
 
 
 NeuralFieldContext::NeuralFieldContext()
@@ -51,16 +49,6 @@ NeuralFieldContext::~NeuralFieldContext() {
 
 bool NeuralFieldContext::Init() {
     showUi_ = true;
-    
-    // Init font
-    if (!fr_.init()) {
-        LOGE << "Unable to initialize FreeType Font Loader";
-        return false;
-    }
-    if (!fr_.load(g_fontFile)) {
-        return false;
-    }
-    a24 = fr_.createAtlas(g_fontSize);
 
     // Init MVP matrices
     mvp_ = glm::ortho(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
@@ -167,9 +155,9 @@ void NeuralFieldContext::Render() {
 }
 
 void NeuralFieldContext::RenderUi() {
-    ImVec2 uiSize = ImVec2(g_UiWidth, windowHeight_ - g_UiMargin * 2);
+    ImVec2 uiSize = ImVec2(g_UiWidth, windowHeight_);
 
-    ImGui::SetNextWindowPos(ImVec2(g_UiMargin, g_UiMargin), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(0.0, 0.0), ImGuiCond_Always);
     ImGui::SetNextWindowSize(uiSize, ImGuiCond_Always);
 
     ImGui::Begin("Neural Field", nullptr,
@@ -177,10 +165,10 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Text("Rendering mode:");
     for (int idx = 0; idx < RenderMode::RENDER_MODES; idx++) {
-        ImGui::RadioButton(g_renderModeLabels[idx], (int *)&this->renderMode_, (int)idx);
+        ImGui::RadioButton(g_renderModeLabels[idx].c_str(), (int *)&this->renderMode_, (int)idx);
         if (idx == 0) {
             ImGui::SameLine();
-            if (ImGui::Checkbox("Texture Blur", (bool*)&this->textureBlur_)) {
+            if (ImGui::Checkbox("Texture Blur", (bool *)&this->textureBlur_)) {
                 renderer_.use_blur = this->textureBlur_;
             }
         }
@@ -207,10 +195,7 @@ void NeuralFieldContext::Resize(int w, int h) {
     windowWidth_ = w;
     windowHeight_ = h;
 
-    //scaleX_ = 2.f / (float)windowWidth_;
-    //scaleY_ = 2.f / (float)windowHeight_;
-
-    int newW = w - g_UiWidth - g_UiMargin * 2;
+    int newW = w - g_UiWidth;
     double newScale = 2.0 / (double)(newW);
     double newLeft = g_area.xmin - g_UiWidth * newScale;
     mvp_ = glm::ortho(newLeft, g_area.xmax, g_area.ymin, g_area.ymax);
@@ -225,14 +210,16 @@ void NeuralFieldContext::Resize(int w, int h) {
 void NeuralFieldContext::SetActivity(int x, int y) {
     int cx = 0, cy = 0;
 
+    int newX = x - g_UiWidth;
+
     int w = windowWidth_ - g_UiWidth;
     int h = windowHeight_;
 
     if (w > h) {
-        cx = x - (w - h) / 2 - g_UiWidth;
+        cx = newX - (w - h) / 2;
         cy = y;
     } else {
-        cx = x - g_UiWidth;
+        cx = newX;
         cy = y - (h - w) / 2;
     }
 

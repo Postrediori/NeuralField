@@ -36,16 +36,12 @@ private:
 
 private:
     int windowWidth_, windowHeight_;
-    //float scaleX_, scaleY_;
 
     RenderMode renderMode_;
 
     GLuint program_;
     
     glm::mat4 mvp_;
-    
-    FontRenderer fr_;
-    FontHandle_t a24;
     
     NeuralFieldModel model_;
     TextureRenderer renderer_;

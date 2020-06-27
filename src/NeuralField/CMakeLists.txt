@@ -5,7 +5,6 @@ include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${GLFW_INCLUDE_DIR}
     ${GLAD_INCLUDE_DIR}
-    ${FREETYPE_INCLUDE_DIRS}
     ${GLM_INCLUDE_DIR}
     ${IMGUI_INCLUDE_DIR}
     )
@@ -14,7 +13,6 @@ target_link_libraries(${PROJECT}
     ${OPENGL_LIBRARIES}
     ${GLFW_LIBRARIES}
     ${GLAD_LIBRARIES}
-    ${FREETYPE_LIBRARIES}
     ${IMGUI_LIBRARIES}
     NeuralFieldLib
     ContourPlotLib
@@ -26,9 +24,6 @@ target_link_libraries(${PROJECT}
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/amari.conf
     ${CMAKE_CURRENT_BINARY_DIR}/data/amari.conf COPYONLY)
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/font.ttf
-    ${CMAKE_CURRENT_BINARY_DIR}/data/font.ttf COPYONLY)
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/plane.vert
     ${CMAKE_CURRENT_BINARY_DIR}/data/plane.vert COPYONLY)

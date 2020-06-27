@@ -4,7 +4,6 @@
 #include "MathUtils.h"
 #include "Gauss.h"
 #include "GlUtils.h"
-#include "FreeType.h"
 #include "NeuralFieldModel.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
@@ -62,7 +61,7 @@ void Display(NeuralFieldContext& context) {
 void Reshape(GLFWwindow* window, int width, int height) {
     void* p = glfwGetWindowUserPointer(window);
     assert(p);
-    NeuralFieldContext* context = (NeuralFieldContext *)p;
+    NeuralFieldContext* context = static_cast<NeuralFieldContext *>(p);
 
     glViewport(0, 0, width, height); LOGOPENGLERROR();
 
@@ -76,7 +75,7 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
 
     void* p = glfwGetWindowUserPointer(window);
     assert(p);
-    NeuralFieldContext* context = (NeuralFieldContext *)p;
+    NeuralFieldContext* context = static_cast<NeuralFieldContext *>(p);
 
     if (action == GLFW_PRESS) {
         switch (key) {
@@ -148,11 +147,11 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
 void Mouse(GLFWwindow* window, int button, int action, int /*mods*/) {
     void* p = glfwGetWindowUserPointer(window);
     assert(p);
-    NeuralFieldContext* context = (NeuralFieldContext *)p;
+    NeuralFieldContext* context = static_cast<NeuralFieldContext *>(p);
 
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_1) {
-            double x, y;
+            double x = 0.0, y = 0.0;
             glfwGetCursorPos(window, &x, &y);
             context->SetActivity(x, y);
         }
@@ -220,9 +219,9 @@ int main(int /*argc*/, char** /*argv*/) {
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr; // Disable .ini
 
-    static const char* gGlslVersion = "#version 330 core";
+    static const std::string gGlslVersion = "#version 330 core";
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(gGlslVersion);
+    ImGui_ImplOpenGL3_Init(gGlslVersion.c_str());
 
     ScopeGuard imGuiContextGuard([]() {
             ImGui_ImplOpenGL3_Shutdown();
@@ -235,7 +234,7 @@ int main(int /*argc*/, char** /*argv*/) {
         LOGE << "Initialization failed";
         return EXIT_FAILURE;
     }
-    glfwSetWindowUserPointer(window, (void *)(&gContext));
+    glfwSetWindowUserPointer(window, static_cast<void *>(&gContext));
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
