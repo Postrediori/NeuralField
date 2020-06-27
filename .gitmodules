@@ -10,3 +10,6 @@
 	path = 3rdparty/plog
 	url = https://github.com/SergiusTheBest/plog/
 	branch = master
+[submodule "3rdparty/glm"]
+	path = 3rdparty/glm
+	url = https://github.com/g-truc/glm.git

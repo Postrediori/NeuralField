@@ -1,13 +1,13 @@
 #pragma once
 
-enum RenderMode : uint32_t {
+enum RenderMode : int {
     RENDER_TEXTURE = 0,
-    RENDER_CONTOUR,
-    RENDER_PARALLEL,
-    RENDER_FILL,
-    RENDER_PARALLEL_FILL,
+    RENDER_CONTOUR = 1,
+    RENDER_PARALLEL = 2,
+    RENDER_FILL = 3,
+    RENDER_PARALLEL_FILL = 4,
 
-    RENDER_MODES
+    RENDER_MODES = 5
 };
 
 class NeuralFieldContext {
@@ -22,7 +22,7 @@ public:
     void Resize(int w, int h);
     void SetActivity(int x, int y);
     void Restart();
-    void Update();
+    void Update(double t);
     
     void SetRenderMode(RenderMode mode);
     void SwitchBlur();
@@ -32,16 +32,17 @@ public:
     void ToggleUi();
 
 private:
-    int windowWidth_, windowHeight_, size_;
-    float scaleX_, scaleY_;
+    void RenderUi();
+
+private:
+    int windowWidth_, windowHeight_;
+    //float scaleX_, scaleY_;
 
     RenderMode renderMode_;
 
     GLuint program_;
     
-    FPSCounter fpsCounter_;
-    
-    Math::mat4f mvp_;
+    glm::mat4 mvp_;
     
     FontRenderer fr_;
     FontHandle_t a24;
@@ -54,5 +55,9 @@ private:
     ContourPlotGuard_t contourParallel_;
     ContourPlotGuard_t contourParallelFill_;
     
-    bool showHelp_;
+    bool showUi_;
+
+    float fps_;
+
+    bool textureBlur_ = true;
 };

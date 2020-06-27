@@ -20,36 +20,46 @@ static const GLfloat g_quadVertices[] = {
     1.0f,  1.0f, 1.f, 1.f,
 };
 
-static const char g_vertexShaderSrc[] = 
-    "#version 330 core\n"
-    "in vec2 coord;"
-    "in vec2 tex_coord;"
-    "out vec2 xy_coord;"
-    "uniform vec2 iRes;"
-    "uniform mat4 mvp;"
-    "void main(void){"
-    "    xy_coord=coord.xy;"
-    "    if (iRes.x>iRes.y)"
-    "        xy_coord.x*=iRes.y/iRes.x;"
-    "    else"
-    "        xy_coord.y*=iRes.x/iRes.y;"
-    "    gl_Position=mvp*vec4(xy_coord,0.,1.);"
-    "    xy_coord=tex_coord.xy;"
-    "}";
+static const std::string g_vertexShaderPath = "data/texture.vert";
+static const std::string g_fragmentShaderPath = "data/texture.frag";
 
-static const char g_fragmentShaderSrc[] =
-    "#version 330 core\n"
-    "in vec2 xy_coord;"
-    "out vec4 frag_color;"
-    "uniform sampler2D tex;"
-    "const vec4 col0=vec4(.5,.5,1.,1.);"
-    "void main(void){"
-    "   frag_color=texture(tex,xy_coord)*col0;"
-    "   frag_color.a=1.;"
-    "}";
+//static const char g_vertexShaderSrc[] = 
+//    "#version 330 core\n"
+//    "in vec2 coord;"
+//    "in vec2 tex_coord;"
+//    "out vec2 xy_coord;"
+//    "uniform vec2 iRes;"
+//    "uniform mat4 mvp;"
+//    "vec2 adjust_proportions(vec2 v, vec2 res) {"
+//    "    vec2 xy=v;"
+//    "    if (res.x>res.y) {"
+//    "        xy.x*=res.y/res.x;"
+//    "    } else {"
+//    "        xy.y*=res.x/res.y;"
+//    "    }"
+//    "    return xy;"
+//    "}"
+//    "void main(void){"
+//    "    xy_coord=adjust_proportions(coord.xy,iRes);"
+//    "    gl_Position=mvp*vec4(xy_coord,0.,1.);"
+//    "    xy_coord=tex_coord.xy;"
+//    "}";
+//
+//static const char g_fragmentShaderSrc[] =
+//    "#version 330 core\n"
+//    "in vec2 xy_coord;"
+//    "out vec4 frag_color;"
+//    "uniform sampler2D tex;"
+//    "const vec4 col0=vec4(.5,.5,1.,1.);"
+//    "void main(void){"
+//    "    float c=texture(tex,xy_coord).r;"
+//    "    frag_color=mix(col0,vec4(0.15),1.-c);"
+//    "    frag_color.a=1.;"
+//    "}";
 
 TextureRenderer::TextureRenderer()
  : use_blur(true) {
+
     set_blur(1.0);
 }
 
@@ -59,7 +69,7 @@ TextureRenderer::~TextureRenderer() {
 
 bool TextureRenderer::init(size_t size) {
     this->size = size;
-    
+
     GLuint genbuf[1];
 
     // Init textures
@@ -78,7 +88,7 @@ bool TextureRenderer::init(size_t size) {
                  GL_UNSIGNED_BYTE, NULL); LOGOPENGLERROR();
 
     // Init shader
-    if (!Shader::createProgramSource(program, g_vertexShaderSrc, g_fragmentShaderSrc)) {
+    if (!Shader::createProgram(program, g_vertexShaderPath, g_fragmentShaderPath)) {
         LOGE << "Unable to load shader for Amari Renderer";
         return false;
     }
@@ -105,9 +115,8 @@ bool TextureRenderer::init(size_t size) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices), g_quadVertices, GL_STATIC_DRAW); LOGOPENGLERROR();
 
-    GLint aCoord(0), aTexCoord(0);
-    aCoord = glGetAttribLocation(program, "coord");
-    aTexCoord = glGetAttribLocation(program, "tex_coord");
+    GLint aCoord = glGetAttribLocation(program, "coord");
+    GLint aTexCoord = glGetAttribLocation(program, "tex_coord");
 
     glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
     glVertexAttribPointer(aCoord, 2, GL_FLOAT, GL_FALSE,
@@ -134,14 +143,14 @@ void TextureRenderer::release() {
     glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
 }
 
-void TextureRenderer::render(const Math::mat4f& mvp) {
+void TextureRenderer::render(const glm::mat4& mvp) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(uMVP, 1, GL_FALSE, (const GLfloat *)(&mvp)); LOGOPENGLERROR();
+    glUniformMatrix4fv(uMVP, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
     glUniform2f(uResolution, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform1i(uTex, 0); LOGOPENGLERROR();
 

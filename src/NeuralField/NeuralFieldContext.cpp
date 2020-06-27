@@ -19,7 +19,6 @@
 static const GLfloat g_background[] = {0.00f, 0.00f, 0.00f, 1.00f};
 static const GLfloat g_foreground[] = {0.50f, 0.50f, 1.00f, 1.00f};
 static const GLfloat g_outline[] = {1.00f, 1.00f, 1.00f, 1.00f};
-static const GLfloat g_textColor[] = {1.00f, 1.00f, 1.00f, 1.00f};
 
 static const FontSize_t g_fontSize = 24;
 
@@ -37,9 +36,12 @@ static const area_t g_area = {-1.0, 1.0, -1.0, 1.0};
 static const int g_timerInterval = 10;
 static const float g_textureBlurDelta = 0.1f;
 
+static const float g_UiWidth = 250.0f;
+static const float g_UiMargin = 0.0f;
+
 
 NeuralFieldContext::NeuralFieldContext()
-    : renderMode_(RENDER_CONTOUR)
+    : renderMode_(RENDER_TEXTURE)
     , program_(0) {
 }
 
@@ -48,7 +50,7 @@ NeuralFieldContext::~NeuralFieldContext() {
 }
 
 bool NeuralFieldContext::Init() {
-    showHelp_ = true;
+    showUi_ = true;
     
     // Init font
     if (!fr_.init()) {
@@ -61,7 +63,7 @@ bool NeuralFieldContext::Init() {
     a24 = fr_.createAtlas(g_fontSize);
 
     // Init MVP matrices
-    mvp_ = Math::GetOrthoProjection(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
+    mvp_ = glm::ortho(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
 
     // Init model
     if (!model_.init(g_configFile)) {
@@ -128,25 +130,19 @@ void NeuralFieldContext::Release() {
 }
 
 void NeuralFieldContext::Render() {
+    static const float zoom = 1.f;
+    static const glm::vec2 offset(0.f, 0.f);
+
     if (renderMode_ == RENDER_TEXTURE) {
         renderer_.render(mvp_);
 
     } else if (renderMode_ == RENDER_CONTOUR) {
-        static const float zoom = 1.f;
-        static const Math::vec2f offset(0.f, 0.f);
-
         contourLines_->render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_PARALLEL) {
-        static const float zoom = 1.f;
-        static const Math::vec2f offset(0.f, 0.f);
-
         contourParallel_->render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_FILL) {
-        static const float zoom = 1.f;
-        static const Math::vec2f offset(0.f, 0.f);
-
         glPolygonOffset(1, 0); LOGOPENGLERROR();
         glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
         contourFill_->render(mvp_, zoom, offset, g_foreground);
@@ -156,9 +152,6 @@ void NeuralFieldContext::Render() {
         contourLines_->render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_PARALLEL_FILL) {
-        static const float zoom = 1.f;
-        static const Math::vec2f offset(0.f, 0.f);
-
         glPolygonOffset(1, 0); LOGOPENGLERROR();
         glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
         contourParallelFill_->render(mvp_, zoom, offset, g_foreground);
@@ -168,69 +161,89 @@ void NeuralFieldContext::Render() {
         contourParallel_->render(mvp_, zoom, offset, g_outline);
     }
 
-    if (showHelp_) {
-        fr_.renderStart();
-        fr_.renderColor(g_textColor);
-
-        fr_.renderText(a24, {-1+8*scaleX_, -1+200*scaleY_, scaleX_, scaleY_}, "1-5 ... Choose plot mode");
-        fr_.renderText(a24, {-1+8*scaleX_, -1+175*scaleY_, scaleX_, scaleY_}, "B ... Turn texture blur on/off");
-        fr_.renderText(a24, {-1+8*scaleX_, -1+150*scaleY_, scaleX_, scaleY_}, "LMB ... Activate model");
-        fr_.renderText(a24, {-1+8*scaleX_, -1+125*scaleY_, scaleX_, scaleY_}, "RMB ... Clear model");
-        fr_.renderText(a24, {-1+8*scaleX_, -1+100*scaleY_, scaleX_, scaleY_}, "F2 ... Show/hide help");
-        fr_.renderText(a24, {-1+8*scaleX_, -1+75*scaleY_,  scaleX_, scaleY_}, "F1 ... Fullscreen on/off");
-        
-        std::stringstream str;
-        str << "Display Mode : " << g_renderModeLabels[renderMode_];
-        fr_.renderText(a24, {-1+8*scaleX_, -1+50*scaleY_,  scaleX_, scaleY_}, str.str());
-
-        str.str(std::string());
-        str << "FPS : " << fpsCounter_.fps;
-        fr_.renderText(a24, {-1+8*scaleX_, -1+25*scaleY_, scaleX_, scaleY_}, str.str());
-
-        fr_.renderEnd();
+    if (showUi_) {
+        this->RenderUi();
     }
-    
-    fpsCounter_.update(glfwGetTime());
+}
+
+void NeuralFieldContext::RenderUi() {
+    ImVec2 uiSize = ImVec2(g_UiWidth, windowHeight_ - g_UiMargin * 2);
+
+    ImGui::SetNextWindowPos(ImVec2(g_UiMargin, g_UiMargin), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(uiSize, ImGuiCond_Always);
+
+    ImGui::Begin("Neural Field", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+    ImGui::Text("Rendering mode:");
+    for (int idx = 0; idx < RenderMode::RENDER_MODES; idx++) {
+        ImGui::RadioButton(g_renderModeLabels[idx], (int *)&this->renderMode_, (int)idx);
+        if (idx == 0) {
+            ImGui::SameLine();
+            if (ImGui::Checkbox("Texture Blur", (bool*)&this->textureBlur_)) {
+                renderer_.use_blur = this->textureBlur_;
+            }
+        }
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text("User Guide:");
+    ImGui::BulletText("F1 to on/off fullscreen mode.");
+    ImGui::BulletText("F2 to show/hide UI.");
+    ImGui::BulletText("RMB to Clear model.");
+    ImGui::BulletText("LMB to Activate model in a point.");
+    ImGui::BulletText("B to toggle texture blur on/off.");
+    ImGui::BulletText("F2 to show/hide UI.");
+
+    ImGui::Separator();
+
+    ImGui::Text("FPS Counter: %.1f", fps_);
+
+    ImGui::End();
 }
 
 void NeuralFieldContext::Resize(int w, int h) {
     windowWidth_ = w;
     windowHeight_ = h;
 
-    scaleX_ = 2.f / (float)windowWidth_;
-    scaleY_ = 2.f / (float)windowHeight_;
+    //scaleX_ = 2.f / (float)windowWidth_;
+    //scaleY_ = 2.f / (float)windowHeight_;
 
-    if (w > h) {
-        size_ = h;
-    } else {
-        size_ = w;
-    }
+    int newW = w - g_UiWidth - g_UiMargin * 2;
+    double newScale = 2.0 / (double)(newW);
+    double newLeft = g_area.xmin - g_UiWidth * newScale;
+    mvp_ = glm::ortho(newLeft, g_area.xmax, g_area.ymin, g_area.ymax);
 
-    renderer_.resize(w, h);
-    contourLines_->resize(w, h);
-    contourFill_->resize(w, h);
-    contourParallel_->resize(w, h);
-    contourParallelFill_->resize(w, h);
+    renderer_.resize(newW, h);
+    contourLines_->resize(newW, h);
+    contourFill_->resize(newW, h);
+    contourParallel_->resize(newW, h);
+    contourParallelFill_->resize(newW, h);
 }
 
 void NeuralFieldContext::SetActivity(int x, int y) {
-    int cx, cy;
+    int cx = 0, cy = 0;
 
-    if (windowWidth_ > windowHeight_) {
-        cx = x - (windowWidth_ - windowHeight_) / 2;
+    int w = windowWidth_ - g_UiWidth;
+    int h = windowHeight_;
+
+    if (w > h) {
+        cx = x - (w - h) / 2 - g_UiWidth;
         cy = y;
     } else {
-        cx = x;
-        cy = y - (windowHeight_ - windowWidth_) / 2;
+        cx = x - g_UiWidth;
+        cy = y - (h - w) / 2;
     }
 
-    if (cx<0 || cy<0 || cx>size_ || cy>size_) {
+    int size = (w > h) ? h : w;
+
+    if (cx<0 || cy<0 || cx>size || cy>size) {
         return;
     }
 
-    int n, m;
-    n = (int)((float)cx/(float)size_ * model_.size);
-    m = (int)((1.f - (float)cy/(float)size_) * model_.size);
+    int n = (int)((float)cx/(float)size * model_.size);
+    int m = (int)((1.f - (float)cy/(float)size) * model_.size);
 
     model_.set_activity(n, m, 1.f);
 
@@ -242,8 +255,19 @@ void NeuralFieldContext::Restart() {
     LOGI << "Reset Model";
 }
 
-void NeuralFieldContext::Update() {
-    model_.stimulate();
+void NeuralFieldContext::Update(double t) {
+    static double lastTime = 0.0;
+    static double lastFpsTime = 0.0;
+    double currentTime = t;
+    double dt = currentTime - lastTime;
+    lastTime = currentTime;
+
+    if (currentTime - lastFpsTime > 1.0) {
+        fps_ = ImGui::GetIO().Framerate;
+        lastFpsTime = currentTime;
+    }
+
+    model_.stimulate(/* dt */);
 
     switch (renderMode_) {
     case RENDER_TEXTURE:
@@ -292,8 +316,9 @@ void NeuralFieldContext::SetRenderMode(RenderMode mode) {
 }
 
 void NeuralFieldContext::SwitchBlur() {
-    renderer_.use_blur = !renderer_.use_blur;
-    if (renderer_.use_blur) {
+    textureBlur_ = !textureBlur_;
+    renderer_.use_blur = textureBlur_;
+    if (textureBlur_) {
         LOGI << "Turned Blur On";
     } else {
         LOGI << "Turned Blur Off";
@@ -309,5 +334,5 @@ void NeuralFieldContext::DecreaseBlur() {
 }
 
 void NeuralFieldContext::ToggleUi() {
-    showHelp_ = !showHelp_;
+    showUi_ = !showUi_;
 }

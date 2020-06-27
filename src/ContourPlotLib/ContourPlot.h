@@ -53,7 +53,7 @@ public:
 
     bool init();
     virtual bool update(matrix_t* points, area_t a, double t);
-    virtual void render(const Math::mat4f& mvp, double zoom, const Math::vec2f& offset,
+    virtual void render(const glm::mat4& mvp, double zoom, const glm::vec2& offset,
                         const GLfloat c[]);
 
     void release();

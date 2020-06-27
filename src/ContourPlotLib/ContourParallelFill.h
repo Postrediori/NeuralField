@@ -10,8 +10,8 @@ public:
     ContourParallelFill(GLuint p);
     
     bool update(matrix_t* points, area_t a, double t);
-    void render(const Math::mat4f& mvp,
+    void render(const glm::mat4& mvp,
                 double zoom,
-                const Math::vec2f& offset,
+                const glm::vec2& offset,
                 const GLfloat c[]);
 };

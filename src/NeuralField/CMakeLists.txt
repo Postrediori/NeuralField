@@ -6,6 +6,8 @@ include_directories(
     ${GLFW_INCLUDE_DIR}
     ${GLAD_INCLUDE_DIR}
     ${FREETYPE_INCLUDE_DIRS}
+    ${GLM_INCLUDE_DIR}
+    ${IMGUI_INCLUDE_DIR}
     )
 
 target_link_libraries(${PROJECT}
@@ -13,12 +15,13 @@ target_link_libraries(${PROJECT}
     ${GLFW_LIBRARIES}
     ${GLAD_LIBRARIES}
     ${FREETYPE_LIBRARIES}
+    ${IMGUI_LIBRARIES}
     NeuralFieldLib
     ContourPlotLib
     GraphicsLib
     MathLib
     )
-    
+
 # Data files
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/amari.conf
@@ -32,6 +35,12 @@ configure_file(
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/plane.frag
     ${CMAKE_CURRENT_BINARY_DIR}/data/plane.frag COPYONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/texture.vert
+    ${CMAKE_CURRENT_BINARY_DIR}/data/texture.vert COPYONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/texture.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/texture.frag COPYONLY)
 
 # Installation
 install(

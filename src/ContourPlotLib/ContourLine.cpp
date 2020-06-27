@@ -94,14 +94,14 @@ bool ContourLine::update(matrix_t* points, area_t a, double t) {
     return true;
 }
 
-void ContourLine::render(const Math::mat4f& mvp, double zoom, const Math::vec2f& offset,
+void ContourLine::render(const glm::mat4& mvp, double zoom, const glm::vec2& offset,
                          const GLfloat c[]) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(u_mvp, 1, GL_FALSE, (const GLfloat *)(&mvp)); LOGOPENGLERROR();
+    glUniformMatrix4fv(u_mvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
     glUniform1f(u_zoom, zoom); LOGOPENGLERROR();
-    glUniform2fv(u_ofs, 1, (const GLfloat *)(&offset)); LOGOPENGLERROR();
+    glUniform2fv(u_ofs, 1, glm::value_ptr(offset)); LOGOPENGLERROR();
     glUniform2f(u_res, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
     glUniform4fv(u_color, 1, c); LOGOPENGLERROR();
 

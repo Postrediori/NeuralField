@@ -12,22 +12,16 @@
 #include "GlFormatter.h"
 #include "ScopeGuard.h"
 
-static const int Width = 512;
-static const int Height = 512;
+static const int Width = 800;
+static const int Height = 600;
 
 static const std::string Title = "Model of Planar Neural Field";
 
-/*****************************************************************************
- * Main variables
- ****************************************************************************/
-bool gFullscreen = false;
-
-NeuralFieldContext gContext;
 
 /*****************************************************************************
  * Graphics functions
  ****************************************************************************/
-bool Init() {
+bool Init(NeuralFieldContext& context) {
     srand(time(0));
 
     LOGI << "OpenGL Renderer : " << glGetString(GL_RENDERER);
@@ -35,19 +29,21 @@ bool Init() {
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
+    // Setup of ImGui visual style
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 0.0f;
+    style.WindowBorderSize = 0.0f;
+
     // Init simulation
-    if (!gContext.Init()) {
+    if (!context.Init()) {
         LOGE << "Unable to initialize context";
         return false;
     }
 
-    gContext.Resize(Width, Height);
+    context.Resize(Width, Height);
 
     return true;
-}
-
-void Deinit() {
-    gContext.Release();
 }
 
 void Error(int /*error*/, const char* description) {
@@ -57,19 +53,31 @@ void Error(int /*error*/, const char* description) {
 /*****************************************************************************
  * GLUT Callback functions
  ****************************************************************************/
-void Display() {
+void Display(NeuralFieldContext& context) {
     glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
 
-    gContext.Render();
+    context.Render();
 }
 
-void Reshape(GLFWwindow* /*window*/, int width, int height) {
+void Reshape(GLFWwindow* window, int width, int height) {
+    void* p = glfwGetWindowUserPointer(window);
+    assert(p);
+    NeuralFieldContext* context = (NeuralFieldContext *)p;
+
     glViewport(0, 0, width, height); LOGOPENGLERROR();
 
-    gContext.Resize(width, height);
+    context->Resize(width, height);
 }
 
 void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
+    static bool gFullscreen = false;
+    static int gSavedXPos = 0, gSavedYPos = 0;
+    static int gSavedWidth = 0, gSavedHeight = 0;
+
+    void* p = glfwGetWindowUserPointer(window);
+    assert(p);
+    NeuralFieldContext* context = (NeuralFieldContext *)p;
+
     if (action == GLFW_PRESS) {
         switch (key) {
         case GLFW_KEY_ESCAPE:
@@ -79,55 +87,58 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
         case GLFW_KEY_F1:
             gFullscreen = !gFullscreen;
             if (gFullscreen) {
+                glfwGetWindowPos(window, &gSavedXPos, &gSavedYPos);
+                glfwGetWindowSize(window, &gSavedWidth, &gSavedHeight);
+
                 GLFWmonitor* monitor = glfwGetPrimaryMonitor();
                 const GLFWvidmode* mode = glfwGetVideoMode(monitor);
                 glfwSetWindowMonitor(window, monitor, 0, 0,
                     mode->width, mode->height, mode->refreshRate);
             }
             else {
-                glfwSetWindowMonitor(window, nullptr, 0, 0,
-                    Width, Height, GLFW_DONT_CARE);
+                glfwSetWindowMonitor(window, nullptr, gSavedXPos, gSavedYPos,
+                    gSavedWidth, gSavedHeight, GLFW_DONT_CARE);
             }
             break;
 
         case GLFW_KEY_F2:
-            gContext.ToggleUi();
+            context->ToggleUi();
             break;
 
         case GLFW_KEY_B:
-            gContext.SwitchBlur();
+            context->SwitchBlur();
             break;
 
         case GLFW_KEY_EQUAL:
-            gContext.IncreaseBlur();
+            context->IncreaseBlur();
             break;
 
         case GLFW_KEY_MINUS:
-            gContext.DecreaseBlur();
+            context->DecreaseBlur();
             break;
 
         case GLFW_KEY_1:
-            gContext.SetRenderMode(RENDER_TEXTURE);
+            context->SetRenderMode(RENDER_TEXTURE);
             break;
 
         case GLFW_KEY_2:
-            gContext.SetRenderMode(RENDER_CONTOUR);
+            context->SetRenderMode(RENDER_CONTOUR);
             break;
 
         case GLFW_KEY_3:
-            gContext.SetRenderMode(RENDER_PARALLEL);
+            context->SetRenderMode(RENDER_PARALLEL);
             break;
 
         case GLFW_KEY_4:
-            gContext.SetRenderMode(RENDER_FILL);
+            context->SetRenderMode(RENDER_FILL);
             break;
 
         case GLFW_KEY_5:
-            gContext.SetRenderMode(RENDER_PARALLEL_FILL);
+            context->SetRenderMode(RENDER_PARALLEL_FILL);
             break;
 
         case GLFW_KEY_SPACE:
-            gContext.Restart();
+            context->Restart();
             break;
         }
     }
@@ -135,20 +146,24 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
 
 
 void Mouse(GLFWwindow* window, int button, int action, int /*mods*/) {
+    void* p = glfwGetWindowUserPointer(window);
+    assert(p);
+    NeuralFieldContext* context = (NeuralFieldContext *)p;
+
     if (action == GLFW_PRESS) {
         if (button == GLFW_MOUSE_BUTTON_1) {
             double x, y;
             glfwGetCursorPos(window, &x, &y);
-            gContext.SetActivity(x, y);
+            context->SetActivity(x, y);
         }
         else if (button == GLFW_MOUSE_BUTTON_2) {
-            gContext.Restart();
+            context->Restart();
         }
     }
 }
 
-void Update(GLFWwindow* /*window*/) {
-    gContext.Update();
+void Update(NeuralFieldContext& context) {
+    context.Update(glfwGetTime());
 }
 
 
@@ -199,22 +214,46 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    if (!Init()) {
+    // Setup ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr; // Disable .ini
+
+    static const char* gGlslVersion = "#version 330 core";
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(gGlslVersion);
+
+    ScopeGuard imGuiContextGuard([]() {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            LOGD << "Cleanup : ImGui";
+        });
+
+    NeuralFieldContext gContext;
+    if (!Init(gContext)) {
         LOGE << "Initialization failed";
         return EXIT_FAILURE;
     }
-    ScopeGuard scopeGuard([]() {
-        Deinit();
-        LOGD << "Cleanup : Simulation";
-    });
+    glfwSetWindowUserPointer(window, (void *)(&gContext));
 
     while (!glfwWindowShouldClose(window)) {
-        Display();
+        glfwPollEvents();
 
-        Update(window);
+        // Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        Display(gContext);
+
+        // Render ImGui
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        Update(gContext);
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // Cleanup is done by scope guards
