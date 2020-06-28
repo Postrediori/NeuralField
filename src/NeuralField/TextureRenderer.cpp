@@ -23,40 +23,6 @@ static const GLfloat g_quadVertices[] = {
 static const std::string g_vertexShaderPath = "data/texture.vert";
 static const std::string g_fragmentShaderPath = "data/texture.frag";
 
-//static const char g_vertexShaderSrc[] = 
-//    "#version 330 core\n"
-//    "in vec2 coord;"
-//    "in vec2 tex_coord;"
-//    "out vec2 xy_coord;"
-//    "uniform vec2 iRes;"
-//    "uniform mat4 mvp;"
-//    "vec2 adjust_proportions(vec2 v, vec2 res) {"
-//    "    vec2 xy=v;"
-//    "    if (res.x>res.y) {"
-//    "        xy.x*=res.y/res.x;"
-//    "    } else {"
-//    "        xy.y*=res.x/res.y;"
-//    "    }"
-//    "    return xy;"
-//    "}"
-//    "void main(void){"
-//    "    xy_coord=adjust_proportions(coord.xy,iRes);"
-//    "    gl_Position=mvp*vec4(xy_coord,0.,1.);"
-//    "    xy_coord=tex_coord.xy;"
-//    "}";
-//
-//static const char g_fragmentShaderSrc[] =
-//    "#version 330 core\n"
-//    "in vec2 xy_coord;"
-//    "out vec4 frag_color;"
-//    "uniform sampler2D tex;"
-//    "const vec4 col0=vec4(.5,.5,1.,1.);"
-//    "void main(void){"
-//    "    float c=texture(tex,xy_coord).r;"
-//    "    frag_color=mix(col0,vec4(0.15),1.-c);"
-//    "    frag_color.a=1.;"
-//    "}";
-
 TextureRenderer::TextureRenderer()
  : use_blur(true) {
 
@@ -67,9 +33,7 @@ TextureRenderer::~TextureRenderer() {
     release();
 }
 
-bool TextureRenderer::init(size_t size) {
-    this->size = size;
-
+bool TextureRenderer::init(size_t texureSize) {
     GLuint genbuf[1];
 
     // Init textures
@@ -84,8 +48,6 @@ bool TextureRenderer::init(size_t size) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); LOGOPENGLERROR();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); LOGOPENGLERROR();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, NULL); LOGOPENGLERROR();
 
     // Init shader
     if (!Shader::createProgram(program, g_vertexShaderPath, g_fragmentShaderPath)) {
@@ -128,8 +90,22 @@ bool TextureRenderer::init(size_t size) {
 
     glBindVertexArray(0); LOGOPENGLERROR();
 
+    return initTexture(texureSize);
+}
+
+bool TextureRenderer::initTexture(size_t newSize) {
+    if (!texture) {
+        return false;
+    }
+
+    size = newSize;
+
+    glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size, size, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, NULL); LOGOPENGLERROR();
+
     // Allocate memory
-    tex = TextureGuard_t(texture_alloc(size, g_bitsPerPixel), texture_free);
+    tex = std::move(TextureGuard_t(texture_alloc(size, g_bitsPerPixel), texture_free));
 
     return true;
 }

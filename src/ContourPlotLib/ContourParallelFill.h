@@ -7,7 +7,7 @@ class ContourPlot;
  ****************************************************************************/
 class ContourParallelFill : public ContourPlot {
 public:
-    ContourParallelFill(GLuint p);
+    ContourParallelFill();
     
     bool update(matrix_t* points, area_t a, double t);
     void render(const glm::mat4& mvp,

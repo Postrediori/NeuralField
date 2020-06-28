@@ -9,8 +9,8 @@ void MakeCorner(lines_t& lines, flags_t flags, discrete_t d, vals_t vals);
 void MakeHalf(lines_t& lines, flags_t flags, discrete_t d, vals_t vals);
 void MakeAmbiguity(lines_t& lines, flags_t flags, bool u, discrete_t d, vals_t vals, double v);
 
-ContourLine::ContourLine(GLuint p)
-    : ContourPlot(p) {
+ContourLine::ContourLine()
+    : ContourPlot() {
 }
 
 bool ContourLine::update(matrix_t* points, area_t a, double t) {

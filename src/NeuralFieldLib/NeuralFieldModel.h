@@ -1,11 +1,14 @@
 #pragma once
 
+typedef std::map<std::string, double> ConfigMap_t;
+
+bool ParseConfigFile(ConfigMap_t& map, const std::string& fileName);
+
 class NeuralFieldModel {
 public:
     NeuralFieldModel();
 
-    bool init(const std::string& config_file);
-    bool load_config(const std::string& config_file);
+    bool init(const ConfigMap_t& configMap);
 
     void release();
 
@@ -13,7 +16,7 @@ public:
     void stimulate();
 
     void set_activity(size_t x, size_t y, float a);
-    
+
 public:
     size_t size;
     size_t data_size;

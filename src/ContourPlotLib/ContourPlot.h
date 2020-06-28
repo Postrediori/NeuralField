@@ -48,10 +48,10 @@ typedef std::vector<Math::vec4f> lines_t;
  ****************************************************************************/
 class ContourPlot {
 public:
-    ContourPlot(GLuint p);
+    ContourPlot();
     virtual ~ContourPlot();
 
-    bool init();
+    bool init(GLuint p);
     virtual bool update(matrix_t* points, area_t a, double t);
     virtual void render(const glm::mat4& mvp, double zoom, const glm::vec2& offset,
                         const GLfloat c[]);
@@ -60,16 +60,14 @@ public:
     void resize(int width, int height);
 
 protected:
-    int w, h;
+    int w = 0, h = 0;
     area_t area;
 
-    double threshold;
+    double threshold = 0.0;
 
-    int vbo_count;
-    GLuint vao;
-    GLuint vbo;
-    GLuint program;
-    GLint u_mvp, u_zoom, u_ofs, u_res, u_color;
+    int vbo_count = 0;
+    GLuint vao = 0;
+    GLuint vbo = 0;
+    GLuint program = 0;
+    GLint u_mvp = -1, u_zoom = -1, u_ofs = -1, u_res = -1, u_color = -1;
 };
-
-typedef std::unique_ptr<ContourPlot> ContourPlotGuard_t;

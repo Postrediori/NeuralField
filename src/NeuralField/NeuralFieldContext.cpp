@@ -38,9 +38,7 @@ static const float g_textureBlurDelta = 0.1f;
 static const float g_UiWidth = 250.0f;
 
 
-NeuralFieldContext::NeuralFieldContext()
-    : renderMode_(RENDER_TEXTURE)
-    , program_(0) {
+NeuralFieldContext::NeuralFieldContext() {
 }
 
 NeuralFieldContext::~NeuralFieldContext() {
@@ -48,16 +46,16 @@ NeuralFieldContext::~NeuralFieldContext() {
 }
 
 bool NeuralFieldContext::Init() {
-    showUi_ = true;
-
     // Init MVP matrices
     mvp_ = glm::ortho(g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax);
 
     // Init model
-    if (!model_.init(g_configFile)) {
-        LOGE << "Unable to load Amari Model Config from file " << g_configFile;
+    if (!ParseConfigFile(modelConfig_, g_configFile)) {
+        LOGE << "Unable to load Model Config from file " << g_configFile;
         return false;
     }
+
+    model_.init(modelConfig_);
 
     // Init render
     if (!renderer_.init(model_.size)) {
@@ -73,34 +71,30 @@ bool NeuralFieldContext::Init() {
         return false;
     }
 
-    contourLines_.reset(new ContourLine(program_));
-    if (!contourLines_->init()) {
+    if (!contourLines_.init(program_)) {
         LOGE << "Unable to create Contour Lines";
         return false;
     }
 
-    contourFill_.reset(new ContourFill(program_));
-    if (!contourFill_->init()) {
+    if (!contourFill_.init(program_)) {
         LOGE << "Unable to create Filled Contour";
         return false;
     }
 
-    contourParallel_.reset(new ContourParallel(program_));
-    if (!contourParallel_->init()) {
+    if (!contourParallel_.init(program_)) {
         LOGE << "Unable to create Parallel Contour Lines";
         return false;
     }
 
-    contourParallelFill_.reset(new ContourParallelFill(program_));
-    if (!contourParallelFill_->init()) {
+    if (!contourParallelFill_.init(program_)) {
         LOGE << "Unable to create Parallel Contour Lines";
         return false;
     }
 
-    contourLines_->update(model_.activity.get(), g_area, 1.0);
-    contourFill_->update(model_.activity.get(), g_area, 1.0);
-    contourParallelFill_->update(model_.activity.get(), g_area, 1.0);
-    contourParallel_->update(model_.activity.get(), g_area, 1.0);
+    contourLines_.update(model_.activity.get(), g_area, 1.0);
+    contourFill_.update(model_.activity.get(), g_area, 1.0);
+    contourParallelFill_.update(model_.activity.get(), g_area, 1.0);
+    contourParallel_.update(model_.activity.get(), g_area, 1.0);
     
     // Set up OpenGL
     glClearColor(g_background[0], g_background[1],
@@ -112,7 +106,7 @@ bool NeuralFieldContext::Init() {
 
 void NeuralFieldContext::Release() {
     if (program_) {
-        glDeleteProgram(program_);
+        glDeleteProgram(program_); LOGOPENGLERROR();
         program_ = 0;
     }
 }
@@ -125,28 +119,28 @@ void NeuralFieldContext::Render() {
         renderer_.render(mvp_);
 
     } else if (renderMode_ == RENDER_CONTOUR) {
-        contourLines_->render(mvp_, zoom, offset, g_outline);
+        contourLines_.render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_PARALLEL) {
-        contourParallel_->render(mvp_, zoom, offset, g_outline);
+        contourParallel_.render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_FILL) {
         glPolygonOffset(1, 0); LOGOPENGLERROR();
         glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourFill_->render(mvp_, zoom, offset, g_foreground);
+        contourFill_.render(mvp_, zoom, offset, g_foreground);
 
         glPolygonOffset(0, 0); LOGOPENGLERROR();
         glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourLines_->render(mvp_, zoom, offset, g_outline);
+        contourLines_.render(mvp_, zoom, offset, g_outline);
 
     } else if (renderMode_ == RENDER_PARALLEL_FILL) {
         glPolygonOffset(1, 0); LOGOPENGLERROR();
         glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourParallelFill_->render(mvp_, zoom, offset, g_foreground);
+        contourParallelFill_.render(mvp_, zoom, offset, g_foreground);
 
         glPolygonOffset(0, 0); LOGOPENGLERROR();
         glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourParallel_->render(mvp_, zoom, offset, g_outline);
+        contourParallel_.render(mvp_, zoom, offset, g_outline);
     }
 
     if (showUi_) {
@@ -176,13 +170,62 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Separator();
 
+    static const std::map<std::string, int> g_ModelSizes = {
+        {"128x128", 128},
+        {"256x256", 256},
+        {"512x512", 512}
+    };
+    static int gModelSize = 256;
+    ImGui::Text("Model size:");
+    for (const auto& s : g_ModelSizes) {
+        if (ImGui::RadioButton(s.first.c_str(), &gModelSize, s.second)) {
+            modelConfig_["size"] = gModelSize;
+            renderer_.initTexture(gModelSize);
+            model_.init(modelConfig_);
+        }
+        ImGui::SameLine();
+    }
+
+    ImGui::Separator();
+
+    static const std::map<std::string, int> g_ModelModes = {
+        {"wrap", static_cast<int>(KernelMode::MODE_WRAP)},
+        {"reflect", static_cast<int>(KernelMode::MODE_REFLECT)},
+        {"mirror", static_cast<int>(KernelMode::MODE_MIRROR)}
+    };
+    static int gModelMode = 0;
+    ImGui::Text("Border mode:");
+    for (const auto& s : g_ModelModes) {
+        if (ImGui::RadioButton(s.first.c_str(), &gModelMode, s.second)) {
+            modelConfig_["mode"] = gModelMode;
+            model_.init(modelConfig_);
+        }
+        ImGui::SameLine();
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text("Model params:");
+
+    static float gModelH = -0.2;
+    if (ImGui::SliderFloat("h", &gModelH, -0.3f, 0.0f)) {
+        modelConfig_["h"] = gModelH;
+        model_.init(modelConfig_);
+    }
+
+    static float gModelM = 0.065;
+    if (ImGui::SliderFloat("M", &gModelM, 0.05f, 0.07)) {
+        modelConfig_["M_"] = gModelM;
+        model_.init(modelConfig_);
+    }
+
+    ImGui::Separator();
+
     ImGui::Text("User Guide:");
     ImGui::BulletText("F1 to on/off fullscreen mode.");
-    ImGui::BulletText("F2 to show/hide UI.");
     ImGui::BulletText("RMB to Clear model.");
     ImGui::BulletText("LMB to Activate model in a point.");
     ImGui::BulletText("B to toggle texture blur on/off.");
-    ImGui::BulletText("F2 to show/hide UI.");
 
     ImGui::Separator();
 
@@ -195,16 +238,16 @@ void NeuralFieldContext::Resize(int w, int h) {
     windowWidth_ = w;
     windowHeight_ = h;
 
-    int newW = w - g_UiWidth;
+    int newW = windowWidth_ - g_UiWidth;
     double newScale = 2.0 / (double)(newW);
     double newLeft = g_area.xmin - g_UiWidth * newScale;
     mvp_ = glm::ortho(newLeft, g_area.xmax, g_area.ymin, g_area.ymax);
 
     renderer_.resize(newW, h);
-    contourLines_->resize(newW, h);
-    contourFill_->resize(newW, h);
-    contourParallel_->resize(newW, h);
-    contourParallelFill_->resize(newW, h);
+    contourLines_.resize(newW, h);
+    contourFill_.resize(newW, h);
+    contourParallel_.resize(newW, h);
+    contourParallelFill_.resize(newW, h);
 }
 
 void NeuralFieldContext::SetActivity(int x, int y) {
@@ -218,7 +261,8 @@ void NeuralFieldContext::SetActivity(int x, int y) {
     if (w > h) {
         cx = newX - (w - h) / 2;
         cy = y;
-    } else {
+    }
+    else {
         cx = newX;
         cy = y - (h - w) / 2;
     }
@@ -262,35 +306,21 @@ void NeuralFieldContext::Update(double t) {
         break;
 
     case RENDER_CONTOUR:
-        if (contourLines_) {
-            contourLines_->update(model_.activity.get(), g_area, 0.0);
-        }
+        contourLines_.update(model_.activity.get(), g_area, 0.0);
         break;
 
     case RENDER_PARALLEL:
-        if (contourParallel_) {
-            contourParallel_->update(model_.activity.get(), g_area, 0.0);
-        }
+        contourParallel_.update(model_.activity.get(), g_area, 0.0);
         break;
 
     case RENDER_FILL:
-        if (contourLines_) {
-            contourLines_->update(model_.activity.get(), g_area, 0.0);
-        }
-
-        if (contourFill_) {
-            contourFill_->update(model_.activity.get(), g_area, 0.0);
-        }
+        contourLines_.update(model_.activity.get(), g_area, 0.0);
+        contourFill_.update(model_.activity.get(), g_area, 0.0);
         break;
 
     case RENDER_PARALLEL_FILL:
-        if (contourParallel_) {
-            contourParallel_->update(model_.activity.get(), g_area, 0.0);
-        }
-
-        if (contourParallelFill_) {
-            contourParallelFill_->update(model_.activity.get(), g_area, 0.0);
-        }
+        contourParallel_.update(model_.activity.get(), g_area, 0.0);
+        contourParallelFill_.update(model_.activity.get(), g_area, 0.0);
         break;
 
     default:
@@ -307,7 +337,8 @@ void NeuralFieldContext::SwitchBlur() {
     renderer_.use_blur = textureBlur_;
     if (textureBlur_) {
         LOGI << "Turned Blur On";
-    } else {
+    }
+    else {
         LOGI << "Turned Blur Off";
     }
 }
@@ -318,8 +349,4 @@ void NeuralFieldContext::IncreaseBlur() {
 
 void NeuralFieldContext::DecreaseBlur() {
     renderer_.add_blur(-g_textureBlurDelta);
-}
-
-void NeuralFieldContext::ToggleUi() {
-    showUi_ = !showUi_;
 }

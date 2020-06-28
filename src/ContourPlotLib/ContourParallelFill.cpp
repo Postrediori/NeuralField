@@ -5,8 +5,8 @@
 #include "ContourPlot.h"
 #include "ContourParallelFill.h"
 
-ContourParallelFill::ContourParallelFill(GLuint p)
-    : ContourPlot(p) {
+ContourParallelFill::ContourParallelFill()
+    : ContourPlot() {
 }
 
 bool ContourParallelFill::update(matrix_t* points, area_t a, double t) {

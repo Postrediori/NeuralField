@@ -7,7 +7,7 @@ class ContourPlot;
  ****************************************************************************/
 class ContourFill : public ContourPlot {
 public:
-    ContourFill(GLuint p);
+    ContourFill();
 
     bool update(matrix_t* points, area_t a, double t);
     void render(const glm::mat4& mvp,

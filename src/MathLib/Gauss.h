@@ -1,9 +1,9 @@
 #pragma once
 
-enum KernelMode {
-    MODE_WRAP,
-    MODE_REFLECT,
-    MODE_MIRROR
+enum KernelMode : int {
+    MODE_WRAP = 0,
+    MODE_REFLECT = 1,
+    MODE_MIRROR = 2
 };
 
 struct kernel_t {

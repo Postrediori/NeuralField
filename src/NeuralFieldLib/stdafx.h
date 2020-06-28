@@ -8,3 +8,5 @@
 #include <cmath>
 #include <functional>
 #include <memory>
+#include <map>
+#include <string>

@@ -25,20 +25,16 @@ double ValuesRatio(vals_t vals, size_t i1, size_t i2) {
     return fabs(vals.v[i1] / (vals.v[i1] - vals.v[i2]));
 }
 
-ContourPlot::ContourPlot(GLuint p)
-    : w(0)
-    , h(0)
-    , threshold(0.0)
-    , vbo_count(0)
-    , vbo(0)
-    , program(p) {
+ContourPlot::ContourPlot() {
 }
 
 ContourPlot::~ContourPlot() {
     this->release();
 }
 
-bool ContourPlot::init() {
+bool ContourPlot::init(GLuint p) {
+    program = p;
+
     glGenVertexArrays(1, &vao); LOGOPENGLERROR();
     if (!vao) {
         LOGE << "Failed to create vertex array object";

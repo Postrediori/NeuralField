@@ -4,13 +4,70 @@
 #include "Gauss.h"
 #include "NeuralFieldModel.h"
 
-inline float frand1000() {
-     return (float)(rand() % 1000) / 1000.f;
+bool ParseConfigFile(ConfigMap_t& map, const std::string& fileName) {
+    std::ifstream in(fileName, std::ios::in);
+    if (!in.is_open()) {
+        LOGE << "Unable to load Amari Model Config File " << fileName;
+        return false;
+    }
+
+    int ival;
+    double fval;
+    char sval[256];
+
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.empty() || line.find("#") == 0) {
+            continue;
+        }
+
+        if (line.find("h = ") == 0) {
+            sscanf(line.c_str(), "h = %lf\n", &fval);
+            map["h"] = fval;
+
+        }
+        else if (line.find("k = ") == 0) {
+            sscanf(line.c_str(), "k = %lf\n", &fval);
+            map["k"] = fval;
+
+        }
+        else if (line.find("K = ") == 0) {
+            sscanf(line.c_str(), "K = %lf\n", &fval);
+            map["K_"] = fval;
+
+        }
+        else if (line.find("m = ") == 0) {
+            sscanf(line.c_str(), "m = %lf\n", &fval);
+            map["m"] = fval;
+
+        }
+        else if (line.find("M = ") == 0) {
+            sscanf(line.c_str(), "M = %lf\n", &fval);
+            map["M_"] = fval;
+
+        }
+        else if (line.find("mode = ") == 0) {
+            sscanf(line.c_str(), "mode = %s\n", sval);
+            if (strcmp(sval, "wrap") == 0) {
+                map["mode"] = MODE_WRAP;
+
+            }
+            else if (strcmp(sval, "reflect") == 0) {
+                map["mode"] = MODE_REFLECT;
+
+            }
+            else if (strcmp(sval, "mirror") == 0) {
+                map["mode"] = MODE_MIRROR;
+            }
+
+        }
+        else if (line.find("size = ") == 0) {
+            sscanf(line.c_str(), "size = %d\n", &ival);
+            map["size"] = ival;
+        }
+    }
 }
 
-/*****************************************************************************
- * Amari model
- ****************************************************************************/
 NeuralFieldModel::NeuralFieldModel()
     : h(-0.1)
     , k(0.05)
@@ -20,23 +77,27 @@ NeuralFieldModel::NeuralFieldModel()
     , mode(MODE_REFLECT) {
 }
 
-bool NeuralFieldModel::init(const std::string& config_file) {
-    if (!load_config(config_file)) {
-        return false;
-    }
+bool NeuralFieldModel::init(const ConfigMap_t& configMap) {
+    this->h = configMap.at("h");
+    this->k = configMap.at("k");
+    this->K_ = configMap.at("K_");
+    this->m = configMap.at("m");
+    this->M_ = configMap.at("M_");
+    this->mode = (KernelMode)static_cast<int>(configMap.at("mode"));
+    this->size = (size_t)configMap.at("size");
 
     sigma_k = 1.0 / sqrtf(2.0 * k);
     sigma_m = 1.0 / sqrtf(2.0 * m);
     pi_k = K_ * M_PI / k;
     pi_m = M_ * M_PI / m;
 
-    excitement_kernel = KernelGuard_t(kernel_create(sigma_k, mode), kernel_free);
-    inhibition_kernel = KernelGuard_t(kernel_create(sigma_m, mode), kernel_free);
+    excitement_kernel = std::move(KernelGuard_t(kernel_create(sigma_k, mode), kernel_free));
+    inhibition_kernel = std::move(KernelGuard_t(kernel_create(sigma_m, mode), kernel_free));
 
-    stimulus = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
-    activity = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
-    excitement = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
-    inhibition = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    stimulus = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
+    activity = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
+    excitement = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
+    inhibition = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
 
     restart();
 
@@ -75,66 +136,6 @@ void NeuralFieldModel::stimulate() {
     matrix_add(activity.get(), excitement.get());
     matrix_sub(activity.get(), inhibition.get());
     matrix_add(activity.get(), stimulus.get());
-}
-
-bool NeuralFieldModel::load_config(const std::string& config_file) {
-    std::ifstream in(config_file, std::ios::in);
-    if (!in) {
-        LOGE << "Unable to load Amari Model Config File " << config_file;
-        return false;
-    }
-
-    int ival;
-    double fval;
-    char sval[256];
-
-    std::string line;
-    while (std::getline(in, line)) {
-        if (line.empty() || line.find("#") == 0) {
-            continue;
-        }
-
-        if (line.find("h = ")==0) {
-            sscanf(line.c_str(), "h = %lf\n", &fval);
-            this->h = fval;
-
-        } else if (line.find("k = ")==0) {
-            sscanf(line.c_str(), "k = %lf\n", &fval);
-            this->k = fval;
-
-        } else if (line.find("K = ")==0) {
-            sscanf(line.c_str(), "K = %lf\n", &fval);
-            this->K_ = fval;
-
-        } else if (line.find("m = ")==0) {
-            sscanf(line.c_str(), "m = %lf\n", &fval);
-            this->m = fval;
-
-        } else if (line.find("M = ")==0) {
-            sscanf(line.c_str(), "M = %lf\n", &fval);
-            this->M_ = fval;
-
-        } else if (line.find("mode = ")==0) {
-            sscanf(line.c_str(), "mode = %s\n", sval);
-            if (strcmp(sval, "wrap")==0) {
-                this->mode = MODE_WRAP;
-                
-            } else if (strcmp(sval, "reflect")==0) {
-                this->mode = MODE_REFLECT;
-                
-            } else if (strcmp(sval, "mirror")==0) {
-                this->mode = MODE_MIRROR;
-            }
-
-        } else if (line.find("size = ")==0) {
-            sscanf(line.c_str(), "size = %d\n", &ival);
-            this->size = ival;
-        }
-    }
-    
-    in.close();
-    
-    return true;
 }
 
 void NeuralFieldModel::set_activity(size_t x, size_t y, float a) {

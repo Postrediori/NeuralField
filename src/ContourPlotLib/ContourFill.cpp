@@ -10,8 +10,8 @@ void MakeFillCorner(triangles_t& triangles, flags_t flags, discrete_t d, vals_t 
 void MakeFillHalf(triangles_t& triangles, flags_t flags, discrete_t d, vals_t vals);
 void MakeFillAmbiguity(triangles_t& triangles, flags_t flags, bool u, discrete_t d, vals_t vals, double v);
 
-ContourFill::ContourFill(GLuint p)
-    : ContourPlot(p) {
+ContourFill::ContourFill()
+    : ContourPlot() {
 }
 
 bool ContourFill::update(matrix_t* points, area_t a, double t) {

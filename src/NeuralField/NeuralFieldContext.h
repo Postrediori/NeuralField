@@ -29,31 +29,31 @@ public:
     void IncreaseBlur();
     void DecreaseBlur();
 
-    void ToggleUi();
-
 private:
     void RenderUi();
 
 private:
-    int windowWidth_, windowHeight_;
+    int windowWidth_ = 0, windowHeight_ = 0;
 
-    RenderMode renderMode_;
+    RenderMode renderMode_ = RenderMode::RENDER_TEXTURE;
 
-    GLuint program_;
+    GLuint program_ = 0;
     
     glm::mat4 mvp_;
     
     NeuralFieldModel model_;
     TextureRenderer renderer_;
 
-    ContourPlotGuard_t contourLines_;
-    ContourPlotGuard_t contourFill_;
-    ContourPlotGuard_t contourParallel_;
-    ContourPlotGuard_t contourParallelFill_;
+    ContourLine contourLines_;
+    ContourFill contourFill_;
+    ContourParallel contourParallel_;
+    ContourParallelFill contourParallelFill_;
     
-    bool showUi_;
+    bool showUi_ = true;
 
-    float fps_;
+    float fps_ = 0.0f;
 
     bool textureBlur_ = true;
+
+    ConfigMap_t modelConfig_;
 };

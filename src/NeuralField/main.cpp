@@ -7,6 +7,10 @@
 #include "NeuralFieldModel.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
+#include "ContourLine.h"
+#include "ContourFill.h"
+#include "ContourParallel.h"
+#include "ContourParallelFill.h"
 #include "NeuralFieldContext.h"
 #include "GlFormatter.h"
 #include "ScopeGuard.h"
@@ -98,10 +102,6 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
                 glfwSetWindowMonitor(window, nullptr, gSavedXPos, gSavedYPos,
                     gSavedWidth, gSavedHeight, GLFW_DONT_CARE);
             }
-            break;
-
-        case GLFW_KEY_F2:
-            context->ToggleUi();
             break;
 
         case GLFW_KEY_B:

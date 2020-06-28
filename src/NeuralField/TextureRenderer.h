@@ -6,6 +6,7 @@ public:
     ~TextureRenderer();
 
     bool init(size_t size);
+    bool initTexture(size_t size);
     void release();
 
     void render(const glm::mat4& mvp);
