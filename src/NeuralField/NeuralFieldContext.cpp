@@ -17,8 +17,8 @@
 
 
 static const std::array<GLfloat, 4> g_background = {0.15f, 0.15f, 0.15f, 1.00f};
-static const GLfloat g_foreground[] = {0.50f, 0.50f, 1.00f, 1.00f};
-static const GLfloat g_outline[] = {1.00f, 1.00f, 1.00f, 1.00f};
+static const std::array<GLfloat, 4> g_foreground = {0.50f, 0.50f, 1.00f, 1.00f};
+static const std::array<GLfloat, 4> g_outline = {1.00f, 1.00f, 1.00f, 1.00f};
 
 static const std::vector<std::string> g_renderModeLabels = {
     "Texture",
@@ -116,18 +116,18 @@ void NeuralFieldContext::Render() {
     static const float zoom = 1.f;
     static const glm::vec2 offset(0.f, 0.f);
 
-    if (renderMode_ == RenderMode::RENDER_TEXTURE) {
+    if (renderMode_ == RenderMode::Texture) {
         renderer_.render(mvp_);
     }
-    else if (renderMode_ == RenderMode::RENDER_CONTOUR) {
+    else if (renderMode_ == RenderMode::Contour) {
         quad_.Render(mvp_, zoom, offset, g_background);
         contourLines_.render(mvp_, zoom, offset, g_outline);
     }
-    else if (renderMode_ == RenderMode::RENDER_PARALLEL) {
+    else if (renderMode_ == RenderMode::ContourParallel) {
         quad_.Render(mvp_, zoom, offset, g_background);
         contourParallel_.render(mvp_, zoom, offset, g_outline);
     }
-    else if (renderMode_ == RenderMode::RENDER_FILL) {
+    else if (renderMode_ == RenderMode::Fill) {
         quad_.Render(mvp_, zoom, offset, g_background);
 
         glPolygonOffset(1, 0); LOGOPENGLERROR();
@@ -138,7 +138,7 @@ void NeuralFieldContext::Render() {
         glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
         contourLines_.render(mvp_, zoom, offset, g_outline);
     }
-    else if (renderMode_ == RenderMode::RENDER_PARALLEL_FILL) {
+    else if (renderMode_ == RenderMode::FillParallel) {
         quad_.Render(mvp_, zoom, offset, g_background);
 
         glPolygonOffset(1, 0); LOGOPENGLERROR();
@@ -165,7 +165,7 @@ void NeuralFieldContext::RenderUi() {
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
     ImGui::Text("Rendering mode:");
-    for (int idx = 0; idx < RenderMode::RENDER_MODES; idx++) {
+    for (int idx = 0; idx < static_cast<int>(RenderMode::RenderModesCount); idx++) {
         ImGui::RadioButton(g_renderModeLabels[idx].c_str(), (int *)&this->renderMode_, (int)idx);
         if (idx == 0) {
             ImGui::SameLine();
@@ -309,24 +309,24 @@ void NeuralFieldContext::Update(double t) {
     model_.stimulate(/* dt */);
 
     switch (renderMode_) {
-    case RENDER_TEXTURE:
+    case RenderMode::Texture:
         renderer_.update_texture(model_.activity.get());
         break;
 
-    case RENDER_CONTOUR:
+    case RenderMode::Contour:
         contourLines_.update(model_.activity.get(), g_area, 0.0);
         break;
 
-    case RENDER_PARALLEL:
+    case RenderMode::ContourParallel:
         contourParallel_.update(model_.activity.get(), g_area, 0.0);
         break;
 
-    case RENDER_FILL:
+    case RenderMode::Fill:
         contourLines_.update(model_.activity.get(), g_area, 0.0);
         contourFill_.update(model_.activity.get(), g_area, 0.0);
         break;
 
-    case RENDER_PARALLEL_FILL:
+    case RenderMode::FillParallel:
         contourParallel_.update(model_.activity.get(), g_area, 0.0);
         contourParallelFill_.update(model_.activity.get(), g_area, 0.0);
         break;

@@ -44,71 +44,68 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
             vals.v[2] = points->data[(j + 1)*(xdiv + 1) + (i + 1)] - threshold;
             vals.v[3] = points->data[(j + 1)*(xdiv + 1) + (i)] - threshold;
 
-            flags_t flags = CellType(vals);
+            SquareFlags flags = CellType(vals);
 
-            if (flags == FLAG_SW || flags == FLAG_NW || flags == FLAG_NE || flags == FLAG_SE
-                || flags == (FLAG_ALL ^ FLAG_SW)
-                || flags == (FLAG_ALL ^ FLAG_NW)
-                || flags == (FLAG_ALL ^ FLAG_NE)
-                || flags == (FLAG_ALL ^ FLAG_SE)) {
+            if (flags == SquareFlags::SouthWest || flags == SquareFlags::NorthWest ||
+                flags == SquareFlags::NorthEast || flags == SquareFlags::SouthEast
+                || flags == (SquareFlags::All ^ SquareFlags::SouthWest)
+                || flags == (SquareFlags::All ^ SquareFlags::NorthWest)
+                || flags == (SquareFlags::All ^ SquareFlags::NorthEast)
+                || flags == (SquareFlags::All ^ SquareFlags::SouthEast)) {
                 // One corner
                 double x1, y1;
                 double x2, y2;
                 double sx = dX, sy = dY;
 
-                switch (flags) {
-                case FLAG_SW:
-                case (FLAG_ALL ^ FLAG_SW):
+                if (flags == SquareFlags::SouthWest ||
+                    flags == (SquareFlags::All ^ SquareFlags::SouthWest)) {
                     x1 = x;
                     y1 = y + sy * ValuesRatio(vals, 0, 3);
                     x2 = x + sx * ValuesRatio(vals, 0, 1);
                     y2 = y;
-                    break;
-
-                case FLAG_NW:
-                case (FLAG_ALL ^ FLAG_NW):
+                }
+                else if (flags == SquareFlags::NorthWest ||
+                    flags == (SquareFlags::All ^ SquareFlags::NorthWest)) {
                     x1 = x + sx * ValuesRatio(vals, 0, 1);
                     y1 = y;
                     x2 = x + sx;
                     y2 = y + sy * ValuesRatio(vals, 1, 2);
-                    break;
-
-                case FLAG_NE:
-                case (FLAG_ALL ^ FLAG_NE):
+                }
+                else if (flags == SquareFlags::NorthEast ||
+                    flags == (SquareFlags::All ^ SquareFlags::NorthEast)) {
                     x1 = x + sx * ValuesRatio(vals, 3, 2);
                     y1 = y + sy;
                     x2 = x + sx;
                     y2 = y + sy * ValuesRatio(vals, 1, 2);
-                    break;
-
-                case FLAG_SE:
-                case (FLAG_ALL ^ FLAG_SE):
+                }
+                else if (flags == SquareFlags::SouthEast ||
+                    flags == (SquareFlags::All ^ SquareFlags::SouthEast)) {
                     x1 = x;
                     y1 = y + sy * ValuesRatio(vals, 0, 3);
                     x2 = x + sx * ValuesRatio(vals, 3, 2);
                     y2 = y + sy;
-                    break;
                 }
 
                 iter_lines.emplace_back(x1, y1, x2, y2);
-
             }
-            else if (flags == (FLAG_SW | FLAG_NW)
-                || flags == (FLAG_NW | FLAG_NE)
-                || flags == (FLAG_NE | FLAG_SE)
-                || flags == (FLAG_SE | FLAG_SW)) {
+            else if (flags == (SquareFlags::SouthWest | SquareFlags::NorthWest)
+                || flags == (SquareFlags::NorthWest | SquareFlags::NorthEast)
+                || flags == (SquareFlags::NorthEast | SquareFlags::SouthEast)
+                || flags == (SquareFlags::SouthEast | SquareFlags::SouthWest)) {
                 // Half
                 double x1, y1;
                 double x2, y2;
                 double sx = dX, sy = dY;
 
-                if (flags == (FLAG_SW | FLAG_NW) || flags == (FLAG_SE | FLAG_NE)) {
+                if (flags == (SquareFlags::SouthWest | SquareFlags::NorthWest) ||
+                    flags == (SquareFlags::SouthEast | SquareFlags::NorthEast)) {
                     x1 = x;
                     y1 = y + sy * ValuesRatio(vals, 0, 3);
                     x2 = x + sx;
                     y2 = y + sy * ValuesRatio(vals, 1, 2);
                 }
-                else if (flags == (FLAG_NW | FLAG_NE) || flags == (FLAG_SW | FLAG_SE)) {
+                else if (flags == (SquareFlags::NorthWest | SquareFlags::NorthEast) ||
+                    flags == (SquareFlags::SouthWest | SquareFlags::SouthEast)) {
                     x1 = x + sx * ValuesRatio(vals, 0, 1);
                     y1 = y;
                     x2 = x + sx * ValuesRatio(vals, 3, 2);
@@ -116,9 +113,9 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
                 }
 
                 iter_lines.emplace_back(x1, y1, x2, y2);
-
             }
-            else if (flags == (FLAG_SW | FLAG_NE) || flags == (FLAG_NW | FLAG_SE)) {
+            else if (flags == (SquareFlags::SouthWest | SquareFlags::NorthEast) ||
+                flags == (SquareFlags::NorthWest | SquareFlags::SouthEast)) {
                 // Ambiguity
                 double v;
                 bool u;
@@ -131,7 +128,8 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
                 double x4, y4;
                 double sx = dX, sy = dY;
 
-                if ((flags == (FLAG_SW | FLAG_NE) && u) || (flags == (FLAG_NW | FLAG_SE) && !u)) {
+                if ((flags == (SquareFlags::SouthWest | SquareFlags::NorthEast) && u) ||
+                    (flags == (SquareFlags::NorthWest | SquareFlags::SouthEast) && !u)) {
                     x1 = x;
                     y1 = y + sy * ValuesRatio(vals, 0, 3);
                     x2 = x + sx * ValuesRatio(vals, 3, 2);
@@ -142,7 +140,8 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
                     x4 = x + sx;
                     y4 = y + sy * ValuesRatio(vals, 1, 2);
                 }
-                if ((flags == (FLAG_SW | FLAG_NE) && !u) || (flags == (FLAG_NW | FLAG_SE) && u)) {
+                else if ((flags == (SquareFlags::SouthWest | SquareFlags::NorthEast) && !u) ||
+                    (flags == (SquareFlags::NorthWest | SquareFlags::SouthEast) && u)) {
                     x1 = x;
                     y1 = y + sy * ValuesRatio(vals, 0, 3);
                     x2 = x + sx * ValuesRatio(vals, 0, 1);
@@ -184,15 +183,15 @@ bool ContourParallel::update(matrix_t* points, area_t a, double t) {
 void ContourParallel::render(const glm::mat4& mvp,
                              double zoom,
                              const glm::vec2& offset,
-                             const GLfloat c[]) {
+                             const std::array<GLfloat, 4>& c) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();
 
     glUniformMatrix4fv(u_mvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
     glUniform1f(u_zoom, (GLfloat)zoom); LOGOPENGLERROR();
     glUniform2fv(u_ofs, 1, glm::value_ptr(offset)); LOGOPENGLERROR();
-    glUniform2f(u_res, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
-    glUniform4fv(u_color, 1, c); LOGOPENGLERROR();
+    glUniform2f(u_res, static_cast<GLfloat>(w), static_cast<GLfloat>(h)); LOGOPENGLERROR();
+    glUniform4fv(u_color, 1, c.data()); LOGOPENGLERROR();
 
     glDrawArrays(GL_LINES, 0, vbo_count); LOGOPENGLERROR();
 

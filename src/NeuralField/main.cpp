@@ -118,23 +118,23 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
             break;
 
         case GLFW_KEY_1:
-            context->SetRenderMode(RENDER_TEXTURE);
+            context->SetRenderMode(RenderMode::Texture);
             break;
 
         case GLFW_KEY_2:
-            context->SetRenderMode(RENDER_CONTOUR);
+            context->SetRenderMode(RenderMode::Contour);
             break;
 
         case GLFW_KEY_3:
-            context->SetRenderMode(RENDER_PARALLEL);
+            context->SetRenderMode(RenderMode::ContourParallel);
             break;
 
         case GLFW_KEY_4:
-            context->SetRenderMode(RENDER_FILL);
+            context->SetRenderMode(RenderMode::Fill);
             break;
 
         case GLFW_KEY_5:
-            context->SetRenderMode(RENDER_PARALLEL_FILL);
+            context->SetRenderMode(RenderMode::FillParallel);
             break;
 
         case GLFW_KEY_SPACE:

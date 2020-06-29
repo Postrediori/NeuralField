@@ -4,24 +4,35 @@
 #include "GlUtils.h"
 #include "ContourPlot.h"
 
-flags_t CellType(vals_t vals) {
-    flags_t flags = FLAG_NO;
-    if (vals.v[0] > 0.0) {
-        flags |= FLAG_SW;
-    }
-    if (vals.v[1] > 0.0) {
-        flags |= FLAG_NW;
-    }
-    if (vals.v[2] > 0.0) {
-        flags |= FLAG_NE;
-    }
-    if (vals.v[3] > 0.0) {
-        flags |= FLAG_SE;
-    }
-    return flags;
+SquareFlags operator|(SquareFlags lhs, SquareFlags rhs) {
+    using Type = std::underlying_type_t<SquareFlags>;
+    return static_cast<SquareFlags>(static_cast<Type>(lhs) | static_cast<Type>(rhs));
+}
+
+SquareFlags& operator|=(SquareFlags& lhs, SquareFlags rhs) {
+    lhs = lhs | rhs;
+    return lhs;
+}
+
+SquareFlags operator^(SquareFlags lhs, SquareFlags rhs) {
+    using Type = std::underlying_type_t<SquareFlags>;
+    return static_cast<SquareFlags>(static_cast<Type>(lhs) ^ static_cast<Type>(rhs));
+}
+
+SquareFlags& operator^=(SquareFlags& lhs, SquareFlags rhs) {
+    lhs = lhs ^ rhs;
+    return lhs;
+}
+
+SquareFlags CellType(vals_t vals) {
+    return ((vals.v[0] > 0.0) ? SquareFlags::SouthWest : SquareFlags::None) |
+        ((vals.v[1] > 0.0) ? SquareFlags::NorthWest : SquareFlags::None) |
+        ((vals.v[2] > 0.0) ? SquareFlags::NorthEast : SquareFlags::None) |
+        ((vals.v[3] > 0.0) ? SquareFlags::SouthEast : SquareFlags::None);
 }
 
 double ValuesRatio(vals_t vals, size_t i1, size_t i2) {
+    assert(i1 >= 0 && i1 <= 3 && i2 >= 0 && i2 <= 3);
     return fabs(vals.v[i1] / (vals.v[i1] - vals.v[i2]));
 }
 
@@ -42,9 +53,7 @@ bool ContourPlot::init(GLuint p) {
     }
     glBindVertexArray(vao); LOGOPENGLERROR();
 
-    GLuint genbuf[1];
-    glGenBuffers(1, genbuf); LOGOPENGLERROR();
-    vbo = genbuf[0];
+    glGenBuffers(1, &vbo); LOGOPENGLERROR();
     if (!vbo) {
         LOGE << "Unable to initialize VBO for parallel contour plot";
         return false;
@@ -63,13 +72,9 @@ bool ContourPlot::init(GLuint p) {
     u_ofs = glGetUniformLocation(program, "ofs"); LOGOPENGLERROR();
     u_res = glGetUniformLocation(program, "res"); LOGOPENGLERROR();
     u_color = glGetUniformLocation(program, "color"); LOGOPENGLERROR();
-    if (a_coord == -1
-            || u_mvp == -1
-            || u_zoom == -1
-            || u_ofs == -1
-            || u_res == -1
-            || u_color == -1) {
-        LOGE << "Invalid Shader for contoul plot";
+    if (a_coord == -1 || u_mvp == -1 || u_zoom == -1 ||
+        u_ofs == -1 || u_res == -1 || u_color == -1) {
+        LOGE << "Shader program for contour plot doesn't contain all required uniform variables";
         return false;
     }
 
@@ -79,7 +84,7 @@ bool ContourPlot::init(GLuint p) {
 bool ContourPlot::update(matrix_t* /*points*/, area_t /*a*/, double /*t*/) { return true; }
 
 void ContourPlot::render(const glm::mat4& /*mvp*/, double /*zoom*/,
-                         const glm::vec2& /*offset*/, const GLfloat /*c*/[]) { }
+                         const glm::vec2& /*offset*/, const std::array<GLfloat, 4>& /*c*/) { }
 
 void ContourPlot::release() {
     if (vbo) {

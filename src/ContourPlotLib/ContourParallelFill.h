@@ -13,5 +13,5 @@ public:
     void render(const glm::mat4& mvp,
                 double zoom,
                 const glm::vec2& offset,
-                const GLfloat c[]);
+                const std::array<GLfloat, 4>& c);
 };

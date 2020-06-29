@@ -1,13 +1,13 @@
 #pragma once
 
-enum RenderMode : int {
-    RENDER_TEXTURE = 0,
-    RENDER_CONTOUR = 1,
-    RENDER_PARALLEL = 2,
-    RENDER_FILL = 3,
-    RENDER_PARALLEL_FILL = 4,
+enum class RenderMode : int {
+    Texture = 0,
+    Contour = 1,
+    ContourParallel = 2,
+    Fill = 3,
+    FillParallel = 4,
 
-    RENDER_MODES = 5
+    RenderModesCount = 5
 };
 
 class NeuralFieldContext {
@@ -35,7 +35,7 @@ private:
 private:
     int windowWidth_ = 0, windowHeight_ = 0;
 
-    RenderMode renderMode_ = RenderMode::RENDER_TEXTURE;
+    RenderMode renderMode_ = RenderMode::Texture;
 
     GLuint program_ = 0;
     
