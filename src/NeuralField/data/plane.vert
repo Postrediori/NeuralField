@@ -8,13 +8,14 @@ uniform vec2 ofs;
 uniform vec2 res;
 
 vec2 adjust_proportions(vec2 u, vec2 res) {
-	vec2 v = u;
+    vec2 v = u;
     if(res.x>res.y){
         v.x *= res.y / res.x;
-    }else{
+    }
+    else{
         v.y *= res.x / res.y;
     }
-	return v;
+    return v;
 }
 
 void main() {

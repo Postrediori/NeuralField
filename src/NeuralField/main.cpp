@@ -11,6 +11,7 @@
 #include "ContourFill.h"
 #include "ContourParallel.h"
 #include "ContourParallelFill.h"
+#include "QuadRenderer.h"
 #include "NeuralFieldContext.h"
 #include "GlFormatter.h"
 #include "ScopeGuard.h"

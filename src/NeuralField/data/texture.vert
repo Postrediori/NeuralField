@@ -18,7 +18,7 @@ vec2 adjust_proportions(vec2 v, vec2 res) {
     return xy;
 }
 
-void main(void){
+void main(void) {
     xy_coord=adjust_proportions(coord.xy,iRes);
     gl_Position=mvp*vec4(xy_coord,0.,1.);
     xy_coord=tex_coord.xy;

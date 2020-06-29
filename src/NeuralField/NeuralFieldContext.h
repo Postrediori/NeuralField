@@ -56,4 +56,6 @@ private:
     bool textureBlur_ = true;
 
     ConfigMap_t modelConfig_;
+
+    QuadRenderer quad_;
 };
