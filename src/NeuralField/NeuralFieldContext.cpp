@@ -175,7 +175,7 @@ void NeuralFieldContext::RenderUi() {
         {"256x256", 256},
         {"512x512", 512}
     };
-    static int gModelSize = 256;
+    static int gModelSize = static_cast<int>(modelConfig_["size"]);
     ImGui::Text("Model size:");
     for (const auto& s : g_ModelSizes) {
         if (ImGui::RadioButton(s.first.c_str(), &gModelSize, s.second)) {
@@ -193,7 +193,7 @@ void NeuralFieldContext::RenderUi() {
         {"reflect", static_cast<int>(KernelMode::MODE_REFLECT)},
         {"mirror", static_cast<int>(KernelMode::MODE_MIRROR)}
     };
-    static int gModelMode = 0;
+    static int gModelMode = static_cast<int>(modelConfig_["mode"]);
     ImGui::Text("Border mode:");
     for (const auto& s : g_ModelModes) {
         if (ImGui::RadioButton(s.first.c_str(), &gModelMode, s.second)) {

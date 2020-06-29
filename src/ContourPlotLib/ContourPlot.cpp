@@ -51,8 +51,7 @@ bool ContourPlot::init(GLuint p) {
     }
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
 
-    GLint a_coord(0);
-    a_coord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
+    GLint a_coord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
 
     glEnableVertexAttribArray(a_coord); LOGOPENGLERROR();
     glVertexAttribPointer(a_coord, 2, GL_FLOAT, GL_FALSE, 0, 0); LOGOPENGLERROR();
