@@ -1,15 +1,17 @@
 ## Introduction
+This is a model of a planar neural field that simulates evolution of activity rate of neurons implemented using the Amari equation.
 
-Neural field model describes evolution of activity rate in neurons. The dynamics
-of neural activity on 2D plane is implemented using the Amari Model.
+This project is written in C++ and it uses CMake to generate platform-specific build files. Program uses OpenGL 3.3 or higher for rendering and ImGui library for the UI. Linear outlines are produced using the [Marching squares](https://en.wikipedia.org/wiki/Marching_squares) algorithm. Matrix algebra and marching squares use [OpenMP API](https://en.wikipedia.org/wiki/OpenMP) for paralleling calculations on CPU.
 
-Marching square algorithm is used to create vectorized outline of the active neural area.
+## Sceenshots
+![Neural field simulation on Windows](images/NeuralFieldWin.png)
 
-![Neural Field Simulation screenshot](images/neuralField.png)
+![Neural field simulation on Linux 1](images/NeuralFieldLinux1.png)
 
-## Model Description
+![Neural field simulation on Linux 2](images/NeuralFieldLinux2.png)
 
-Amari model uses the solution of the Cauchy problem for integro-differential equation
+## Description of the Amari Neural Field
+Planar neural field is modeled using an Amari model that uses the solution of the Cauchy problem for integro-differential equation:
 
 ![Amari equation](images/amariEquation.png)
 
@@ -22,23 +24,21 @@ Amari model uses the solution of the Cauchy problem for integro-differential equ
 * `x` - coordinate in the area `Omega`.
 
 ## Prerequisites
-
-Compiling and running the sample project requires GCC, CMake, GNU Make
-as well as FreeType library for text rendering. Most of the dependencies needed
-are bundled with the repository. This includes:
+You need CMake to generate platform-specific makefiles or project files. This repository bundles most of the dependencies as git submodules, which includes:
 
 * [glad](https://github.com/Dav1dde/glad) - OpenGL Function Loader.
 * [glfw](https://github.com/glfw/glfw) - Windowing and Input.
+* [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
 * [plog](https://github.com/SergiusTheBest/plog) - Logging library.
+* [imgui](https://github.com/ocornut/imgui) - UI library.
 
-## Environment Setup
+## Building for Linux
 
-### Debian-based Systems
-
+### Dependencies
 The following instructions apply to:
 
-* Ubuntu 16.04
-* Debian 9
+* Ubuntu 20.04, 18.04, 16.04
+* Debian 9 and higher
 
 ```
 apt-get install \
@@ -48,8 +48,6 @@ apt-get install \
     libgl1-mesa-dev \
     libfreetype6-dev
 ```
-
-### RedHat-based Systems
 
 The following instructions apply to:
 
@@ -67,7 +65,7 @@ dnf install \
     freetype-devel
 ```
 
-* CentOS 7
+* CentOS 7 and higher
 
 ```
 yum install \
@@ -81,75 +79,51 @@ yum install \
     freetype-devel
 ```
 
-## Cloning Repository
-
-Cloning the repository requires passing the `--recursive` flag to load dependencies
-
+### Cloning Repository
 ```
-git clone --recursive https://github.com/Postrediori/AmariNeuralField
-cd AmariNeuralField
+git clone --recursive https://github.com/Postrediori/NeuralField.git
+cd NeuralField
 ```
 
-## Building Project
+The `--recursive` option automatically clones the required Git submodules too.
 
-The program is built with the commands below. CMake requires the directory 
-with the main project's `CMakeLists.txt` file as an argument. Then the CMake 
-creates the build files for the GNU make which build an executable.
-
-```
-mkdir build && cd build
-cmake ..
-make
-```
-
-## Building Project in Release Mode
+### Building Project
+The program is built with the commands below. CMake requires the directory with the main project's `CMakeLists.txt` file as an argument. Then the CMake creates the build files for the GNU make which build an executable.
 
 ```
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
-```
-
-## Running Project
-
-After the successful build the binary `AmariModel` will end up in `build/src/AmariModel/` directory.
-
-```
-cd build/src/AmariModel
-./AmariModel
-```
-
-## Installation
-
-In order to make the stand-alone bundle for the simulation executable and all the data files `make install`
-is used.
-
-```
-cd <PathToProject>/build
 make install
 ```
 
-This will install all of the files required for an executable to `<PathToProject>/bundle/AmariModel` directory.
+### Running Project
+After the successful build the binary `NeuralField` will end up in `<source dir>/bundle/NauralField` directory.
+
+```
+cd bundle/NeuralField
+./NeuralField
+```
+
+
+All of the files required for an executable to run are stored in the `<PathToProject>/bundle/NeuralField`:
 
 ```
 cd <PathToProject>/bundle
 tree
 .
-└── AmariModel
-    ├── AmariModel
+└── NeuralField
+    ├── NeuralField
     └── data
         ├── amari.conf
-        ├── font.ttf
         ├── plane.frag
-        └── plane.vert
+        ├── plane.vert
+        └── ...
 
-2 directories, 5 files
-cd AmariModel
-./AmariModel
+2 directories, 7 files
 ```
 
 ## Configuration
-
 The parameters of the model can be adjusted in the `data/amari.conf` file:
 
 ```
@@ -185,21 +159,23 @@ h=0  | h=-0.15 | h=-0.3
 
 
 ## Controls
-
 * `F1` - Toggle fullscreen mode.
 * `F2` - Show/hide help on the screen.
-* `Space` - Clear the model.
-* `Left Mouse Click` - Initiate the activity in a pointunder cursor.
-* `1` - Toggle textured mode.
-* `2` - Toggle filled contour mode.
-* `3` - Toggle outline mode.
+* `Space` or `RMB` - Clear the model.
+* `LMB` - Initiate the activity in a pointunder cursor.
+* `1..5` - Switch between output modes.
 * `B` - Toggle blurring for the textured mode.
 
 ## Links
-
-* [https://habrahabr.ru/post/181265/](https://habrahabr.ru/post/181265/).
 * S. Amari, [Dynamics of pattern formation in lateral-inhibition type neural filed](http://www.math.pitt.edu/~troy/sflood/amari.pdf), 1977.
 * Konstantin Doubrovinski, Dynamics, [Stability and Bifurcation Phenomena in the Nonlocal Model of Cortical Activity](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.8688&rep=rep1&type=pdf), 2005.
 * Dequan Jin, Dong Liang, Jigen Peng, [Existence and Properties of Stationary Solution of Dynamical Neural Field](http://gr.xjtu.edu.cn/c/document_library/get_file?folderId=29529&name=DLFE-2974.pdf), 2011.
 * Stephen Coombes, Helmut Schmidt, Ingo Bojak, [Interface Dynamics in Planar Neural Field Models](http://www.mathematical-neuroscience.com/content/2/1/9), 2012.
+* Luca Salasnich, [Power Spectrum and Diffusion of the Amari Neural Field](https://doi.org/10.3390/sym11020134), 2019.
 
+## TODO
+* [  ] Build instructions for Windows.
+* [  ] Build instructions for macOS X: add OpenMP setup or make more universal version without OpenMP.
+* [  ] Matrix algebra using hardware acceleration (OpenCL, OpenGL Compute Shaders, texture rendering&framebuffers, shader feedback, etc.)
+* [  ] Export results to images and videos.
+* [  ] Expand description of the model.
