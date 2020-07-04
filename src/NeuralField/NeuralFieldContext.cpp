@@ -300,6 +300,7 @@ void NeuralFieldContext::Update(double t) {
     double currentTime = t;
     double dt = currentTime - lastTime;
     lastTime = currentTime;
+    (void)dt;
 
     if (currentTime - lastFpsTime > 1.0) {
         fps_ = ImGui::GetIO().Framerate;

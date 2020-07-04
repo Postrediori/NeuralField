@@ -5,8 +5,7 @@
 #include "ContourPlot.h"
 
 SquareFlags operator|(SquareFlags lhs, SquareFlags rhs) {
-    using Type = std::underlying_type_t<SquareFlags>;
-    return static_cast<SquareFlags>(static_cast<Type>(lhs) | static_cast<Type>(rhs));
+    return static_cast<SquareFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
 }
 
 SquareFlags& operator|=(SquareFlags& lhs, SquareFlags rhs) {
@@ -15,8 +14,7 @@ SquareFlags& operator|=(SquareFlags& lhs, SquareFlags rhs) {
 }
 
 SquareFlags operator^(SquareFlags lhs, SquareFlags rhs) {
-    using Type = std::underlying_type_t<SquareFlags>;
-    return static_cast<SquareFlags>(static_cast<Type>(lhs) ^ static_cast<Type>(rhs));
+    return static_cast<SquareFlags>(static_cast<int>(lhs) ^ static_cast<int>(rhs));
 }
 
 SquareFlags& operator^=(SquareFlags& lhs, SquareFlags rhs) {

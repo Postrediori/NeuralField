@@ -66,6 +66,8 @@ bool ParseConfigFile(ConfigMap_t& map, const std::string& fileName) {
             map["size"] = ival;
         }
     }
+
+    return true;
 }
 
 NeuralFieldModel::NeuralFieldModel()
