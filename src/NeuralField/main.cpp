@@ -9,8 +9,6 @@
 #include "ContourPlot.h"
 #include "ContourLine.h"
 #include "ContourFill.h"
-#include "ContourParallel.h"
-#include "ContourParallelFill.h"
 #include "QuadRenderer.h"
 #include "NeuralFieldContext.h"
 #include "GlFormatter.h"
@@ -126,15 +124,7 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
             break;
 
         case GLFW_KEY_3:
-            context->SetRenderMode(RenderMode::ContourParallel);
-            break;
-
-        case GLFW_KEY_4:
             context->SetRenderMode(RenderMode::Fill);
-            break;
-
-        case GLFW_KEY_5:
-            context->SetRenderMode(RenderMode::FillParallel);
             break;
 
         case GLFW_KEY_SPACE:
@@ -191,9 +181,10 @@ int main(int /*argc*/, char** /*argv*/) {
     });
 
     LOGI << "Init window context with OpenGL 3.3";
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     auto window = glfwCreateWindow(Width, Height, Title.c_str(), nullptr, nullptr);
     if (!window) {
@@ -255,8 +246,6 @@ int main(int /*argc*/, char** /*argv*/) {
 
         glfwSwapBuffers(window);
     }
-
-    // Cleanup is done by scope guards
 
     return EXIT_SUCCESS;
 }

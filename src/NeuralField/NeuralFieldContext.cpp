@@ -10,8 +10,6 @@
 #include "ContourPlot.h"
 #include "ContourLine.h"
 #include "ContourFill.h"
-#include "ContourParallel.h"
-#include "ContourParallelFill.h"
 #include "QuadRenderer.h"
 #include "NeuralFieldContext.h"
 
@@ -23,9 +21,7 @@ static const std::array<GLfloat, 4> g_outline = {1.00f, 1.00f, 1.00f, 1.00f};
 static const std::vector<std::string> g_renderModeLabels = {
     "Texture",
     "Contour",
-    "Contour Parallel",
-    "Fill",
-    "Filled Parallel"
+    "Filled",
 };
 
 static const std::string g_configFile = "data/amari.conf";
@@ -83,25 +79,13 @@ bool NeuralFieldContext::Init() {
         return false;
     }
 
-    if (!contourParallel_.init(program_)) {
-        LOGE << "Unable to create Parallel Contour Lines";
-        return false;
-    }
-
-    if (!contourParallelFill_.init(program_)) {
-        LOGE << "Unable to create Parallel Contour Lines";
-        return false;
-    }
-
     contourLines_.update(model_.activity.get(), g_area, 1.0);
     contourFill_.update(model_.activity.get(), g_area, 1.0);
-    contourParallelFill_.update(model_.activity.get(), g_area, 1.0);
-    contourParallel_.update(model_.activity.get(), g_area, 1.0);
-    
+
     // Set up OpenGL
     glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
     glClearDepth(1.); LOGOPENGLERROR();
-    
+
     return true;
 }
 
@@ -123,10 +107,6 @@ void NeuralFieldContext::Render() {
         quad_.Render(mvp_, zoom, offset, g_background);
         contourLines_.render(mvp_, zoom, offset, g_outline);
     }
-    else if (renderMode_ == RenderMode::ContourParallel) {
-        quad_.Render(mvp_, zoom, offset, g_background);
-        contourParallel_.render(mvp_, zoom, offset, g_outline);
-    }
     else if (renderMode_ == RenderMode::Fill) {
         quad_.Render(mvp_, zoom, offset, g_background);
 
@@ -137,17 +117,6 @@ void NeuralFieldContext::Render() {
         glPolygonOffset(0, 0); LOGOPENGLERROR();
         glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
         contourLines_.render(mvp_, zoom, offset, g_outline);
-    }
-    else if (renderMode_ == RenderMode::FillParallel) {
-        quad_.Render(mvp_, zoom, offset, g_background);
-
-        glPolygonOffset(1, 0); LOGOPENGLERROR();
-        glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourParallelFill_.render(mvp_, zoom, offset, g_foreground);
-
-        glPolygonOffset(0, 0); LOGOPENGLERROR();
-        glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
-        contourParallel_.render(mvp_, zoom, offset, g_outline);
     }
 
     if (showUi_) {
@@ -254,8 +223,6 @@ void NeuralFieldContext::Resize(int w, int h) {
     renderer_.resize(newW, h);
     contourLines_.resize(newW, h);
     contourFill_.resize(newW, h);
-    contourParallel_.resize(newW, h);
-    contourParallelFill_.resize(newW, h);
 }
 
 void NeuralFieldContext::SetActivity(int x, int y) {
@@ -318,18 +285,9 @@ void NeuralFieldContext::Update(double t) {
         contourLines_.update(model_.activity.get(), g_area, 0.0);
         break;
 
-    case RenderMode::ContourParallel:
-        contourParallel_.update(model_.activity.get(), g_area, 0.0);
-        break;
-
     case RenderMode::Fill:
         contourLines_.update(model_.activity.get(), g_area, 0.0);
         contourFill_.update(model_.activity.get(), g_area, 0.0);
-        break;
-
-    case RenderMode::FillParallel:
-        contourParallel_.update(model_.activity.get(), g_area, 0.0);
-        contourParallelFill_.update(model_.activity.get(), g_area, 0.0);
         break;
 
     default:

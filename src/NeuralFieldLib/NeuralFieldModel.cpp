@@ -93,13 +93,13 @@ bool NeuralFieldModel::init(const ConfigMap_t& configMap) {
     pi_k = K_ * M_PI / k;
     pi_m = M_ * M_PI / m;
 
-    excitement_kernel = std::move(KernelGuard_t(kernel_create(sigma_k, mode), kernel_free));
-    inhibition_kernel = std::move(KernelGuard_t(kernel_create(sigma_m, mode), kernel_free));
+    excitement_kernel = KernelGuard_t(kernel_create(sigma_k, mode), kernel_free);
+    inhibition_kernel = KernelGuard_t(kernel_create(sigma_m, mode), kernel_free);
 
-    stimulus = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
-    activity = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
-    excitement = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
-    inhibition = std::move(MatrixGuard_t(matrix_allocate(size, size), matrix_free));
+    stimulus = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    activity = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    excitement = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    inhibition = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
 
     restart();
 

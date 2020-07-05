@@ -59,7 +59,6 @@ matrix_t* matrix_scalar_set(matrix_t* a, double h) {
         LOGE << "Matrix NULL Error";
         return nullptr;
     }
-#pragma omp parallel for
     for (int idx = 0; idx < static_cast<int>(a->rows * a->cols); idx++) {
         a->data[idx] = h;
     }
@@ -71,7 +70,6 @@ matrix_t* matrix_scalar_add(matrix_t* a, double h) {
         LOGE << "Matrix NULL Error";
         return a;
     }
-#pragma omp parallel for
     for (int idx = 0; idx < static_cast<int>(a->rows * a->cols); idx++) {
         a->data[idx] += h;
     }
@@ -83,7 +81,6 @@ matrix_t* matrix_scalar_mul(matrix_t* a, double h) {
         LOGE << "Matrix NULL Error";
         return a;
     }
-#pragma omp parallel for
     for (int idx = 0; idx < static_cast<int>(a->rows * a->cols); idx++) {
         a->data[idx] *= h;
     }
@@ -103,7 +100,6 @@ matrix_t* matrix_add(matrix_t* a, matrix_t* b) {
         LOGE << "Matrix COLUMNS Error";
         return a;
     }
-#pragma omp parallel for
     for (int idx = 0; idx < static_cast<int>(a->rows * a->cols); idx++) {
         a->data[idx] += b->data[idx];
     }
@@ -123,7 +119,6 @@ matrix_t* matrix_sub(matrix_t* a, matrix_t* b) {
         LOGE << "Matrix COLUMNS Error";
         return a;
     }
-#pragma omp parallel for
     for (int idx = 0; idx < static_cast<int>(a->rows * a->cols); idx++) {
         a->data[idx] -= b->data[idx];
     }
@@ -135,7 +130,6 @@ matrix_t* matrix_heaviside(matrix_t* a) {
         LOGE << "Matrix NULL Error";
         return a;
     }
-#pragma omp parallel for
     for (int idx = 0; idx < static_cast<int>(a->rows * a->cols); idx++) {
         a->data[idx] = (a->data[idx] > 0.0) ? 1.0 : 0.0;
     }
@@ -147,7 +141,6 @@ matrix_t* matrix_random_f(matrix_t* a) {
         LOGE << "Matrix NULL Error";
         return a;
     }
-#pragma omp parallel for
     for (int idx = 0; idx < static_cast<int>(a->rows * a->cols); idx++) {
         a->data[idx] = drand48();
     }

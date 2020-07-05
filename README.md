@@ -1,14 +1,14 @@
 ## Introduction
 This is a model of a planar neural field that simulates evolution of activity rate of neurons implemented using the Amari equation.
 
-This project is written in C++ and it uses CMake to generate platform-specific build files. Program uses OpenGL 3.3 or higher for rendering and ImGui library for the UI. Linear outlines are produced using the [Marching squares](https://en.wikipedia.org/wiki/Marching_squares) algorithm. Matrix algebra and marching squares use [OpenMP API](https://en.wikipedia.org/wiki/OpenMP) for paralleling calculations on CPU.
+This project is written in C++ and it uses CMake to generate platform-specific build files. Program uses OpenGL 3.3 or higher for rendering and ImGui library for the UI. Linear outlines are produced using the [Marching squares](https://en.wikipedia.org/wiki/Marching_squares) algorithm.
 
 ## Sceenshots
 ![Neural field simulation on Windows](images/NeuralFieldWin.png)
 
-![Neural field simulation on Linux 1](images/NeuralFieldLinux1.png)
+![Neural field simulation on Linux](images/NeuralFieldLinux.png)
 
-![Neural field simulation on Linux 2](images/NeuralFieldLinux2.png)
+![Neural field simulation on macOS](images/NeuralFieldMacOs.png)
 
 ## Description of the Amari Neural Field
 Planar neural field is modeled using an Amari model that uses the solution of the Cauchy problem for integro-differential equation:
@@ -123,6 +123,37 @@ tree
 2 directories, 7 files
 ```
 
+## Building for macOS
+
+### Dependencies
+You’ll need to download and install the following to build the project:
+* Xcode and the Xcode command line tools
+* [CMake](https://cmake.org/) (e.g. via homebrew `brew install cmake`)
+
+### Cloning Repository
+```
+git clone --recursive https://github.com/Postrediori/NeuralField.git
+cd NeuralField
+```
+
+### Using CMake
+Generate makefiles for the build:
+
+```
+mkdir build
+cd build
+cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release
+```
+
+### Building
+```
+make -j4
+make install
+```
+
+An `NeuralField` application bundle will now be present under `<Source directory>/bundle/NeuralField`.
+
+
 ## Configuration
 The parameters of the model can be adjusted in the `data/amari.conf` file:
 
@@ -163,7 +194,7 @@ h=0  | h=-0.15 | h=-0.3
 * `F2` - Show/hide help on the screen.
 * `Space` or `RMB` - Clear the model.
 * `LMB` - Initiate the activity in a pointunder cursor.
-* `1..5` - Switch between output modes.
+* `1..3` - Switch between output modes.
 * `B` - Toggle blurring for the textured mode.
 
 ## Links
@@ -175,7 +206,7 @@ h=0  | h=-0.15 | h=-0.3
 
 ## TODO
 * [  ] Build instructions for Windows.
-* [  ] Build instructions for macOS X: add OpenMP setup or make more universal version without OpenMP.
+* [x] Build instructions for macOS X.
 * [  ] Matrix algebra using hardware acceleration (OpenCL, OpenGL Compute Shaders, texture rendering&framebuffers, shader feedback, etc.)
 * [  ] Export results to images and videos.
 * [  ] Expand description of the model.

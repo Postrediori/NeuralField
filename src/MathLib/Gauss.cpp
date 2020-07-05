@@ -89,7 +89,7 @@ kernel_t* kernel_create(double sigma, KernelMode mode) {
         LOGE << "kernel invalid sigma error";
         return nullptr;
     }
-    
+
     kernel_t* k = kernel_alloc(k_size);
     k->mode = mode;
 
@@ -105,7 +105,7 @@ kernel_t* kernel_create(double sigma, KernelMode mode) {
     for (int i = 0; i < k_size; i++) {
         k->data[i] /= s;
     }
-    
+
     return k;
 }
 
@@ -114,25 +114,24 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
         LOGE << "kernel null error";;
         return nullptr;
     }
-    
+
     if (dst->rows != src->rows) {
         LOGE << "kernel rows mismatch";
         return dst;
     }
-    
+
     if (dst->cols != src->cols) {
         LOGE << "kernel cols mismatch";
         return dst;
     }
-    
+
     matrix_t* tmp = matrix_allocate(src->rows, src->cols);
     if (!tmp) {
         return dst;
     }
-    
+
     size_t k2 = k->size / 2;
-    
-#pragma omp parallel for
+
     for (int j = 0; j < static_cast<int>(dst->cols); ++j) {
         for (int i = 0; i < static_cast<int>(dst->rows); ++i) {
             double d = 0.0;
@@ -146,8 +145,7 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
             tmp->data[i + j * tmp->cols] = d;
         }
     }
-    
-#pragma omp parallel for
+
     for (int j = 0; j < static_cast<int>(dst->cols); ++j) {
         for (int i = 0; i < static_cast<int>(dst->rows); ++i) {
             double d = 0.0;
@@ -163,7 +161,7 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
     }
 
     matrix_free(tmp);
-    
+
     return dst;
 }
 
@@ -176,11 +174,11 @@ matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, Kerne
     if (!k) {
         return dst;
     }
-    
+
     kernel_apply_to_matrix(dst, src, k);
 
     kernel_free(k);
-    
+
     return dst;
 }
 
@@ -189,15 +187,14 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
         LOGE << "kernel null error";
         return t;
     }
-    
+
     texture_t* tmp = texture_alloc(t->size, t->bpp);
     if (!tmp) {
         return t;
     }
-    
+
     size_t k2 = k->size / 2;
-    
-#pragma omp parallel for
+
     for (int j = 0; j < static_cast<int>(t->size); ++j) {
         for (int i = 0; i < static_cast<int>(t->size); ++i) {
             double r = 0.0, g = 0.0, b = 0.0;
@@ -216,8 +213,7 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
             tmp->data[(i+j*t->size)*t->bpp+2] = b;
         }
     }
-    
-#pragma omp parallel for
+
     for (int j = 0; j < static_cast<int>(t->size); ++j) {
         for (int i = 0; i < static_cast<int>(t->size); ++i) {
             double r = 0.0, g = 0.0, b = 0.0;
@@ -238,7 +234,7 @@ texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k) {
     }
 
     texture_free(tmp);
-    
+
     return t;
 }
 
@@ -255,6 +251,6 @@ texture_t* kernel_filter_texture(texture_t* t, double sigma, KernelMode mode) {
     kernel_apply_to_texture(t, k);
 
     kernel_free(k);
-    
+
     return t;
 }

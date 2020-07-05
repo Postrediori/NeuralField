@@ -5,14 +5,12 @@ macro(make_project_)
 
     project(${PROJECT} CXX)
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-
     if (MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W4")
     else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror -std=c++11")
     endif ()
-    
+
     if (MSVC)
         add_definitions(
             -D_USE_MATH_DEFINES
@@ -55,7 +53,6 @@ endmacro()
 
 function(add_all_subdirectories)
     file(GLOB CHILDREN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
-
     foreach(CHILD ${CHILDREN})
         if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${CHILD})
             add_subdirectory(${CHILD})

@@ -8,12 +8,12 @@ texture_t* texture_alloc(size_t size, size_t bpp) {
         LOGE << "texture alloc error";
         return nullptr;
     }
-    
+
     t->size = size;
     t->bpp = bpp;
-    
+
     t->data = new uint8_t[size * size * bpp];
-    
+
     return t;
 }
 
@@ -33,23 +33,22 @@ texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
         LOGE << "texture null error";
         return t;
     }
-    
+
     if (t->size != m->rows) {
         LOGE << "texture rows error";
         return t;
     }
-    
+
     if (t->size != m->cols) {
         LOGE << "texture cols error";
         return t;
     }
-    
+
     if (t->bpp != 3 && t->bpp != 4) {
         LOGE << "texture bpp error";
         return t;
-    } 
-    
-#pragma omp parallel for
+    }
+
     for (int idx = 0; idx < static_cast<int>(t->size * t->size); ++idx) {
         uint8_t k = m->data[idx] > 0.0 ? 0xff : 0x00;
         t->data[idx * t->bpp + 0] = k;
@@ -59,6 +58,6 @@ texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
             t->data[idx * t->bpp + 3] = 0xff;
         }
     }
-    
+
     return t;
 }
