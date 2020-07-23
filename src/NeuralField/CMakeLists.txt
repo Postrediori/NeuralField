@@ -36,6 +36,12 @@ configure_file(
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/data/texture.frag
     ${CMAKE_CURRENT_BINARY_DIR}/data/texture.frag COPYONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/texture-blur.vert
+    ${CMAKE_CURRENT_BINARY_DIR}/data/texture-blur.vert COPYONLY)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/texture-blur.frag
+    ${CMAKE_CURRENT_BINARY_DIR}/data/texture-blur.frag COPYONLY)
 
 # Installation
 install(

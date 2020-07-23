@@ -10,6 +10,5 @@ const vec4 col0=vec4(.5,.5,1.,1.);
 
 void main(void){
     float c=texture(tex,xy_coord).r;
-    frag_color=mix(col0,vec4(0.15),1.-c);
-    frag_color.a=1.;
+    frag_color=vec4(mix(col0.rgb,vec3(0.15),1.-c),1.);
 }

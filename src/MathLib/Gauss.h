@@ -22,6 +22,3 @@ kernel_t* kernel_create(double sigma, KernelMode mode);
 
 matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k);
 matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, KernelMode mode);
-
-texture_t* kernel_apply_to_texture(texture_t* t, kernel_t* k);
-texture_t* kernel_filter_texture(texture_t* t, double sigma, KernelMode mode);

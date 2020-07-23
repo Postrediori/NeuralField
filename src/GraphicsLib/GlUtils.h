@@ -7,15 +7,3 @@
 #endif
 
 void LogOpenGLError(const char *file, int line);
-
-class FPSCounter {
-public:
-    FPSCounter();
-
-    void update(float t);
-
-public:
-    int frame;
-    float timePrev;
-    int fps;
-};
