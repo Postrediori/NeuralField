@@ -105,7 +105,7 @@ bool TextureRenderer::initTexture(size_t newSize) {
         GL_UNSIGNED_BYTE, NULL); LOGOPENGLERROR();
 
     // Allocate memory
-    tex = std::move(TextureGuard_t(texture_alloc(size, g_bitsPerPixel), texture_free));
+    tex = TextureGuard_t(texture_alloc(size, g_bitsPerPixel), texture_free);
 
     return true;
 }

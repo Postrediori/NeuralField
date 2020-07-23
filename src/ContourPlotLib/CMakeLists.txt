@@ -6,7 +6,7 @@ include_directories(
     ${GLFW_INCLUDE_DIR}
     ${GLAD_INCLUDE_DIR}
     ${FREETYPE_INCLUDE_DIRS}
-	${GLM_INCLUDE_DIR}
+    ${GLM_INCLUDE_DIR}
     )
 
 target_link_libraries(${PROJECT}
