@@ -20,10 +20,8 @@ static const std::string g_fragmentShaderPath = "data/texture.frag";
 static const std::string g_vertexBlurShaderPath = "data/texture-blur.vert";
 static const std::string g_fragmentBlurShaderPath = "data/texture-blur.frag";
 
-TextureRenderer::TextureRenderer()
- : use_blur(true) {
-
-    set_blur(1.0);
+TextureRenderer::TextureRenderer() {
+    setBlur(1.0);
 }
 
 TextureRenderer::~TextureRenderer() {
@@ -31,7 +29,7 @@ TextureRenderer::~TextureRenderer() {
 }
 
 bool TextureRenderer::init(size_t textureSize) {
-    if (!initTexture(textureSize)) {
+    if (!initTextures(textureSize)) {
         LOGE << "Failed to create textures for neural field renderer";
         return false;
     }
@@ -43,36 +41,35 @@ bool TextureRenderer::init(size_t textureSize) {
     }
 
     // Init shader program
-    {
-        if (!Shader::createProgram(program.p, g_vertexShaderPath, g_fragmentShaderPath)) {
-            LOGE << "Failed to create shader program for neural field renderer";
-            return false;
-        }
+    if (!Shader::createProgram(program.p, g_vertexShaderPath, g_fragmentShaderPath)) {
+        LOGE << "Failed to create shader program for neural field renderer";
+        return false;
     }
 
     // Init blur shader program
-    {
-        if (!Shader::createProgram(blurProgram.p, g_vertexBlurShaderPath, g_fragmentBlurShaderPath)) {
-            LOGE << "Failed to create blur shader program for neural field renderer";
-            return false;
-        }
-
-        blurProgram.uBlurDir = glGetUniformLocation(blurProgram.p, "blur_dir");
-        blurProgram.uBlurKernelTex = glGetUniformLocation(blurProgram.p, "blur_kernel_tex");
+    if (!Shader::createProgram(blurProgram.p, g_vertexBlurShaderPath, g_fragmentBlurShaderPath)) {
+        LOGE << "Failed to create blur shader program for neural field renderer";
+        return false;
     }
 
+    blurProgram.uBlurDir = glGetUniformLocation(blurProgram.p, "blur_dir");
+    blurProgram.uBlurKernelTex = glGetUniformLocation(blurProgram.p, "blur_kernel_tex");
+
+    // Init renderers
     if (!screenRenderer.Init(program.p)) {
+        LOGE << "Failed to create screen texture renderer";
         return false;
     }
 
     if (!blurPreRenderer.Init(blurProgram.p)) {
+        LOGE << "Failed to create texture blur pre-renderer";
         return false;
     }
 
     return true;
 }
 
-bool TextureRenderer::initTexture(size_t newSize) {
+bool TextureRenderer::initTextures(size_t newSize) {
     releaseTextures();
 
     size = newSize;
@@ -138,7 +135,7 @@ void TextureRenderer::release() {
 }
 
 void TextureRenderer::render(const glm::mat4& mvp) {
-    if (use_blur) {
+    if (useBlur) {
         // Render blured version to texture
 
         // Save viewport
@@ -157,20 +154,20 @@ void TextureRenderer::render(const glm::mat4& mvp) {
         blurPreRenderer.SetTexture(texture); // texture is source (0)
 
         glUseProgram(blurProgram.p); LOGOPENGLERROR();
-        glUniform1i(blurProgram.uBlurDir, 1); LOGOPENGLERROR(); // Vertical blur
         glUniform1i(blurProgram.uBlurKernelTex, 2); LOGOPENGLERROR();
+        glUniform1i(blurProgram.uBlurDir, static_cast<int>(BlurDirection::VerticalBlur)); LOGOPENGLERROR();
 
         frameBuffer.Bind();
         blurPreRenderer.Render();
         frameBuffer.Unbind();
 
-        // Step 2: Horizontal blur blurTextureInter->blurTextureFinal
+        // Step 2: Horizontal blur blurTextureInter->texture
         frameBuffer.SetTexColorBuffer(texture);
         blurPreRenderer.SetTexture(blurTextureInter); // blurTextureInter is source (1)
 
         glUseProgram(blurProgram.p); LOGOPENGLERROR();
         glUniform1i(blurProgram.uBlurKernelTex, 2); LOGOPENGLERROR();
-        glUniform1i(blurProgram.uBlurDir, 2); LOGOPENGLERROR(); // Horizontal blur
+        glUniform1i(blurProgram.uBlurDir, static_cast<int>(BlurDirection::HorizontalBlur)); LOGOPENGLERROR();
 
         frameBuffer.Bind();
         blurPreRenderer.Render();
@@ -194,7 +191,7 @@ void TextureRenderer::resize(unsigned int w, unsigned int h) {
     screenRenderer.Resize(w, h);
 }
 
-void TextureRenderer::update_texture(matrix_t* m) {
+void TextureRenderer::updateTexture(matrix_t* m) {
     texture_copy_matrix(tex.get(), m);
 
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
@@ -202,29 +199,34 @@ void TextureRenderer::update_texture(matrix_t* m) {
                     GL_UNSIGNED_BYTE, (const GLubyte *)tex->data); LOGOPENGLERROR();
 }
 
-void TextureRenderer::set_blur(double blur) {
-    blur_sigma = blur;
-    if (blur_sigma > 0.0) {
-        blur_kernel = KernelGuard_t(kernel_create(blur_sigma, MODE_WRAP), kernel_free);
+void TextureRenderer::setBlur(double blur) {
+    blurSigma = blur;
+    if (blurSigma > 0.0) {
+        setUseBlur(true);
+
+        blurKernel = KernelGuard_t(kernel_create(blurSigma, MODE_WRAP), kernel_free);
 
         this->initBlurKernelTex();
 
 #ifndef NDEBUG
         std::stringstream s;
-        for (size_t t = 0; t < blur_kernel->size; t++) {
-            s << blur_kernel->data[t] << ", ";
+        for (size_t t = 0; t < blurKernel->size; t++) {
+            s << blurKernel->data[t] << ", ";
         }
         LOGD << "Blur kernel = [ " << s.str() << " ]";
 #endif
+    }
+    else {
+        setUseBlur(false);
     }
 }
 
 void TextureRenderer::initBlurKernelTex() {
     // Cast array for doubles to array of floats
     // to send array to OpenGL texture
-    std::vector<float> data(blur_kernel->size);
-    for (size_t i = 0; i < blur_kernel->size; i++) {
-        data[i] = static_cast<float>(blur_kernel->data[i]);
+    std::vector<float> data(blurKernel->size);
+    for (size_t i = 0; i < blurKernel->size; i++) {
+        data[i] = static_cast<float>(blurKernel->data[i]);
     }
 
     // Remove existing texture
@@ -250,8 +252,8 @@ void TextureRenderer::initBlurKernelTex() {
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT); LOGOPENGLERROR();
 }
 
-void TextureRenderer::add_blur(double dblur) {
-    double new_blur_sigma = blur_sigma + dblur;
+void TextureRenderer::addBlur(double dblur) {
+    double new_blur_sigma = blurSigma + dblur;
 
     if (new_blur_sigma > 0.0) {
         this->setUseBlur(true);
@@ -262,12 +264,12 @@ void TextureRenderer::add_blur(double dblur) {
     }
     LOGI << "Blur Sigma = " << new_blur_sigma;
 
-    set_blur(new_blur_sigma);
+    setBlur(new_blur_sigma);
 }
 
 void TextureRenderer::setUseBlur(bool newUseBlur) {
-    this->use_blur = newUseBlur;
-    if (this->use_blur) {
+    this->useBlur = newUseBlur;
+    if (this->useBlur) {
         LOGI << "Turned Blur On";
     }
     else {

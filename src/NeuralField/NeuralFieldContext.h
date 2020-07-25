@@ -12,7 +12,6 @@ enum class RenderMode : int {
 
 class NeuralFieldContext {
 public:
-    NeuralFieldContext();
     ~NeuralFieldContext();
     
     bool Init();

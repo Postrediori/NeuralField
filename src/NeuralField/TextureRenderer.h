@@ -1,21 +1,25 @@
 #pragma once
 
+enum class BlurDirection : int {
+    VerticalBlur = 1,
+    HorizontalBlur = 2,
+};
+
 class TextureRenderer {
 public:
     TextureRenderer();
     ~TextureRenderer();
 
     bool init(size_t size);
-    bool initTexture(size_t size);
-    void release();
+    bool initTextures(size_t size);
 
     void render(const glm::mat4& mvp);
     void resize(unsigned int w, unsigned int h);
 
-    void update_texture(matrix_t* m);
+    void updateTexture(matrix_t* m);
 
-    void set_blur(double blur);
-    void add_blur(double dblur);
+    void setBlur(double blur);
+    void addBlur(double dblur);
 
     void setUseBlur(bool newUseBlur);
 
@@ -23,14 +27,15 @@ private:
     void initBlurKernelTex();
 
     void releaseTextures();
+    void release();
 
 private:
-    unsigned int w, h;
-    size_t size;
+    unsigned int w = 0, h = 0;
+    size_t size = 0;
 
-    bool use_blur;
-    double blur_sigma;
-    KernelGuard_t blur_kernel;
+    bool useBlur = false;
+    double blurSigma = 0.0;
+    KernelGuard_t blurKernel;
     GLuint blurKernelTexture = 0;
 
     TextureGuard_t tex;

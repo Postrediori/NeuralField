@@ -40,9 +40,6 @@ static const float g_textureBlurDelta = 0.1f;
 
 static const float g_UiWidth = 250.0f;
 
-NeuralFieldContext::NeuralFieldContext() {
-}
-
 NeuralFieldContext::~NeuralFieldContext() {
     Release();
 }
@@ -65,7 +62,7 @@ bool NeuralFieldContext::Init() {
         return false;
     }
     
-    renderer_.update_texture(model_.activity.get());
+    renderer_.updateTexture(model_.activity.get());
 
     // Init contour lines
     if (!Shader::createProgram(program_, g_vertexShader, g_fragmentShader)) {
@@ -189,7 +186,7 @@ void NeuralFieldContext::RenderUi() {
     for (const auto& s : g_ModelSizes) {
         if (ImGui::RadioButton(s.first.c_str(), &gModelSize, s.second)) {
             modelConfig_["size"] = gModelSize;
-            renderer_.initTexture(gModelSize);
+            renderer_.initTextures(gModelSize);
             model_.init(modelConfig_);
         }
         ImGui::SameLine();
@@ -313,7 +310,7 @@ void NeuralFieldContext::Update(double t) {
 
     switch (renderMode_) {
     case RenderMode::Texture:
-        renderer_.update_texture(model_.activity.get());
+        renderer_.updateTexture(model_.activity.get());
         break;
 
     case RenderMode::Contour:
@@ -349,9 +346,9 @@ void NeuralFieldContext::SwitchBlur() {
 }
 
 void NeuralFieldContext::IncreaseBlur() {
-    renderer_.add_blur(g_textureBlurDelta);
+    renderer_.addBlur(g_textureBlurDelta);
 }
 
 void NeuralFieldContext::DecreaseBlur() {
-    renderer_.add_blur(-g_textureBlurDelta);
+    renderer_.addBlur(-g_textureBlurDelta);
 }
