@@ -6,6 +6,7 @@
 #include "GlUtils.h"
 #include "Shader.h"
 #include "FrameBufferWrapper.h"
+#include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
 
 static const size_t g_bitsPerPixel = 4;
@@ -13,18 +14,6 @@ static const size_t g_bitsPerPixel = 4;
 /*****************************************************************************
  * TextureRenderer
  ****************************************************************************/
-static const std::vector<glm::vec4> g_quadVertices = {
-    {-1.0f, -1.0f, 0.f, 0.f},
-    {-1.0f,  1.0f, 0.f, 1.f},
-    {1.0f, -1.0f, 1.f, 0.f},
-    {1.0f,  1.0f, 1.f, 1.f},
-};
-
-static const std::vector<GLuint> g_quadIndices = {
-    0, 1, 2,
-    2, 1, 3,
-};
-
 static const std::string g_vertexShaderPath = "data/texture.vert";
 static const std::string g_fragmentShaderPath = "data/texture.frag";
 
@@ -59,10 +48,6 @@ bool TextureRenderer::init(size_t textureSize) {
             LOGE << "Failed to create shader program for neural field renderer";
             return false;
         }
-
-        program.uTex = glGetUniformLocation(program.p, "tex");
-        program.uResolution = glGetUniformLocation(program.p, "iRes");
-        program.uMVP = glGetUniformLocation(program.p, "mvp");
     }
 
     // Init blur shader program
@@ -72,76 +57,16 @@ bool TextureRenderer::init(size_t textureSize) {
             return false;
         }
 
-        blurProgram.uTex = glGetUniformLocation(blurProgram.p, "tex");
         blurProgram.uBlurDir = glGetUniformLocation(blurProgram.p, "blur_dir");
         blurProgram.uBlurKernelTex = glGetUniformLocation(blurProgram.p, "blur_kernel_tex");
     }
 
-    // Create vertex buffer
-    glGenBuffers(1, &vbo); LOGOPENGLERROR();
-    glGenBuffers(1, &indVbo); LOGOPENGLERROR();
-    if (!vbo || !indVbo) {
-        LOGE << "Unable to initialize vertex buffers";
+    if (!screenRenderer.Init(program.p)) {
         return false;
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices[0]) * g_quadVertices.size(),
-        g_quadVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_quadIndices[0]) * g_quadIndices.size(),
-        g_quadIndices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
-
-    // Create VAO
-    {
-        glGenVertexArrays(1, &vao); LOGOPENGLERROR();
-        if (!vao) {
-            LOGE << "Failed to create vertex array object";
-            return false;
-        }
-        glBindVertexArray(vao); LOGOPENGLERROR();
-
-        GLint aCoord = glGetAttribLocation(program.p, "coord");
-        GLint aTexCoord = glGetAttribLocation(program.p, "tex_coord");
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo);
-
-        glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
-        glVertexAttribPointer(aCoord, 2, GL_FLOAT, GL_FALSE,
-            sizeof(GLfloat) * 4, 0); LOGOPENGLERROR();
-
-        glEnableVertexAttribArray(aTexCoord); LOGOPENGLERROR();
-        glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE,
-            sizeof(GLfloat) * 4, (void *)(sizeof(GLfloat) * 2)); LOGOPENGLERROR();
-
-        glBindVertexArray(0); LOGOPENGLERROR();
-    }
-
-    {
-        glGenVertexArrays(1, &blurVao); LOGOPENGLERROR();
-        if (!blurVao) {
-            LOGE << "Failed to create vertex array object";
-            return false;
-        }
-        glBindVertexArray(blurVao); LOGOPENGLERROR();
-
-        GLint aCoord = glGetAttribLocation(blurProgram.p, "coord");
-        GLint aTexCoord = glGetAttribLocation(blurProgram.p, "tex_coord");
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo);
-
-        glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
-        glVertexAttribPointer(aCoord, 2, GL_FLOAT, GL_FALSE,
-            sizeof(GLfloat) * 4, 0); LOGOPENGLERROR();
-
-        glEnableVertexAttribArray(aTexCoord); LOGOPENGLERROR();
-        glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE,
-            sizeof(GLfloat) * 4, (void *)(sizeof(GLfloat) * 2)); LOGOPENGLERROR();
-
-        glBindVertexArray(0); LOGOPENGLERROR();
+    if (!blurPreRenderer.Init(blurProgram.p)) {
+        return false;
     }
 
     return true;
@@ -208,12 +133,6 @@ void TextureRenderer::release() {
 
     glDeleteProgram(program.p); LOGOPENGLERROR();
     glDeleteProgram(blurProgram.p); LOGOPENGLERROR();
-    
-    glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
-    glDeleteVertexArrays(1, &blurVao); LOGOPENGLERROR();
-
-    glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
-    glDeleteBuffers(1, &indVbo); LOGOPENGLERROR();
 
     glDeleteTextures(1, &blurKernelTexture); LOGOPENGLERROR();
 }
@@ -230,36 +149,31 @@ void TextureRenderer::render(const glm::mat4& mvp) {
         glViewport(0, 0, (GLsizei)size, (GLsizei)size);
 
         // Initialize blur shader program
-        glUseProgram(blurProgram.p); LOGOPENGLERROR();
-        glBindVertexArray(blurVao); LOGOPENGLERROR();
-
-        glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
-        glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
-
-        glActiveTexture(GL_TEXTURE1); LOGOPENGLERROR();
-        glBindTexture(GL_TEXTURE_2D, blurTextureInter); LOGOPENGLERROR();
-
         glActiveTexture(GL_TEXTURE2); LOGOPENGLERROR();
         glBindTexture(GL_TEXTURE_1D, blurKernelTexture); LOGOPENGLERROR();
 
-        glUniform1i(blurProgram.uBlurKernelTex, 2); LOGOPENGLERROR();
-
         // Step 1: Vertical blur texture->blurTextureInter
         frameBuffer.SetTexColorBuffer(blurTextureInter);
-        glUniform1i(blurProgram.uTex, 0); LOGOPENGLERROR(); // texture is source (0)
+        blurPreRenderer.SetTexture(texture); // texture is source (0)
+
+        glUseProgram(blurProgram.p); LOGOPENGLERROR();
         glUniform1i(blurProgram.uBlurDir, 1); LOGOPENGLERROR(); // Vertical blur
+        glUniform1i(blurProgram.uBlurKernelTex, 2); LOGOPENGLERROR();
 
         frameBuffer.Bind();
-        glDrawElements(GL_TRIANGLES, (GLsizei)g_quadIndices.size(), GL_UNSIGNED_INT, nullptr); LOGOPENGLERROR();
+        blurPreRenderer.Render();
         frameBuffer.Unbind();
 
         // Step 2: Horizontal blur blurTextureInter->blurTextureFinal
         frameBuffer.SetTexColorBuffer(texture);
-        glUniform1i(blurProgram.uTex, 1); LOGOPENGLERROR(); // blurTextureInter is source (1)
+        blurPreRenderer.SetTexture(blurTextureInter); // blurTextureInter is source (1)
+
+        glUseProgram(blurProgram.p); LOGOPENGLERROR();
+        glUniform1i(blurProgram.uBlurKernelTex, 2); LOGOPENGLERROR();
         glUniform1i(blurProgram.uBlurDir, 2); LOGOPENGLERROR(); // Horizontal blur
 
         frameBuffer.Bind();
-        glDrawElements(GL_TRIANGLES, (GLsizei)g_quadIndices.size(), GL_UNSIGNED_INT, nullptr); LOGOPENGLERROR();
+        blurPreRenderer.Render();
         frameBuffer.Unbind();
 
         // Step 3: Render texture
@@ -269,25 +183,15 @@ void TextureRenderer::render(const glm::mat4& mvp) {
             viewport[2], viewport[3]);
     }
 
-    glUseProgram(program.p); LOGOPENGLERROR();
-    glBindVertexArray(vao); LOGOPENGLERROR();
-
-    glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
-    glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
-
-    glUniformMatrix4fv(program.uMVP, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
-    glUniform2f(program.uResolution, (GLfloat)w, (GLfloat)h); LOGOPENGLERROR();
-    glUniform1i(program.uTex, 0); LOGOPENGLERROR();
-
-    glDrawElements(GL_TRIANGLES, (GLsizei)g_quadIndices.size(), GL_UNSIGNED_INT, nullptr); LOGOPENGLERROR();
-
-    glUseProgram(0); LOGOPENGLERROR();
-    glBindVertexArray(0); LOGOPENGLERROR();
+    screenRenderer.SetMvp(mvp);
+    screenRenderer.SetTexture(texture);
+    screenRenderer.Render();
 }
 
 void TextureRenderer::resize(unsigned int w, unsigned int h) {
     this->w = w;
     this->h = h;
+    screenRenderer.Resize(w, h);
 }
 
 void TextureRenderer::update_texture(matrix_t* m) {
@@ -350,13 +254,23 @@ void TextureRenderer::add_blur(double dblur) {
     double new_blur_sigma = blur_sigma + dblur;
 
     if (new_blur_sigma > 0.0) {
-        use_blur = true;
-        LOGI << "Blur Sigma " << new_blur_sigma;
+        this->setUseBlur(true);
     }
     else {
-        use_blur = false;
-        LOGI << "Turned Blur Off";
+        this->setUseBlur(false);
+        new_blur_sigma = 0.0;
     }
+    LOGI << "Blur Sigma = " << new_blur_sigma;
 
     set_blur(new_blur_sigma);
+}
+
+void TextureRenderer::setUseBlur(bool newUseBlur) {
+    this->use_blur = newUseBlur;
+    if (this->use_blur) {
+        LOGI << "Turned Blur On";
+    }
+    else {
+        LOGI << "Turned Blur Off";
+    }
 }

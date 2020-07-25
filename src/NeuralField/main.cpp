@@ -6,6 +6,7 @@
 #include "GlUtils.h"
 #include "NeuralFieldModel.h"
 #include "FrameBufferWrapper.h"
+#include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
 #include "ContourLine.h"

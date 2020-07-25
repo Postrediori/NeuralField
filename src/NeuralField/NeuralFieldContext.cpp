@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "NeuralFieldModel.h"
 #include "FrameBufferWrapper.h"
+#include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
 #include "ContourLine.h"
@@ -171,7 +172,7 @@ void NeuralFieldContext::RenderUi() {
         if (idx == 0) {
             ImGui::SameLine();
             if (ImGui::Checkbox("Texture Blur", (bool *)&this->textureBlur_)) {
-                renderer_.use_blur = this->textureBlur_;
+                renderer_.setUseBlur(this->textureBlur_);
             }
         }
     }
@@ -344,13 +345,7 @@ void NeuralFieldContext::SetRenderMode(RenderMode mode) {
 
 void NeuralFieldContext::SwitchBlur() {
     textureBlur_ = !textureBlur_;
-    renderer_.use_blur = textureBlur_;
-    if (textureBlur_) {
-        LOGI << "Turned Blur On";
-    }
-    else {
-        LOGI << "Turned Blur Off";
-    }
+    renderer_.setUseBlur(textureBlur_);
 }
 
 void NeuralFieldContext::IncreaseBlur() {

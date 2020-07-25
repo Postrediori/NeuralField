@@ -17,12 +17,14 @@ public:
     void set_blur(double blur);
     void add_blur(double dblur);
 
+    void setUseBlur(bool newUseBlur);
+
 private:
     void initBlurKernelTex();
 
     void releaseTextures();
-    
-public:
+
+private:
     unsigned int w, h;
     size_t size;
 
@@ -32,22 +34,20 @@ public:
     GLuint blurKernelTexture = 0;
 
     TextureGuard_t tex;
-    GLuint texture;
+    GLuint texture = 0;
     GLuint blurTextureInter = 0;
-
-    GLuint vao, blurVao;
-    GLuint vbo, indVbo;
 
     FrameBufferWrapper frameBuffer;
 
+    PlainTextureRenderer blurPreRenderer;
+    PlainTextureRenderer screenRenderer;
+
     struct {
         GLuint p = 0;
-        GLint uMVP = -1, uResolution = -1, uTex = -1;
     } program;
 
     struct {
         GLuint p = 0;
-        GLint uTex = -1;
         GLint uBlurDir = -1;
         GLint uBlurKernelTex = -1;
     } blurProgram;
