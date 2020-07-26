@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
+#include <array>
 #include <unordered_map>
 
 #include <glad/glad.h>

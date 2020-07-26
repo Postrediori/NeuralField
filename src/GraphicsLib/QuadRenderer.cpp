@@ -7,7 +7,7 @@ QuadRenderer::~QuadRenderer() {
 }
 
 bool QuadRenderer::Init(GLuint p, const std::array<double, 4>& area,
-    const std::array<GLfloat, 4>& quadColor) {
+    const std::array<float, 4>& quadColor) {
     program = p;
 
     this->SetColor(quadColor);

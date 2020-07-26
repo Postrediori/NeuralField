@@ -114,6 +114,8 @@ bool TextureRenderer::initTextures(size_t newSize) {
 }
 
 void TextureRenderer::releaseTextures() {
+    tex.reset();
+
     if (texture) {
         glDeleteTextures(1, &texture); LOGOPENGLERROR();
         texture = 0;
@@ -125,7 +127,6 @@ void TextureRenderer::releaseTextures() {
 }
 
 void TextureRenderer::release() {
-    tex.reset();
     releaseTextures();
 
     glDeleteProgram(program.p); LOGOPENGLERROR();
