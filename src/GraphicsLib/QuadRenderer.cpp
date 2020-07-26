@@ -2,15 +2,15 @@
 #include "GlUtils.h"
 #include "QuadRenderer.h"
 
-QuadRenderer::QuadRenderer() {
-}
-
 QuadRenderer::~QuadRenderer() {
     Release();
 }
 
-bool QuadRenderer::Init(GLuint p, const std::array<double, 4>& area) {
+bool QuadRenderer::Init(GLuint p, const std::array<double, 4>& area,
+    const std::array<GLfloat, 4>& quadColor) {
     program = p;
+
+    this->SetColor(quadColor);
 
     uMvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
     uColor = glGetUniformLocation(program, "color"); LOGOPENGLERROR();
@@ -65,8 +65,7 @@ void QuadRenderer::Release() {
     }
 }
 
-void QuadRenderer::Render(const glm::mat4& mvp, float zoom, const glm::vec2& offset,
-    const std::array<GLfloat, 4>& color) {
+void QuadRenderer::Render(const glm::mat4& mvp, float zoom, const glm::vec2& offset) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();
 
@@ -85,4 +84,8 @@ void QuadRenderer::Render(const glm::mat4& mvp, float zoom, const glm::vec2& off
 void QuadRenderer::Resize(int w, int h) {
     width = w;
     height = h;
+}
+
+void QuadRenderer::SetColor(const std::array<float, 4> newColor) {
+    color = newColor;
 }

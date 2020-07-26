@@ -18,9 +18,9 @@
 #include "NeuralFieldContext.h"
 
 
-static const std::array<GLfloat, 4> g_background = {0.15f, 0.15f, 0.15f, 1.00f};
-static const std::array<GLfloat, 4> g_foreground = {0.50f, 0.50f, 1.00f, 1.00f};
-static const std::array<GLfloat, 4> g_outline = {1.00f, 1.00f, 1.00f, 1.00f};
+static const std::array<float, 4> g_background = {0.15f, 0.15f, 0.15f, 1.00f};
+static const std::array<float, 4> g_foreground = {0.50f, 0.50f, 1.00f, 1.00f};
+static const std::array<float, 4> g_outline = {1.00f, 1.00f, 1.00f, 1.00f};
 
 static const std::vector<std::string> g_renderModeLabels = {
     "Texture",
@@ -61,7 +61,7 @@ bool NeuralFieldContext::Init() {
         LOGE << "Unable to init Amari Model Renderer";
         return false;
     }
-    
+
     renderer_.updateTexture(model_.activity.get());
 
     // Init contour lines
@@ -70,7 +70,7 @@ bool NeuralFieldContext::Init() {
         return false;
     }
 
-    quad_.Init(program_, { g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax });
+    quad_.Init(program_, { g_area.xmin, g_area.xmax, g_area.ymin, g_area.ymax }, g_background);
 
     if (!contourLines_.init(program_)) {
         LOGE << "Unable to create Contour Lines";
@@ -96,11 +96,11 @@ bool NeuralFieldContext::Init() {
     contourFill_.update(model_.activity.get(), g_area, 1.0);
     contourParallelFill_.update(model_.activity.get(), g_area, 1.0);
     contourParallel_.update(model_.activity.get(), g_area, 1.0);
-    
+
     // Set up OpenGL
     glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
     glClearDepth(1.); LOGOPENGLERROR();
-    
+
     return true;
 }
 
@@ -119,15 +119,15 @@ void NeuralFieldContext::Render() {
         renderer_.render(mvp_);
     }
     else if (renderMode_ == RenderMode::Contour) {
-        quad_.Render(mvp_, zoom, offset, g_background);
+        quad_.Render(mvp_, zoom, offset);
         contourLines_.render(mvp_, zoom, offset, g_outline);
     }
     else if (renderMode_ == RenderMode::ContourParallel) {
-        quad_.Render(mvp_, zoom, offset, g_background);
+        quad_.Render(mvp_, zoom, offset);
         contourParallel_.render(mvp_, zoom, offset, g_outline);
     }
     else if (renderMode_ == RenderMode::Fill) {
-        quad_.Render(mvp_, zoom, offset, g_background);
+        quad_.Render(mvp_, zoom, offset);
 
         glPolygonOffset(1, 0); LOGOPENGLERROR();
         glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
@@ -138,7 +138,7 @@ void NeuralFieldContext::Render() {
         contourLines_.render(mvp_, zoom, offset, g_outline);
     }
     else if (renderMode_ == RenderMode::FillParallel) {
-        quad_.Render(mvp_, zoom, offset, g_background);
+        quad_.Render(mvp_, zoom, offset);
 
         glPolygonOffset(1, 0); LOGOPENGLERROR();
         glEnable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
