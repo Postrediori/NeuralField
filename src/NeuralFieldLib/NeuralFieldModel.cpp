@@ -100,6 +100,7 @@ bool NeuralFieldModel::init(const ConfigMap_t& configMap) {
     activity = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
     excitement = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
     inhibition = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
+    temp = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
 
     restart();
 
@@ -128,10 +129,10 @@ void NeuralFieldModel::release() {
 void NeuralFieldModel::stimulate() {
     matrix_heaviside(activity.get());
 
-    kernel_apply_to_matrix(excitement.get(), activity.get(), excitement_kernel.get());
+    kernel_apply_to_matrix(excitement.get(), activity.get(), temp.get(), excitement_kernel.get());
     matrix_scalar_mul(excitement.get(), pi_k);
 
-    kernel_apply_to_matrix(inhibition.get(), activity.get(), inhibition_kernel.get());
+    kernel_apply_to_matrix(inhibition.get(), activity.get(), temp.get(), inhibition_kernel.get());
     matrix_scalar_mul(inhibition.get(), pi_m);
 
     matrix_scalar_set(activity.get(), h);

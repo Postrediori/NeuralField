@@ -20,5 +20,5 @@ void kernel_free(kernel_t* k);
 
 kernel_t* kernel_create(double sigma, KernelMode mode);
 
-matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k);
+matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, matrix_t* tmp, kernel_t* k);
 matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, KernelMode mode);

@@ -107,7 +107,7 @@ kernel_t* kernel_create(double sigma, KernelMode mode) {
     return k;
 }
 
-matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
+matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, matrix_t* tmp, kernel_t* k) {
     assert(dst);
     assert(dst->data);
     assert(src);
@@ -122,11 +122,6 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
     
     if (dst->cols != src->cols) {
         LOGE << "kernel cols mismatch";
-        return dst;
-    }
-    
-    matrix_t* tmp = matrix_allocate(src->rows, src->cols);
-    if (!tmp) {
         return dst;
     }
     
@@ -161,8 +156,6 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
             dst->data[j + i * dst->cols] = d;
         }
     }
-
-    matrix_free(tmp);
     
     return dst;
 }
@@ -178,7 +171,11 @@ matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, Kerne
         return dst;
     }
     
-    kernel_apply_to_matrix(dst, src, k);
+    matrix_t* tmp = matrix_allocate(src->rows, src->cols);
+
+    kernel_apply_to_matrix(dst, src, tmp, k);
+
+    matrix_free(tmp);
 
     kernel_free(k);
     

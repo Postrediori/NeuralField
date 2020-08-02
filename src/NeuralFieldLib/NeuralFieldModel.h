@@ -39,4 +39,5 @@ public:
     MatrixGuard_t activity;
     MatrixGuard_t excitement;
     MatrixGuard_t inhibition;
+    MatrixGuard_t temp;
 };
