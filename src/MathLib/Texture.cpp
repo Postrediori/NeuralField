@@ -2,7 +2,7 @@
 #include "Matrix.h"
 #include "Texture.h"
 
-texture_t* texture_alloc(size_t size, size_t bpp) {
+texture_t* texture_alloc(size_t size, TextureFormat format) {
     texture_t* t = new texture_t;
     if (!t) {
         LOGE << "texture alloc error";
@@ -10,18 +10,20 @@ texture_t* texture_alloc(size_t size, size_t bpp) {
     }
     
     t->size = size;
-    t->bpp = bpp;
+    t->format = format;
+    t->bpp = static_cast<size_t>(format);
+    t->pixelCount = size * size;
+    t->dataSize = t->pixelCount * t->bpp;
     
-    t->data = new uint8_t[size * size * bpp];
+    t->data = new uint8_t[t->dataSize];
     
     return t;
 }
 
 void texture_free(texture_t* t) {
-    if (!t) {
-        LOGE << "texture null error";
-        return;
-    }
+    assert(t);
+    assert(t->data);
+
     if (t->data) {
         delete[] t->data;
     }
@@ -29,10 +31,10 @@ void texture_free(texture_t* t) {
 }
 
 texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
-    if (t == nullptr || m == nullptr) {
-        LOGE << "texture null error";
-        return t;
-    }
+    assert(t);
+    assert(t->data);
+    assert(m);
+    assert(m->data);
     
     if (t->size != m->rows) {
         LOGE << "texture rows error";
@@ -50,12 +52,16 @@ texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
     } 
     
 #pragma omp parallel for
-    for (int idx = 0; idx < static_cast<int>(t->size * t->size); ++idx) {
+    for (int idx = 0; idx < static_cast<int>(t->pixelCount); ++idx) {
         uint8_t k = m->data[idx] > 0.0 ? 0xff : 0x00;
         t->data[idx * t->bpp + 0] = k;
         t->data[idx * t->bpp + 1] = k;
         t->data[idx * t->bpp + 2] = k;
-        if (t->bpp == 4) {
+    }
+
+    if (t->format == TextureFormat::RGBA) {
+#pragma omp parallel for
+        for (int idx = 0; idx < static_cast<int>(t->pixelCount); ++idx) {
             t->data[idx * t->bpp + 3] = 0xff;
         }
     }

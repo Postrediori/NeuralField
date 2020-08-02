@@ -72,10 +72,8 @@ kernel_t* kernel_alloc(size_t size) {
 }
 
 void kernel_free(kernel_t* k) {
-    if (!k) {
-        LOGE << "kernel null error";
-        return;
-    }
+    assert(k);
+    assert(k->data);
     if (k->data) {
         delete[] k->data;
     }
@@ -110,10 +108,12 @@ kernel_t* kernel_create(double sigma, KernelMode mode) {
 }
 
 matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
-    if (dst == nullptr || src == nullptr || k == nullptr) {
-        LOGE << "kernel null error";;
-        return nullptr;
-    }
+    assert(dst);
+    assert(dst->data);
+    assert(src);
+    assert(src->data);
+    assert(k);
+    assert(k->data);
     
     if (dst->rows != src->rows) {
         LOGE << "kernel rows mismatch";
@@ -168,10 +168,11 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, kernel_t* k) {
 }
 
 matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, KernelMode mode) {
-    if (dst == nullptr || src == nullptr) {
-        LOGE << "kernel null error";
-        return dst;
-    }
+    assert(dst);
+    assert(dst->data);
+    assert(src);
+    assert(src->data);
+
     kernel_t* k = kernel_create(sigma, mode);
     if (!k) {
         return dst;

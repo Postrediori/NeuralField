@@ -108,7 +108,8 @@ bool TextureRenderer::initTextures(size_t newSize) {
         GL_UNSIGNED_BYTE, nullptr); LOGOPENGLERROR();
 
     // Allocate memory
-    tex = TextureGuard_t(texture_alloc(size, g_bitsPerPixel), texture_free);
+    tex = TextureGuard_t(texture_alloc(size, g_bitsPerPixel == 3 ? TextureFormat::RGB : TextureFormat::RGBA),
+        texture_free);
 
     return true;
 }

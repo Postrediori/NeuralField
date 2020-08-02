@@ -3,6 +3,7 @@
 struct matrix_t {
     size_t rows;
     size_t cols;
+    size_t dataSize;
     double* data;
 };
 
