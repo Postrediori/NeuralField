@@ -34,7 +34,7 @@ private:
 private:
     int windowWidth_ = 0, windowHeight_ = 0;
 
-    RenderMode renderMode_ = RenderMode::Texture;
+    RenderMode renderMode_ = RenderMode::FillParallel;
 
     GLuint program_ = 0;
     
