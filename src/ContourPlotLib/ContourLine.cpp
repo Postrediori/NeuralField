@@ -102,96 +102,100 @@ void ContourLine::render(const glm::mat4& mvp, double zoom, const glm::vec2& off
 
 void MakeCorner(lines_t& lines, SquareFlags flags,
                 discrete_t d, vals_t vals) {
-    double x1, y1;
-    double x2, y2;
-
     if (flags == SquareFlags::SouthWest ||
         flags == (SquareFlags::All ^ SquareFlags::SouthWest)) {
-        x1 = d.x;
-        y1 = d.y + d.sy * ValuesRatio(vals, 0, 3);
-        x2 = d.x + d.sx * ValuesRatio(vals, 0, 1);
-        y2 = d.y;
+        Math::vec4f line(
+            d.x,
+            d.y + d.sy * ValuesRatio(vals, 0, 3),
+            d.x + d.sx * ValuesRatio(vals, 0, 1),
+            d.y);
+        lines.push_back(line);
     }
     else if (flags == SquareFlags::NorthWest ||
         flags == (SquareFlags::All ^ SquareFlags::NorthWest)) {
-        x1 = d.x + d.sx * ValuesRatio(vals, 0, 1);
-        y1 = d.y;
-        x2 = d.x + d.sx;
-        y2 = d.y + d.sy * ValuesRatio(vals, 1, 2);
+        Math::vec4f line(
+            d.x + d.sx * ValuesRatio(vals, 0, 1),
+            d.y,
+            d.x + d.sx,
+            d.y + d.sy * ValuesRatio(vals, 1, 2));
+        lines.push_back(line);
     }
     else if (flags == SquareFlags::NorthEast ||
         flags == (SquareFlags::All ^ SquareFlags::NorthEast)) {
-        x1 = d.x + d.sx * ValuesRatio(vals, 3, 2);
-        y1 = d.y + d.sy;
-        x2 = d.x + d.sx;
-        y2 = d.y + d.sy * ValuesRatio(vals, 1, 2);
+        Math::vec4f line(
+            d.x + d.sx * ValuesRatio(vals, 3, 2),
+            d.y + d.sy,
+            d.x + d.sx,
+            d.y + d.sy * ValuesRatio(vals, 1, 2));
+        lines.push_back(line);
     }
     else if (flags == SquareFlags::SouthEast || 
         flags == (SquareFlags::All ^ SquareFlags::SouthEast)) {
-        x1 = d.x;
-        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
-        x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
-        y2 = d.y+d.sy;
+        Math::vec4f line(
+            d.x,
+            d.y+d.sy * ValuesRatio(vals, 0, 3),
+            d.x+d.sx * ValuesRatio(vals, 3, 2),
+            d.y+d.sy);
+        lines.push_back(line);
     }
-
-    lines.emplace_back(x1, y1, x2, y2);
 }
 
 void MakeHalf(lines_t& lines, SquareFlags flags,
               discrete_t d, vals_t vals) {
-    double x1, y1;
-    double x2, y2;
-
     if (flags == (SquareFlags::SouthWest | SquareFlags::NorthWest) ||
         flags == (SquareFlags::NorthEast | SquareFlags::SouthEast)) {
-        x1 = d.x;
-        y1 = d.y + d.sy * ValuesRatio(vals, 0, 3);
-        x2 = d.x + d.sx;
-        y2 = d.y + d.sy * ValuesRatio(vals, 1, 2);
+        Math::vec4f line(
+            d.x,
+            d.y + d.sy * ValuesRatio(vals, 0, 3),
+            d.x + d.sx,
+            d.y + d.sy * ValuesRatio(vals, 1, 2));
+        lines.push_back(line);
     }
     else if (flags == (SquareFlags::NorthWest | SquareFlags::NorthEast) ||
         flags == (SquareFlags::SouthEast | SquareFlags::SouthWest)) {
-        x1 = d.x+d.sx * ValuesRatio(vals, 0, 1);
-        y1 = d.y;
-        x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
-        y2 = d.y+d.sy;
+        Math::vec4f line(
+            d.x+d.sx * ValuesRatio(vals, 0, 1),
+            d.y,
+            d.x+d.sx * ValuesRatio(vals, 3, 2),
+            d.y+d.sy);
+        lines.push_back(line);
     }
-
-    lines.emplace_back(x1, y1, x2, y2);
 }
 
 void MakeAmbiguity(lines_t& lines, SquareFlags flags, bool u,
                    discrete_t d, vals_t vals, double /*v*/) {
-    double x1, y1;
-    double x2, y2;
-    double x3, y3;
-    double x4, y4;
-
     if ((flags == (SquareFlags::SouthWest | SquareFlags::NorthEast) && u) ||
         (flags == (SquareFlags::NorthWest | SquareFlags::SouthEast) && !u)) {
-        x1 = d.x;
-        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
-        x2 = d.x+d.sx * ValuesRatio(vals, 3, 2);
-        y2 = d.y+d.sy;
+        Math::vec4f line1(
+            d.x,
+            d.y+d.sy * ValuesRatio(vals, 0, 3),
+            d.x+d.sx * ValuesRatio(vals, 3, 2),
+            d.y+d.sy);
 
-        x3 = d.x+d.sx * ValuesRatio(vals, 0, 1);
-        y3 = d.y;
-        x4 = d.x+d.sx;
-        y4 = d.y+d.sy * ValuesRatio(vals, 1, 2);
+        Math::vec4f line2(
+            d.x+d.sx * ValuesRatio(vals, 0, 1),
+            d.y,
+            d.x+d.sx,
+            d.y+d.sy * ValuesRatio(vals, 1, 2));
+
+        lines.push_back(line1);
+        lines.push_back(line2);
     }
     else if ((flags == (SquareFlags::SouthWest | SquareFlags::NorthEast) && !u) ||
         (flags == (SquareFlags::NorthWest | SquareFlags::SouthEast) && u)) {
-        x1 = d.x;
-        y1 = d.y+d.sy * ValuesRatio(vals, 0, 3);
-        x2 = d.x+d.sx * ValuesRatio(vals, 0, 1);
-        y2 = d.y;
+        Math::vec4f line1(
+            d.x,
+            d.y+d.sy * ValuesRatio(vals, 0, 3),
+            d.x+d.sx * ValuesRatio(vals, 0, 1),
+            d.y);
 
-        x3 = d.x+d.sx * ValuesRatio(vals, 3, 2);
-        y3 = d.y+d.sy;
-        x4 = d.x+d.sx;
-        y4 = d.y+d.sy * ValuesRatio(vals, 1, 2);
+        Math::vec4f line2(
+            d.x+d.sx * ValuesRatio(vals, 3, 2),
+            d.y+d.sy,
+            d.x+d.sx,
+            d.y+d.sy * ValuesRatio(vals, 1, 2));
+
+        lines.push_back(line1);
+        lines.push_back(line2);
     }
-
-    lines.emplace_back(x1, y1, x2, y2);
-    lines.emplace_back(x3, y3, x4, y4);
 }
