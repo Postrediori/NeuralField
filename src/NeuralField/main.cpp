@@ -15,7 +15,7 @@
 #include "ContourParallelFill.h"
 #include "QuadRenderer.h"
 #include "NeuralFieldContext.h"
-#include "GlFormatter.h"
+#include "LogFormatter.h"
 #include "ScopeGuard.h"
 
 static const int Width = 800;
@@ -209,11 +209,11 @@ void GuiRender() {
  ****************************************************************************/
 
 int main(int /*argc*/, char** /*argv*/) {
-    static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
+    static plog::ConsoleAppender<plog::LogFormatter> logger;
 #ifdef NDEBUG
-    plog::init(plog::info, &consoleAppender);
+    plog::init(plog::info, &logger);
 #else
-    plog::init(plog::debug, &consoleAppender);
+    plog::init(plog::debug, &logger);
 #endif
 
     glfwSetErrorCallback(Error);

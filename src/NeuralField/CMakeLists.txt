@@ -18,6 +18,7 @@ target_link_libraries(${PROJECT}
     ContourPlotLib
     GraphicsLib
     MathLib
+    UtilsLib
     )
 
 # Data files
