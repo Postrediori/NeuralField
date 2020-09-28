@@ -52,17 +52,23 @@ bool Init(NeuralFieldContext& context) {
     return true;
 }
 
-void Error(int /*error*/, const char* description) {
-    LOGE << "Error: " << description;
-}
-
-/*****************************************************************************
- * GLUT Callback functions
- ****************************************************************************/
 void Display(NeuralFieldContext& context) {
     glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
 
     context.Render();
+}
+
+void Update(NeuralFieldContext& context) {
+    context.Update(glfwGetTime());
+}
+
+
+/*****************************************************************************
+ * GLFW Callback functions
+ ****************************************************************************/
+
+void Error(int /*error*/, const char* description) {
+    LOGE << "Error: " << description;
 }
 
 void Reshape(GLFWwindow* window, int width, int height) {
@@ -146,7 +152,6 @@ void Keyboard(GLFWwindow* window, int key, int /*scancode*/, int action, int /*m
     }
 }
 
-
 void Mouse(GLFWwindow* window, int button, int action, int /*mods*/) {
     void* p = glfwGetWindowUserPointer(window);
     assert(p);
@@ -164,16 +169,46 @@ void Mouse(GLFWwindow* window, int button, int action, int /*mods*/) {
     }
 }
 
-void Update(NeuralFieldContext& context) {
-    context.Update(glfwGetTime());
+
+/*****************************************************************************
+ * GUI Functions
+ ****************************************************************************/
+
+void GuiInit(GLFWwindow* window) {
+    assert(window);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr; // Disable .ini
+
+    static const std::string glslVersion = "#version 330 core";
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glslVersion.c_str());
+}
+
+void GuiTerminate() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+}
+
+void GuiStartFrame() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void GuiRender() {
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 
 /*****************************************************************************
  * Main program
  ****************************************************************************/
-int main(int /*argc*/, char** /*argv*/) {
 
+int main(int /*argc*/, char** /*argv*/) {
     static plog::ConsoleAppender<plog::GlFormatter> consoleAppender;
 #ifdef NDEBUG
     plog::init(plog::info, &consoleAppender);
@@ -187,10 +222,7 @@ int main(int /*argc*/, char** /*argv*/) {
         LOGE << "Failed to load GLFW";
         return EXIT_FAILURE;
     }
-    ScopeGuard glfwGuard([]() {
-        glfwTerminate();
-        LOGD << "Cleanup : GLFW context";
-    });
+    ScopeGuard glfwGuard([]() { glfwTerminate(); });
 
     LOGI << "Init window context with OpenGL 3.3";
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -198,65 +230,49 @@ int main(int /*argc*/, char** /*argv*/) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on Mac
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    auto window = glfwCreateWindow(Width, Height, Title.c_str(), nullptr, nullptr);
+
+    std::unique_ptr<GLFWwindow, decltype(&glfwDestroyWindow)> window(
+        glfwCreateWindow(Width, Height, Title.c_str(), nullptr, nullptr),
+        &glfwDestroyWindow);
     if (!window) {
         LOGE << "Unable to Create OpenGL 3.3 Context";
         return EXIT_FAILURE;
-    }
-    ScopeGuard windowGuard([window]() {
-        glfwDestroyWindow(window);
-        LOGD << "Cleanup : GLFW window";
-    });
+    };
 
-    glfwSetKeyCallback(window, Keyboard);
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+    glfwSetKeyCallback(window.get(), Keyboard);
+    glfwSetInputMode(window.get(), GLFW_STICKY_KEYS, GLFW_TRUE);
 
-    glfwSetMouseButtonCallback(window, Mouse);
-    glfwSetWindowSizeCallback(window, Reshape);
+    glfwSetMouseButtonCallback(window.get(), Mouse);
+    glfwSetWindowSizeCallback(window.get(), Reshape);
 
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(window.get());
     gladLoadGL();
 
     // Setup ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = nullptr; // Disable .ini
-
-    static const std::string gGlslVersion = "#version 330 core";
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(gGlslVersion.c_str());
-
-    ScopeGuard imGuiContextGuard([]() {
-            ImGui_ImplOpenGL3_Shutdown();
-            ImGui_ImplGlfw_Shutdown();
-            LOGD << "Cleanup : ImGui";
-        });
+    GuiInit(window.get());
+    ScopeGuard imGuiContextGuard([]() { GuiTerminate(); });
 
     NeuralFieldContext gContext;
     if (!Init(gContext)) {
         LOGE << "Initialization failed";
         return EXIT_FAILURE;
     }
-    glfwSetWindowUserPointer(window, static_cast<void *>(&gContext));
+    glfwSetWindowUserPointer(window.get(), static_cast<void *>(&gContext));
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window.get())) {
         glfwPollEvents();
 
         // Start ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        GuiStartFrame();
 
         Display(gContext);
 
         // Render ImGui
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        GuiRender();
 
         Update(gContext);
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window.get());
     }
 
     return EXIT_SUCCESS;
