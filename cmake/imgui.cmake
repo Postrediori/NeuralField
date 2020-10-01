@@ -4,9 +4,9 @@ file(GLOB IMGUI_HEADERS ${IMGUI_INCLUDE_DIR}/*.h)
                  
 add_library(imgui STATIC ${IMGUI_SOURCES} ${IMGUI_SOURCES})
 
-add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GLAD)
+target_compile_definitions(imgui PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
 
-include_directories(
+target_include_directories(imgui PUBLIC
     ${IMGUI_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
     ${GLFW_INCLUDE_DIR}
