@@ -1,6 +1,17 @@
 find_package(OpenGL REQUIRED)
 find_package(OpenMP REQUIRED)
 
+set(USE_OPENMP ON CACHE BOOL "Use OpenMP")
+
+# Skip OpenMP on macOS
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(USE_OPENMP OFF)
+endif ()
+
+if (USE_OPENMP)
+  find_package(OpenMP REQUIRED)
+endif ()
+
 if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   find_package(X11 REQUIRED)
 
