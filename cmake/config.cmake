@@ -20,6 +20,7 @@ endmacro ()
 macro(make_project_options_)
     if (USE_OPENMP)
         target_compile_options(${PROJECT} PRIVATE ${OpenMP_CXX_FLAGS})
+        target_link_libraries(${PROJECT} ${OpenMP_CXX_FLAGS})
     endif ()
 
     if (MSVC)
