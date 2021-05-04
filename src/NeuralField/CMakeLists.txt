@@ -14,6 +14,7 @@ target_link_libraries(${PROJECT}
     ${GLAD_LIBRARIES}
     ${IMGUI_LIBRARIES}
     ${PLOG_LIBRARY}
+    ${OpenMP_CXX_FLAGS}
     NeuralFieldLib
     ContourPlotLib
     GraphicsLib
