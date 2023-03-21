@@ -1,12 +1,11 @@
 #include "stdafx.h"
 #include "Matrix.h"
-#include "Texture.h"
 #include "Gauss.h"
-#include "GraphicsLogger.h"
 #include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
+#include "GraphicsResource.h"
 #include "Shader.h"
 #include "NeuralFieldModel.h"
-#include "FrameBufferWrapper.h"
 #include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
@@ -24,7 +23,7 @@ const std::filesystem::path g_configFile = "amari.conf";
 const std::filesystem::path g_vertexShader = "plane.vert";
 const std::filesystem::path g_fragmentShader = "plane.frag";
 
-const hmm_vec4 g_area = {-1.0, 1.0, -1.0, 1.0};
+const hmm_vec4 g_area = {-1.f, 1.f, -1.f, 1.f};
 
 const float g_textureBlurDelta = 0.1f;
 
@@ -34,7 +33,7 @@ NeuralFieldContext::~NeuralFieldContext() {
     Release();
 }
 
-bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) {
+bool NeuralFieldContext::Init(GLFWwindow* window, int /*argc*/, const char* argv[]) {
     srand(time(0));
 
     std::filesystem::path moduleDataDir;
@@ -42,18 +41,18 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
         LOGE << "Unable to find data directory";
         return false;
     }
-	
+
     LOGI << "OpenGL Renderer : " << glGetString(GL_RENDERER);
     LOGI << "OpenGL Vendor : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
-	
+
     window_ = window;
     glfwSetWindowUserPointer(window_, static_cast<void *>(this));
-	
+
     // Init MVP matrices
     mvp_ = HMM_Orthographic(g_area.X, g_area.Y, g_area.Z, g_area.W, 1.f, -1.f);
-	
+
     constexpr float DefaultH = -0.1;
     constexpr float DefaultK = 0.05;
     constexpr float DefaultKp = 0.125;
@@ -62,7 +61,7 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     constexpr int DefaultSize = 256;
 
     // Init model
-	auto configFilePath = (moduleDataDir / g_configFile).string();
+    auto configFilePath = (moduleDataDir / g_configFile).string();
     INIReader reader(configFilePath.c_str());
     if (reader.ParseError() == 0) {
         modelConfig_["h"] = reader.GetFloat("", "h", DefaultH);
@@ -72,7 +71,7 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
         modelConfig_["Mp"] = reader.GetFloat("", "Mp", DefaultMp);
         modelConfig_["size"] = reader.GetInteger("", "size", DefaultSize);
     }
-	else {
+    else {
         LOGE << "Unable to load Model Config from file " << configFilePath;
         LOGI << "Model will use default params instead";
         modelConfig_["h"] = DefaultH;
@@ -81,12 +80,12 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
         modelConfig_["m"] = DefaultM;
         modelConfig_["Mp"] = DefaultMp;
         modelConfig_["size"] =  DefaultSize;
-	}
+    }
 
     model_.Init(modelConfig_);
 
     // Init render
-    if (!renderer_.Init(moduleDataDir, model_.size)) {
+    if (!renderer_.Init(&model_, moduleDataDir, model_.size)) {
         LOGE << "Unable to init Amari Model Renderer";
         return false;
     }
@@ -94,29 +93,29 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     renderer_.UpdateTexture(model_.activity.get());
 
     // Init contour lines
-	program_ = Shader::CreateProgramFromFiles(
-		(moduleDataDir / g_vertexShader).string(),
-		(moduleDataDir / g_fragmentShader).string());
+    auto vertexShaderFile = (moduleDataDir / g_vertexShader).string();
+    auto fragmentShaderFile = (moduleDataDir / g_fragmentShader).string();
+    program_.reset(Shader::CreateProgramFromFiles(vertexShaderFile, fragmentShaderFile));
     if (!program_) {
         LOGE << "Unable to create shader for contour lines";
         return false;
     }
 
-    quad_.Init(program_, { g_area.X, g_area.Y, g_area.Z, g_area.W }, g_background);
+    quad_.Init(program_.get(), { g_area.X, g_area.Y, g_area.Z, g_area.W }, g_background);
 
-    if (!contourLines_.Init(program_)) {
+    if (!contourLines_.Init(program_.get())) {
         LOGE << "Unable to create Contour Lines";
         return false;
     }
 
-    if (!contourFill_.Init(program_)) {
+    if (!contourFill_.Init(program_.get())) {
         LOGE << "Unable to create Filled Contour";
         return false;
     }
 
     contourLines_.Update(model_.activity.get(), g_area, 1.0);
     contourFill_.Update(model_.activity.get(), g_area, 1.0);
-	
+
     // Initial resize
     glfwGetWindowSize(window_, &windowWidth_, &windowHeight_);
     this->Resize(windowWidth_, windowHeight_);
@@ -124,22 +123,19 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     RegisterCallbacks();
 
     // Set up OpenGL
-    glClearColor(0.0, 0.0, 0.0, 1.0); LOGOPENGLERROR();
+    glClearColor(0.f, 0.f, 0.f, 1.0); LOGOPENGLERROR();
     glClearDepth(1.); LOGOPENGLERROR();
 
     return true;
 }
 
 void NeuralFieldContext::Release() {
-    if (program_) {
-        glDeleteProgram(program_); LOGOPENGLERROR();
-        program_ = 0;
-    }
+    //
 }
 
 void NeuralFieldContext::Display() {
     glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
-	
+
     constexpr float zoom = 1.f;
     static const hmm_vec2 offset = {0.f, 0.f};
 
@@ -173,15 +169,15 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Begin("Neural Field", nullptr,
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-		
+
     static const std::vector<std::tuple<std::string, RenderMode>> g_RenderModeLabels = {
         {"Texture", RenderMode::Texture},
         {"Contour", RenderMode::Contour},
         {"Fill", RenderMode::Fill},
     };
-		
+
     ImGui::Text("Rendering mode:");
-	
+
     bool firstItemFlag = true;
     for (const auto& info : g_RenderModeLabels) {
         std::string name;
@@ -205,15 +201,15 @@ void NeuralFieldContext::RenderUi() {
         {"512x512", 512}
     };
     static int gModelSize = static_cast<int>(modelConfig_["size"]);
-	firstItemFlag = true;
+    firstItemFlag = true;
     ImGui::Text("Model size:");
     for (const auto& s : g_ModelSizes) {
-		if (firstItemFlag) {
-			firstItemFlag = false;
-		}
-		else {
-        	ImGui::SameLine();
-		}
+        if (firstItemFlag) {
+            firstItemFlag = false;
+        }
+        else {
+            ImGui::SameLine();
+        }
         if (ImGui::RadioButton(s.first.c_str(), &gModelSize, s.second)) {
             modelConfig_["size"] = gModelSize;
             renderer_.InitTextures(gModelSize);
@@ -229,15 +225,15 @@ void NeuralFieldContext::RenderUi() {
         {"mirror", static_cast<int>(KernelMode::MODE_MIRROR)}
     };
     static int gModelMode = static_cast<int>(modelConfig_["mode"]);
-	firstItemFlag = true;
+    firstItemFlag = true;
     ImGui::Text("Border mode:");
     for (const auto& s : g_ModelModes) {
-		if (firstItemFlag) {
-			firstItemFlag = false;
-		}
-		else {
-        	ImGui::SameLine();
-		}
+        if (firstItemFlag) {
+            firstItemFlag = false;
+        }
+        else {
+            ImGui::SameLine();
+        }
         if (ImGui::RadioButton(s.first.c_str(), &gModelMode, s.second)) {
             modelConfig_["mode"] = gModelMode;
             model_.Init(modelConfig_);
@@ -281,10 +277,10 @@ void NeuralFieldContext::Resize(int w, int h) {
     windowHeight_ = h;
 
     glViewport(0, 0, windowWidth_, windowHeight_); LOGOPENGLERROR();
-	
-    int newW = windowWidth_ - g_UiWidth;
-    double newScale = 2.0 / static_cast<double>(newW);
-    double newLeft = g_area.X - g_UiWidth * newScale;
+
+    int newW = windowWidth_ - static_cast<int>(g_UiWidth);
+    float newScale = 2.0 / static_cast<float>(newW);
+    float newLeft = g_area.X - g_UiWidth * newScale;
     mvp_ = HMM_Orthographic(newLeft, g_area.Y, g_area.Z, g_area.W, 1.f, -1.f);
 
     quad_.Resize(newW, h);
@@ -296,9 +292,9 @@ void NeuralFieldContext::Resize(int w, int h) {
 void NeuralFieldContext::SetActivity(int x, int y) {
     int cx = 0, cy = 0;
 
-    int newX = x - g_UiWidth;
+    int newX = x - static_cast<int>(g_UiWidth);
 
-    int w = windowWidth_ - g_UiWidth;
+    int w = windowWidth_ - static_cast<int>(g_UiWidth);
     int h = windowHeight_;
 
     if (w > h) {
@@ -316,8 +312,8 @@ void NeuralFieldContext::SetActivity(int x, int y) {
         return;
     }
 
-    int n = (int)((float)cx/(float)size * model_.size);
-    int m = (int)((1.f - (float)cy/(float)size) * model_.size);
+    size_t n = static_cast<size_t>((static_cast<double>(cx) / size) * model_.size);
+    size_t m = static_cast<size_t>((1.0 - static_cast<double>(cy) / size) * model_.size);
 
     model_.SetActivity(n, m, 1.f);
 
@@ -332,14 +328,14 @@ void NeuralFieldContext::Restart() {
 void NeuralFieldContext::Update() {
     static double lastFpsTime = 0.0;
     double currentTime = glfwGetTime();
-	
+
     static uint64_t iterationsTime = 0;
     static int simulationsCounter = 0;
-	
+
     if (currentTime - lastFpsTime > 1.0) {
         fps_ = ImGui::GetIO().Framerate;
         lastFpsTime = currentTime;
-		
+
         if (simulationsCounter != 0) {
             averageIteration_ = iterationsTime / simulationsCounter;
 
@@ -362,21 +358,20 @@ void NeuralFieldContext::Update() {
         iterationsTime += duration.count();
     }
 
+    constexpr double ContourThreshold = 0.0;
+
     switch (renderMode_) {
     case RenderMode::Texture:
         renderer_.UpdateTexture(model_.activity.get());
         break;
 
     case RenderMode::Contour:
-        contourLines_.Update(model_.activity.get(), g_area, 0.0);
+        contourLines_.Update(model_.activity.get(), g_area, ContourThreshold);
         break;
 
     case RenderMode::Fill:
-        contourLines_.Update(model_.activity.get(), g_area, 0.0);
-        contourFill_.Update(model_.activity.get(), g_area, 0.0);
-        break;
-
-    default:
+        contourLines_.Update(model_.activity.get(), g_area, ContourThreshold);
+        contourFill_.Update(model_.activity.get(), g_area, ContourThreshold);
         break;
     }
 }
@@ -399,25 +394,25 @@ void NeuralFieldContext::DecreaseBlur() {
 }
 
 void NeuralFieldContext::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    void* p = glfwGetWindowUserPointer(window);
+    auto p = glfwGetWindowUserPointer(window);
     assert(p);
-    NeuralFieldContext* context = static_cast<NeuralFieldContext *>(p);
+    auto context = static_cast<NeuralFieldContext *>(p);
 
     context->Keyboard(key, scancode, action, mods);
 }
 
 void NeuralFieldContext::ReshapeCallback(GLFWwindow* window, int width, int height) {
-    void* p = glfwGetWindowUserPointer(window);
+    auto p = glfwGetWindowUserPointer(window);
     assert(p);
-    NeuralFieldContext* context = static_cast<NeuralFieldContext *>(p);
+    auto context = static_cast<NeuralFieldContext *>(p);
 
     context->Resize(width, height);
 }
 
 void NeuralFieldContext::MouseCallback(GLFWwindow* window, int button, int action, int mods) {
-    void* p = glfwGetWindowUserPointer(window);
+    auto p = glfwGetWindowUserPointer(window);
     assert(p);
-    NeuralFieldContext* context = static_cast<NeuralFieldContext *>(p);
+    auto context = static_cast<NeuralFieldContext *>(p);
 
     context->Mouse(button, action, mods);
 }

@@ -1,11 +1,10 @@
 #include "stdafx.h"
 #include "Matrix.h"
-#include "Texture.h"
 #include "Gauss.h"
-#include "GraphicsLogger.h"
 #include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
+#include "GraphicsResource.h"
 #include "NeuralFieldModel.h"
-#include "FrameBufferWrapper.h"
 #include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
@@ -25,12 +24,12 @@ const std::string Title = "Model of Planar Neural Field";
 
 
 int main(int argc, const char* argv[]) {
-	try {
-	    plog::ConsoleAppender<plog::LogFormatter> logger;
+    try {
+        plog::ConsoleAppender<plog::LogFormatter> logger;
 #ifdef NDEBUG
-	    plog::init(plog::info, &logger);
+        plog::init(plog::info, &logger);
 #else
-	    plog::init(plog::debug, &logger);
+        plog::init(plog::debug, &logger);
 #endif
 
         GlfwWrapper glfwWrapper;
@@ -38,15 +37,15 @@ int main(int argc, const char* argv[]) {
             LOGE << "Failed to load GLFW";
             return EXIT_FAILURE;
         }
-		
+        
         glfwSwapInterval(0); // Disable vsync to get maximum number of iterations
 
-	    NeuralFieldContext context;
-	    if (!context.Init(glfwWrapper.GetWindow(), argc, argv)) {
-	        LOGE << "Initialization failed";
-	        return EXIT_FAILURE;
-	    }
-		
+        NeuralFieldContext context;
+        if (!context.Init(glfwWrapper.GetWindow(), argc, argv)) {
+            LOGE << "Initialization failed";
+            return EXIT_FAILURE;
+        }
+        
         // Setup ImGui
         ImGuiWrapper imguiWrapper;
         imguiWrapper.Init(glfwWrapper.GetWindow());
@@ -57,7 +56,7 @@ int main(int argc, const char* argv[]) {
         style.WindowRounding = 0.0f;
         style.WindowBorderSize = 0.0f;
 
-		// Main loop
+        // Main loop
         while (!glfwWindowShouldClose(glfwWrapper.GetWindow())) {
             glfwPollEvents();
 
@@ -73,7 +72,7 @@ int main(int argc, const char* argv[]) {
 
             glfwSwapBuffers(glfwWrapper.GetWindow());
         }
-	}
+    }
     catch (const std::exception& ex) {
         LOGE << ex.what();
         return EXIT_FAILURE;

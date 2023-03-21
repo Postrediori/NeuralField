@@ -1,8 +1,11 @@
 #include "stdafx.h"
 #include "GraphicsLogger.h"
+#include "GraphicsResource.h"
 #include "PlainTextureRenderer.h"
 
-
+/*****************************************************************************
+ * Geometry constants
+ ****************************************************************************/
 const hmm_vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
 
 const std::vector<hmm_vec4> g_quadVertices = {
@@ -20,12 +23,8 @@ const std::vector<GLuint> g_quadIndices = {
 /*****************************************************************************
  * PlainTextureRenderer
  ****************************************************************************/
-PlainTextureRenderer::~PlainTextureRenderer() {
-    Release();
-}
-
-bool PlainTextureRenderer::Init(GLuint p) {
-    program = p;
+bool PlainTextureRenderer::Init(GLuint program) {
+    this->program = program;
 
     uRes = glGetUniformLocation(program, "iRes"); LOGOPENGLERROR();
     uMvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
@@ -34,30 +33,30 @@ bool PlainTextureRenderer::Init(GLuint p) {
     mvp = HMM_Orthographic(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
 
     // Init VAO
-    glGenVertexArrays(1, &vao); LOGOPENGLERROR();
+    glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
     if (!vao) {
         LOGE << "Failed to create VAO for planar texture";
         return false;
     }
-    glBindVertexArray(vao); LOGOPENGLERROR();
+    glBindVertexArray(vao.get()); LOGOPENGLERROR();
 
     // Init VBO
-    glGenBuffers(1, &vbo); LOGOPENGLERROR();
+    glGenBuffers(1, vbo.put()); LOGOPENGLERROR();
     if (!vbo) {
         LOGE << "Failed to create VBO for planar texture";
         return false;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices[0]) * g_quadVertices.size(),
         g_quadVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     // Init indices VBO
-    glGenBuffers(1, &indVbo);
+    glGenBuffers(1, indVbo.put());
     if (!indVbo) {
         LOGE << "Failed to create indices VBO";
         return false;
     }
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo.get());
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_quadIndices[0]) * g_quadIndices.size(),
         g_quadIndices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
@@ -86,17 +85,6 @@ void PlainTextureRenderer::SetMvp(const hmm_mat4& newMvp) {
     mvp = newMvp;
 }
 
-void PlainTextureRenderer::Release() {
-    if (vao) {
-        glDeleteVertexArrays(1, &vao); LOGOPENGLERROR();
-        vao = 0;
-    }
-    if (vbo) {
-        glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
-        vbo = 0;
-    }
-}
-
 void PlainTextureRenderer::Resize(int newWidth, int newHeight) {
     width = newWidth;
     height = newHeight;
@@ -108,7 +96,7 @@ void PlainTextureRenderer::AdjustViewport() {
 
 void PlainTextureRenderer::Render() {
     glUseProgram(program); LOGOPENGLERROR();
-    glBindVertexArray(vao); LOGOPENGLERROR();
+    glBindVertexArray(vao.get()); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();

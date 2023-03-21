@@ -49,7 +49,7 @@ std::string GetProgramInfo(GLuint program) {
 }
 
 GLuint Shader::CreateProgramFromFiles(
-    	const std::string& vertex_shader, const std::string& fragment_shader) {
+        const std::string& vertex_shader, const std::string& fragment_shader) {
     LOGI << "Shader Files: " << vertex_shader << " " << fragment_shader;
 
     std::string strVert = LoadShaderFile(vertex_shader);
@@ -68,7 +68,7 @@ GLuint Shader::CreateProgramFromFiles(
 }
 
 GLuint Shader::CreateProgramFromSource(
-    	const std::string& vertex_shader, const std::string& fragment_shader) {
+        const std::string& vertex_shader, const std::string& fragment_shader) {
     LOGD << "Vertex Shader    : " << vertex_shader.length() << " symbols";
     LOGD << "Fragment Shader  : " << fragment_shader.length() << " symbols";
 
@@ -76,7 +76,7 @@ GLuint Shader::CreateProgramFromSource(
     GLuint vShader = 0;
     GLuint fShader = 0;
     GLuint sProgram = 0;
-	
+
     const GLchar* vertexSource = vertex_shader.c_str();
     const GLchar* fragmentSource = fragment_shader.c_str();
 

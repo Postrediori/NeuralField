@@ -20,7 +20,7 @@ matrix_t* matrix_allocate(size_t rows, size_t cols) {
     m->rows = rows;
     m->cols = cols;
     m->dataSize = rows * cols;
-    m->data = new double[m->dataSize];
+    m->data = new float[m->dataSize];
     return m;
 }
 

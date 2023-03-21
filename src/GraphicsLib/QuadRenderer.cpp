@@ -1,14 +1,11 @@
 #include "stdafx.h"
-#include "GraphicsLogger.h"
 #include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
+#include "GraphicsResource.h"
 #include "QuadRenderer.h"
 
-QuadRenderer::~QuadRenderer() {
-    Release();
-}
-
-bool QuadRenderer::Init(GLuint p, const hmm_vec4& area, const FloatColor& quadColor) {
-    program = p;
+bool QuadRenderer::Init(GLuint program, const hmm_vec4& area, const FloatColor& quadColor) {
+    this->program = program;
 
     this->SetColor(quadColor);
 
@@ -18,17 +15,17 @@ bool QuadRenderer::Init(GLuint p, const hmm_vec4& area, const FloatColor& quadCo
     uOffset = glGetUniformLocation(program, "ofs"); LOGOPENGLERROR();
     uRes = glGetUniformLocation(program, "res"); LOGOPENGLERROR();
 
-    glGenVertexArrays(1, &vao); LOGOPENGLERROR();
+    glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
     if (!vao) {
         return false;
     }
-    glBindVertexArray(vao); LOGOPENGLERROR();
+    glBindVertexArray(vao.get()); LOGOPENGLERROR();
 
-    glGenBuffers(1, &vbo); LOGOPENGLERROR();
+    glGenBuffers(1, vbo.put()); LOGOPENGLERROR();
     if (!vbo) {
         return false;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
 
     const std::vector<hmm_vec2> vertices = {
         {area.Elements[0], area.Elements[2]},
@@ -54,20 +51,9 @@ bool QuadRenderer::Init(GLuint p, const hmm_vec4& area, const FloatColor& quadCo
     return true;
 }
 
-void QuadRenderer::Release() {
-    if (vao) {
-        glDeleteVertexArrays(1, &vao);
-        vao = 0;
-    }
-    if (vbo) {
-        glDeleteBuffers(1, &vbo);
-        vbo = 0;
-    }
-}
-
 void QuadRenderer::Render(const hmm_mat4& mvp, float zoom, const hmm_vec2& offset) {
     glUseProgram(program); LOGOPENGLERROR();
-    glBindVertexArray(vao); LOGOPENGLERROR();
+    glBindVertexArray(vao.get()); LOGOPENGLERROR();
 
     glUniformMatrix4fv(uMvp, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(&mvp)); LOGOPENGLERROR();
     glUniform1f(uZoom, zoom); LOGOPENGLERROR();

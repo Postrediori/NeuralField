@@ -4,10 +4,10 @@ struct matrix_t {
     size_t rows;
     size_t cols;
     size_t dataSize;
-    double* data;
+    float* data;
 };
 
-typedef std::unique_ptr<matrix_t, std::function<void(matrix_t*)>> MatrixGuard_t;
+using MatrixGuard_t = std::unique_ptr<matrix_t, std::function<void(matrix_t*)>>;
 
 matrix_t* matrix_allocate(size_t rows, size_t cols);
 void matrix_free(matrix_t* m);

@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "ResourceFinder.h"
 
+const std::filesystem::path DataDirName = "data";
+
 Utils::ResourceFinder::DirectoryList Utils::ResourceFinder::GetDataDirectoryList(const std::string& argv_path) {
     const auto current_directory{ std::filesystem::current_path() };
 
@@ -15,7 +17,6 @@ Utils::ResourceFinder::DirectoryList Utils::ResourceFinder::GetDataDirectoryList
 
 bool Utils::ResourceFinder::LookForDataDir(const Utils::ResourceFinder::DirectoryList& paths_for_lookup,
         std::filesystem::path& found_path) {
-    static const std::filesystem::path DataDirName{ "data" };
 
     for (const auto& p : paths_for_lookup) {
         std::filesystem::path data_path = p / DataDirName;
@@ -26,7 +27,7 @@ bool Utils::ResourceFinder::LookForDataDir(const Utils::ResourceFinder::Director
         }
     }
 
-    found_path = "";
+    found_path = std::filesystem::path(); // empty path
     return false;
 }
 

@@ -25,22 +25,22 @@ endmacro ()
 
 macro(make_project_options_)
     if (USE_OPENMP)
-        target_compile_options(${PROJECT} PRIVATE ${OpenMP_CXX_FLAGS})
-        target_compile_definitions(${PROJECT} PRIVATE USE_OPENMP)
+        target_compile_options(${PROJECT} PUBLIC ${OpenMP_CXX_FLAGS})
+        target_compile_definitions(${PROJECT} PUBLIC USE_OPENMP)
     endif ()
 
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
-		# Flags for Visual Studio compiler
-        target_compile_options(${PROJECT} PRIVATE /Wall)
-        target_compile_definitions(${PROJECT} PRIVATE _USE_MATH_DEFINES)
-    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-		# Flags for gcc compiler
-        target_compile_options(${PROJECT} PRIVATE -Wall -Wextra -Wpedantic -Werror)
-    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-		# Flags for clang compiler
-        target_compile_options(${PROJECT} PRIVATE -Wall -Wextra -Wpedantic -Werror)
-		# Flags to compile HandmadeMath with Clang
-        target_compile_options(${PROJECT} PRIVATE
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        # Flags for Visual Studio compiler
+        target_compile_options(${PROJECT} PUBLIC /Wall)
+        target_compile_definitions(${PROJECT} PUBLIC _USE_MATH_DEFINES)
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # Flags for gcc compiler
+        target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic -Werror)
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # Flags for clang compiler
+        target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic -Werror)
+        # Flags to compile HandmadeMath with Clang
+        target_compile_options(${PROJECT} PUBLIC
             -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-missing-field-initializers -Wno-missing-braces)
     endif ()
 endmacro()

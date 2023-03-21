@@ -65,7 +65,7 @@ public:
     bool Init(GLuint p);
     virtual bool Update(matrix_t* /*points*/, const hmm_vec4& /*area*/, double /*t*/) { return false; }
     virtual void Render(const hmm_mat4& /*mvp*/, double /*zoom*/, const hmm_vec2& /*offset*/,
-    	const FloatColor& /*c*/) { }
+        const FloatColor& /*c*/) { }
 
     void Release();
     void Resize(int width, int height);

@@ -10,7 +10,7 @@ public:
     TextureRenderer() = default;
     ~TextureRenderer();
 
-    bool Init(const std::filesystem::path& moduleDataDir, size_t size);
+    bool Init(NeuralFieldModel* model, const std::filesystem::path& moduleDataDir, size_t size);
     bool InitTextures(size_t size);
 
     void Render(const hmm_mat4& mvp);
@@ -24,8 +24,6 @@ public:
     void SetUseBlur(bool newUseBlur);
 
 private:
-    void InitBlurKernelTex();
-
     void ReleaseTextures();
     void Release();
 
@@ -36,24 +34,13 @@ private:
     bool useBlur = false;
     double blurSigma = 0.0;
     KernelGuard_t blurKernel;
-    GLuint blurKernelTexture = 0;
 
-    TextureGuard_t tex;
-    GLuint texture = 0;
-    GLuint blurTextureInter = 0;
+    MatrixGuard_t tex, tempTex;
+    GraphicsUtils::unique_texture texture;
 
-    FrameBufferWrapper frameBuffer;
-
-    PlainTextureRenderer blurPreRenderer;
     PlainTextureRenderer screenRenderer;
 
-    struct {
-        GLuint p = 0;
-    } program;
+    GraphicsUtils::unique_program program;
 
-    struct {
-        GLuint p = 0;
-        GLint uBlurDir = -1;
-        GLint uBlurKernelTex = -1;
-    } blurProgram;
+    NeuralFieldModel* model_ = nullptr;
 };
