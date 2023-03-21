@@ -1,8 +1,9 @@
-set(IMGUI_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rdparty/imgui)
-file(GLOB IMGUI_SOURCES ${IMGUI_INCLUDE_DIR}/*.cpp)
-file(GLOB IMGUI_HEADERS ${IMGUI_INCLUDE_DIR}/*.h)
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/3rdparty/imgui)
+set(IMGUI_INCLUDE_DIR ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+file(GLOB IMGUI_SOURCES ${IMGUI_DIR}/*.cpp)
+file(GLOB IMGUI_BACKENDS_SOURCES ${IMGUI_DIR}/backends/*.cpp)
                  
-add_library(imgui STATIC ${IMGUI_SOURCES} ${IMGUI_SOURCES})
+add_library(imgui STATIC ${IMGUI_SOURCES} ${IMGUI_BACKENDS_SOURCES})
 
 target_compile_definitions(imgui PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
 
