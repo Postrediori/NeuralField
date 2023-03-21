@@ -51,7 +51,9 @@ texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
         return t;
     } 
     
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(t->pixelCount); ++idx) {
         uint8_t k = m->data[idx] > 0.0 ? 0xff : 0x00;
         t->data[idx * t->bpp + 0] = k;
@@ -60,7 +62,9 @@ texture_t* texture_copy_matrix(texture_t* t, matrix_t* m) {
     }
 
     if (t->format == TextureFormat::RGBA) {
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
         for (int idx = 0; idx < static_cast<int>(t->pixelCount); ++idx) {
             t->data[idx * t->bpp + 3] = 0xff;
         }

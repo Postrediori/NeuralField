@@ -4,15 +4,16 @@ target_precompile_headers(${PROJECT} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/stdafx.h)
 
 target_include_directories(${PROJECT} PRIVATE
-    ${OPENGL_INCLUDE_DIR}
-    ${GLFW_INCLUDE_DIR}
     ${GLAD_INCLUDE_DIR}
-    ${GLM_INCLUDE_DIR}
+    ${GLFW_INCLUDE_DIR}
+    ${OPENGL_INCLUDE_DIR}
     )
 
 target_link_libraries(${PROJECT}
-    ${OPENGL_LIBRARIES}
-    ${GLFW_LIBRARIES}
     ${GLAD_LIBRARIES}
+    ${GLFW_LIBRARIES}
+    ${HMM_LIBRARY}
+    ${IMGUI_LIBRARIES}
+    ${OPENGL_LIBRARIES}
     ${PLOG_LIBRARY}
     )

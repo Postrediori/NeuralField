@@ -1,3 +1,9 @@
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bundle")
+
+install(
+    DIRECTORY "${CMAKE_SOURCE_DIR}/data"
+    DESTINATION ${CMAKE_INSTALL_PREFIX})
+
 macro(make_project_)
     if (NOT DEFINED PROJECT)
         get_filename_component(PROJECT ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -20,22 +26,22 @@ endmacro ()
 macro(make_project_options_)
     if (USE_OPENMP)
         target_compile_options(${PROJECT} PRIVATE ${OpenMP_CXX_FLAGS})
+        target_compile_definitions(${PROJECT} PRIVATE USE_OPENMP)
     endif ()
 
-    if (MSVC)
+    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+		# Flags for Visual Studio compiler
         target_compile_options(${PROJECT} PRIVATE /Wall)
-    else ()
+        target_compile_definitions(${PROJECT} PRIVATE _USE_MATH_DEFINES)
+    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+		# Flags for gcc compiler
         target_compile_options(${PROJECT} PRIVATE -Wall -Wextra -Wpedantic -Werror)
-    endif ()
-
-    # Flags to compile HandmadeMath with Clang
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+		# Flags for clang compiler
+        target_compile_options(${PROJECT} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+		# Flags to compile HandmadeMath with Clang
         target_compile_options(${PROJECT} PRIVATE
             -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-missing-field-initializers -Wno-missing-braces)
-    endif ()
-
-    if (MSVC)
-        target_compile_definitions(${PROJECT} PRIVATE _USE_MATH_DEFINES)
     endif ()
 endmacro()
 
@@ -44,7 +50,6 @@ macro(make_executable)
     add_executable(${PROJECT} ${HEADERS} ${SOURCES})
     make_project_options_()
 
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bundle/${PROJECT}")
     install(
         TARGETS ${PROJECT}
         DESTINATION ${CMAKE_INSTALL_PREFIX})

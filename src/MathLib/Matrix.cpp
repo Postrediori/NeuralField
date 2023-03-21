@@ -54,8 +54,10 @@ matrix_t* matrix_set(matrix_t* a, size_t row, size_t col, double val) {
 matrix_t* matrix_scalar_set(matrix_t* a, double h) {
     assert(a);
     assert(a->data);
-
+    
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(a->dataSize); idx++) {
         a->data[idx] = h;
     }
@@ -65,8 +67,10 @@ matrix_t* matrix_scalar_set(matrix_t* a, double h) {
 matrix_t* matrix_scalar_add(matrix_t* a, double h) {
     assert(a);
     assert(a->data);
-
+    
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(a->dataSize); idx++) {
         a->data[idx] += h;
     }
@@ -76,8 +80,10 @@ matrix_t* matrix_scalar_add(matrix_t* a, double h) {
 matrix_t* matrix_scalar_mul(matrix_t* a, double h) {
     assert(a);
     assert(a->data);
-
+    
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(a->dataSize); idx++) {
         a->data[idx] *= h;
     }
@@ -98,7 +104,10 @@ matrix_t* matrix_add(matrix_t* a, matrix_t* b) {
         LOGE << "Matrix COLUMNS Error";
         return a;
     }
+    
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(a->dataSize); idx++) {
         a->data[idx] += b->data[idx];
     }
@@ -119,7 +128,10 @@ matrix_t* matrix_sub(matrix_t* a, matrix_t* b) {
         LOGE << "Matrix COLUMNS Error";
         return a;
     }
+    
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(a->dataSize); idx++) {
         a->data[idx] -= b->data[idx];
     }
@@ -129,8 +141,10 @@ matrix_t* matrix_sub(matrix_t* a, matrix_t* b) {
 matrix_t* matrix_heaviside(matrix_t* a) {
     assert(a);
     assert(a->data);
-
+    
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(a->dataSize); idx++) {
         a->data[idx] = (a->data[idx] > 0.0) ? 1.0 : 0.0;
     }
@@ -140,8 +154,10 @@ matrix_t* matrix_heaviside(matrix_t* a) {
 matrix_t* matrix_random_f(matrix_t* a) {
     assert(a);
     assert(a->data);
-
+    
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int idx = 0; idx < static_cast<int>(a->dataSize); idx++) {
         a->data[idx] = drand48();
     }

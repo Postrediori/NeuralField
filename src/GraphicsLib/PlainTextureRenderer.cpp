@@ -1,24 +1,18 @@
 #include "stdafx.h"
-#include "GlUtils.h"
-#include "Shader.h"
+#include "GraphicsLogger.h"
 #include "PlainTextureRenderer.h"
 
-static const struct areaf {
-    float xmin, xmax;
-    float ymin, ymax;
-} PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
 
-/*****************************************************************************
- * Geometry constants
- ****************************************************************************/
-static const std::vector<glm::vec4> g_quadVertices = {
+const hmm_vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
+
+const std::vector<hmm_vec4> g_quadVertices = {
     {-1.0f, -1.0f, 0.f, 0.f},
     {-1.0f,  1.0f, 0.f, 1.f},
     {1.0f, -1.0f, 1.f, 0.f},
     {1.0f,  1.0f, 1.f, 1.f},
 };
 
-static const std::vector<GLuint> g_quadIndices = {
+const std::vector<GLuint> g_quadIndices = {
     0, 1, 2,
     2, 1, 3,
 };
@@ -37,7 +31,7 @@ bool PlainTextureRenderer::Init(GLuint p) {
     uMvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
     uTex = glGetUniformLocation(program, "tex"); LOGOPENGLERROR();
 
-    mvp = glm::ortho(PlaneBounds.xmin, PlaneBounds.xmax, PlaneBounds.ymin, PlaneBounds.ymax);
+    mvp = HMM_Orthographic(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
 
     // Init VAO
     glGenVertexArrays(1, &vao); LOGOPENGLERROR();
@@ -88,7 +82,7 @@ void PlainTextureRenderer::SetTexture(GLuint t) {
     texture = t;
 }
 
-void PlainTextureRenderer::SetMvp(glm::mat4 newMvp) {
+void PlainTextureRenderer::SetMvp(const hmm_mat4& newMvp) {
     mvp = newMvp;
 }
 
@@ -119,11 +113,11 @@ void PlainTextureRenderer::Render() {
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(uMvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
-    glUniform2f(uRes, (GLfloat)width, (GLfloat)height); LOGOPENGLERROR();
+    glUniformMatrix4fv(uMvp, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(&mvp)); LOGOPENGLERROR();
+    glUniform2f(uRes, static_cast<GLfloat>(width), static_cast<GLfloat>(height)); LOGOPENGLERROR();
     glUniform1i(uTex, 0); LOGOPENGLERROR();
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)g_quadIndices.size(), GL_UNSIGNED_INT, nullptr); LOGOPENGLERROR();
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(g_quadIndices.size()), GL_UNSIGNED_INT, nullptr); LOGOPENGLERROR();
 
     glBindVertexArray(0); LOGOPENGLERROR();
     glUseProgram(0); LOGOPENGLERROR();

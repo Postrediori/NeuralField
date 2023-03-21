@@ -37,8 +37,7 @@ You need CMake to generate platform-specific makefiles or project files. This re
 ### Dependencies
 The following instructions apply to:
 
-* Ubuntu 20.04, 18.04, 16.04
-* Debian 9 and higher
+* Ubuntu or Debian
 
 ```
 apt-get install \
@@ -51,24 +50,10 @@ apt-get install \
 
 The following instructions apply to:
 
-* Fedora 22 and higher
+* RedHat-based systems (Fedora, CantOS):
 
 ```
 dnf install \
-    cmake \
-    gcc-c++ \
-    mesa-libGL-devel \
-    libXrandr-devel \
-    libXinerama-devel \
-    libXcursor-devel \
-    libXi-devel \
-    freetype-devel
-```
-
-* CentOS 7 and higher
-
-```
-yum install \
     cmake \
     gcc-c++ \
     mesa-libGL-devel \
@@ -94,33 +79,52 @@ The program is built with the commands below. CMake requires the directory with 
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
-make install
+```
+
+### Additional build options
+
+The following options are available when running CMake:
+* `USE_OPENMP` (default value: ON) - Make parallel code with OpenMP. This option is disabled on macOS.
+
+Example usage:
+
+```
+mkdir build && cd build
+cmake .. -DUSE_OPENMP=OFF
 ```
 
 ### Running Project
-After the successful build the binary `NeuralField` will end up in `<source dir>/bundle/NauralField` directory.
+
+After the successful build the binary `NeuralField` will end up in `<source dir>/bundle` directory.
 
 ```
-cd bundle/NeuralField
-./NeuralField
+./bundle/NeuralField
 ```
 
 
-All of the files required for an executable to run are stored in the `<PathToProject>/bundle/NeuralField`:
+All of the files required for an executable to run are stored in the `<PathToProject>/bundle`:
 
 ```
 cd <PathToProject>/bundle
 tree
 .
-└── NeuralField
-    ├── NeuralField
-    └── data
-        ├── amari.conf
-        ├── plane.frag
-        ├── plane.vert
-        └── ...
+├── NeuralField
+└── data
+    ├── amari.conf
+    ├── plane.frag
+    ├── plane.vert
+    └── ...
 
 2 directories, 7 files
+```
+
+## Building for macOS
+
+Generate makefiles for the build:
+
+```
+mkdir build && cd build
+cmake .. -DUSE_OPENMP=OFF -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## Configuration
@@ -174,8 +178,7 @@ h=0  | h=-0.15 | h=-0.3
 * Luca Salasnich, [Power Spectrum and Diffusion of the Amari Neural Field](https://doi.org/10.3390/sym11020134), 2019.
 
 ## TODO
-* [  ] Build instructions for Windows.
-* [  ] Build instructions for macOS X: add OpenMP setup or make more universal version without OpenMP.
-* [  ] Matrix algebra using hardware acceleration (OpenCL, OpenGL Compute Shaders, texture rendering&framebuffers, shader feedback, etc.)
-* [  ] Export results to images and videos.
-* [  ] Expand description of the model.
+* [ ] Build instructions for Windows.
+* [ ] Matrix algebra using hardware acceleration (OpenCL, OpenGL Compute Shaders, texture rendering&framebuffers, shader feedback, etc.)
+* [ ] Export results to images and videos.
+* [ ] Expand description of the model.

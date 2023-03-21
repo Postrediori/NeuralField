@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "GlUtils.h"
+#include "GraphicsLogger.h"
 #include "FrameBufferWrapper.h"
 
 FrameBufferWrapper::~FrameBufferWrapper() {

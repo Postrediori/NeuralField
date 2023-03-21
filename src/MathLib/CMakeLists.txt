@@ -5,5 +5,8 @@ target_precompile_headers(${PROJECT} PUBLIC
 
 target_link_libraries(${PROJECT} PRIVATE
     ${PLOG_LIBRARY}
-    ${OpenMP_CXX_FLAGS}
     )
+
+if (USE_OPENMP)
+	target_link_libraries(${PROJECT} ${OpenMP_CXX_FLAGS})
+endif()

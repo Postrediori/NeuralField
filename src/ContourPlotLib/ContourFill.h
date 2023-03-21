@@ -3,15 +3,15 @@
 class ContourPlot;
 
 /*****************************************************************************
- * ContourFill
+ * ContourParallelFill - level filles plot that uses OpenMP
  ****************************************************************************/
 class ContourFill : public ContourPlot {
 public:
-    ContourFill();
-
-    bool update(matrix_t* points, area_t a, double t);
-    void render(const glm::mat4& mvp,
+    ContourFill() = default;
+    
+    bool Update(matrix_t* points, const hmm_vec4& area, double t);
+    void Render(const hmm_mat4& mvp,
                 double zoom,
-                const glm::vec2& offset,
-                const std::array<GLfloat, 4>& c);
+                const hmm_vec2& offset,
+                const FloatColor& c);
 };

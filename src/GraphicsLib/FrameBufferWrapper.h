@@ -2,6 +2,7 @@
 
 class FrameBufferWrapper {
 public:
+    FrameBufferWrapper() = default;
     ~FrameBufferWrapper();
 
     bool Init();

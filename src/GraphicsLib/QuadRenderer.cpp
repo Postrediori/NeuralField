@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "GlUtils.h"
+#include "GraphicsLogger.h"
+#include "GraphicsUtils.h"
 #include "QuadRenderer.h"
 
 QuadRenderer::~QuadRenderer() {
     Release();
 }
 
-bool QuadRenderer::Init(GLuint p, const std::array<double, 4>& area,
-    const std::array<float, 4>& quadColor) {
+bool QuadRenderer::Init(GLuint p, const hmm_vec4& area, const FloatColor& quadColor) {
     program = p;
 
     this->SetColor(quadColor);
@@ -30,18 +30,18 @@ bool QuadRenderer::Init(GLuint p, const std::array<double, 4>& area,
     }
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
 
-    std::vector<glm::vec2> vertices = {
-        {area[0], area[2]},
-        {area[0], area[3]},
-        {area[1], area[2]},
+    const std::vector<hmm_vec2> vertices = {
+        {area.Elements[0], area.Elements[2]},
+        {area.Elements[0], area.Elements[3]},
+        {area.Elements[1], area.Elements[2]},
 
-        {area[1], area[2]},
-        {area[0], area[3]},
-        {area[1], area[3]},
+        {area.Elements[1], area.Elements[2]},
+        {area.Elements[0], area.Elements[3]},
+        {area.Elements[1], area.Elements[3]},
     };
     verticesCount = vertices.size();
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * verticesCount,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec2) * verticesCount,
         vertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     GLint aCoord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
@@ -65,13 +65,13 @@ void QuadRenderer::Release() {
     }
 }
 
-void QuadRenderer::Render(const glm::mat4& mvp, float zoom, const glm::vec2& offset) {
+void QuadRenderer::Render(const hmm_mat4& mvp, float zoom, const hmm_vec2& offset) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();
 
-    glUniformMatrix4fv(uMvp, 1, GL_FALSE, glm::value_ptr(mvp)); LOGOPENGLERROR();
+    glUniformMatrix4fv(uMvp, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(&mvp)); LOGOPENGLERROR();
     glUniform1f(uZoom, zoom); LOGOPENGLERROR();
-    glUniform2fv(uOffset, 1, glm::value_ptr(offset)); LOGOPENGLERROR();
+    glUniform2fv(uOffset, 1, reinterpret_cast<const GLfloat*>(&offset)); LOGOPENGLERROR();
     glUniform4fv(uColor, 1, color.data()); LOGOPENGLERROR();
     glUniform2f(uRes, static_cast<GLfloat>(width), static_cast<GLfloat>(height)); LOGOPENGLERROR();
 
@@ -86,6 +86,6 @@ void QuadRenderer::Resize(int w, int h) {
     height = h;
 }
 
-void QuadRenderer::SetColor(const std::array<float, 4> newColor) {
+void QuadRenderer::SetColor(const FloatColor& newColor) {
     color = newColor;
 }

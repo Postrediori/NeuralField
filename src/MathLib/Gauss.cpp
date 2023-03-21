@@ -127,7 +127,9 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, matrix_t* tmp, ke
     
     size_t k2 = k->size / 2;
     
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int j = 0; j < static_cast<int>(dst->cols); ++j) {
         for (int i = 0; i < static_cast<int>(dst->rows); ++i) {
             double d = 0.0;
@@ -142,7 +144,9 @@ matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, matrix_t* tmp, ke
         }
     }
     
+#ifdef USE_OPENMP
 #pragma omp parallel for
+#endif
     for (int j = 0; j < static_cast<int>(dst->cols); ++j) {
         for (int i = 0; i < static_cast<int>(dst->rows); ++i) {
             double d = 0.0;

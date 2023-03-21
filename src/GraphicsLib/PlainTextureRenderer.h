@@ -2,6 +2,7 @@
 
 class PlainTextureRenderer {
 public:
+    PlainTextureRenderer() = default;
     ~PlainTextureRenderer();
 
     bool Init(GLuint program);
@@ -12,7 +13,7 @@ public:
     void AdjustViewport();
 
     void SetTexture(GLuint t);
-    void SetMvp(glm::mat4 mvp);
+    void SetMvp(const hmm_mat4& mvp);
 
 private:
     int width = 0, height = 0;
@@ -25,5 +26,5 @@ private:
     GLuint vao = 0;
     GLuint vbo = 0, indVbo = 0;
 
-    glm::mat4 mvp;
+    hmm_mat4 mvp;
 };

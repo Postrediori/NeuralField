@@ -1,35 +1,32 @@
 #include "stdafx.h"
 #include "Matrix.h"
 #include "Texture.h"
-#include "MathUtils.h"
 #include "Gauss.h"
-#include "GlUtils.h"
+#include "GraphicsLogger.h"
 #include "Shader.h"
 #include "FrameBufferWrapper.h"
 #include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
 
-static const size_t g_bitsPerPixel = 4;
+const size_t g_bitsPerPixel = 4;
 
 /*****************************************************************************
  * TextureRenderer
  ****************************************************************************/
-static const std::string g_vertexShaderPath = "data/texture.vert";
-static const std::string g_fragmentShaderPath = "data/texture.frag";
+const std::filesystem::path g_vertexShaderPath = "texture.vert";
+const std::filesystem::path g_fragmentShaderPath = "texture.frag";
 
-static const std::string g_vertexBlurShaderPath = "data/texture-blur.vert";
-static const std::string g_fragmentBlurShaderPath = "data/texture-blur.frag";
-
-TextureRenderer::TextureRenderer() {
-    setBlur(1.0);
-}
+const std::filesystem::path g_vertexBlurShaderPath = "texture-blur.vert";
+const std::filesystem::path g_fragmentBlurShaderPath = "texture-blur.frag";
 
 TextureRenderer::~TextureRenderer() {
-    release();
+    Release();
 }
 
-bool TextureRenderer::init(size_t textureSize) {
-    if (!initTextures(textureSize)) {
+bool TextureRenderer::Init(const std::filesystem::path& moduleDataDir, size_t textureSize) {
+    SetBlur(1.0);
+	
+    if (!InitTextures(textureSize)) {
         LOGE << "Failed to create textures for neural field renderer";
         return false;
     }
@@ -41,13 +38,19 @@ bool TextureRenderer::init(size_t textureSize) {
     }
 
     // Init shader program
-    if (!Shader::createProgram(program.p, g_vertexShaderPath, g_fragmentShaderPath)) {
+	program.p = Shader::CreateProgramFromFiles(
+			(moduleDataDir / g_vertexShaderPath).string(),
+			(moduleDataDir / g_fragmentShaderPath).string());
+    if (!program.p) {
         LOGE << "Failed to create shader program for neural field renderer";
         return false;
     }
 
     // Init blur shader program
-    if (!Shader::createProgram(blurProgram.p, g_vertexBlurShaderPath, g_fragmentBlurShaderPath)) {
+	blurProgram.p = Shader::CreateProgramFromFiles(
+			(moduleDataDir / g_vertexBlurShaderPath).string(),
+			(moduleDataDir / g_fragmentBlurShaderPath).string());
+    if (!blurProgram.p) {
         LOGE << "Failed to create blur shader program for neural field renderer";
         return false;
     }
@@ -69,8 +72,8 @@ bool TextureRenderer::init(size_t textureSize) {
     return true;
 }
 
-bool TextureRenderer::initTextures(size_t newSize) {
-    releaseTextures();
+bool TextureRenderer::InitTextures(size_t newSize) {
+    ReleaseTextures();
 
     size = newSize;
 
@@ -114,7 +117,7 @@ bool TextureRenderer::initTextures(size_t newSize) {
     return true;
 }
 
-void TextureRenderer::releaseTextures() {
+void TextureRenderer::ReleaseTextures() {
     tex.reset();
 
     if (texture) {
@@ -127,8 +130,8 @@ void TextureRenderer::releaseTextures() {
     }
 }
 
-void TextureRenderer::release() {
-    releaseTextures();
+void TextureRenderer::Release() {
+    ReleaseTextures();
 
     glDeleteProgram(program.p); LOGOPENGLERROR();
     glDeleteProgram(blurProgram.p); LOGOPENGLERROR();
@@ -136,7 +139,7 @@ void TextureRenderer::release() {
     glDeleteTextures(1, &blurKernelTexture); LOGOPENGLERROR();
 }
 
-void TextureRenderer::render(const glm::mat4& mvp) {
+void TextureRenderer::Render(const hmm_mat4& mvp) {
     if (useBlur) {
         // Render blured version to texture
 
@@ -187,13 +190,13 @@ void TextureRenderer::render(const glm::mat4& mvp) {
     screenRenderer.Render();
 }
 
-void TextureRenderer::resize(unsigned int w, unsigned int h) {
+void TextureRenderer::Resize(unsigned int w, unsigned int h) {
     this->w = w;
     this->h = h;
     screenRenderer.Resize(w, h);
 }
 
-void TextureRenderer::updateTexture(matrix_t* m) {
+void TextureRenderer::UpdateTexture(matrix_t* m) {
     texture_copy_matrix(tex.get(), m);
 
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
@@ -201,14 +204,14 @@ void TextureRenderer::updateTexture(matrix_t* m) {
                     GL_UNSIGNED_BYTE, (const GLubyte *)tex->data); LOGOPENGLERROR();
 }
 
-void TextureRenderer::setBlur(double blur) {
+void TextureRenderer::SetBlur(double blur) {
     blurSigma = blur;
     if (blurSigma > 0.0) {
-        setUseBlur(true);
+        SetUseBlur(true);
 
         blurKernel = KernelGuard_t(kernel_create(blurSigma, MODE_WRAP), kernel_free);
 
-        this->initBlurKernelTex();
+        InitBlurKernelTex();
 
 #ifndef NDEBUG
         std::stringstream s;
@@ -219,11 +222,11 @@ void TextureRenderer::setBlur(double blur) {
 #endif
     }
     else {
-        setUseBlur(false);
+        SetUseBlur(false);
     }
 }
 
-void TextureRenderer::initBlurKernelTex() {
+void TextureRenderer::InitBlurKernelTex() {
     // Cast array for doubles to array of floats
     // to send array to OpenGL texture
     std::vector<float> data(blurKernel->size);
@@ -254,24 +257,24 @@ void TextureRenderer::initBlurKernelTex() {
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT); LOGOPENGLERROR();
 }
 
-void TextureRenderer::addBlur(double dblur) {
+void TextureRenderer::AddBlur(double dblur) {
     double new_blur_sigma = blurSigma + dblur;
 
     if (new_blur_sigma > 0.0) {
-        this->setUseBlur(true);
+        SetUseBlur(true);
     }
     else {
-        this->setUseBlur(false);
+        SetUseBlur(false);
         new_blur_sigma = 0.0;
     }
     LOGI << "Blur Sigma = " << new_blur_sigma;
 
-    setBlur(new_blur_sigma);
+    SetBlur(new_blur_sigma);
 }
 
-void TextureRenderer::setUseBlur(bool newUseBlur) {
-    this->useBlur = newUseBlur;
-    if (this->useBlur) {
+void TextureRenderer::SetUseBlur(bool newUseBlur) {
+    useBlur = newUseBlur;
+    if (useBlur) {
         LOGI << "Turned Blur On";
     }
     else {

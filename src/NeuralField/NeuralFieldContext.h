@@ -1,60 +1,75 @@
 #pragma once
 
 enum class RenderMode : int {
-    Texture = 0,
-    Contour = 1,
-    ContourParallel = 2,
-    Fill = 3,
-    FillParallel = 4,
+    Texture,
+    Contour,
+    Fill,
 
-    RenderModesCount = 5
+    RenderModesCount
 };
 
 class NeuralFieldContext {
 public:
+    NeuralFieldContext() = default;
     ~NeuralFieldContext();
     
-    bool Init();
-    void Release();
-    
-    void Render();
-    void Resize(int w, int h);
-    void SetActivity(int x, int y);
+    bool Init(GLFWwindow* window, int argc, const char* argv[]);
+	
+    void Display();
+    void Update();
+
+    static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void ReshapeCallback(GLFWwindow* window, int width, int height);
+    static void MouseCallback(GLFWwindow* window, int button, int action, int mods);
+
+private:
     void Restart();
-    void Update(double t);
+    void SetActivity(int x, int y);
+	
+    void Resize(int w, int h);
     
     void SetRenderMode(RenderMode mode);
+	
     void SwitchBlur();
     void IncreaseBlur();
     void DecreaseBlur();
 
-private:
     void RenderUi();
+    void Release();
+	
+	void Keyboard(int key, int scancode, int action, int mods);
+	void Mouse(int button, int action, int mods);
 
+    void RegisterCallbacks();
+	
 private:
+    GLFWwindow* window_ = nullptr;
     int windowWidth_ = 0, windowHeight_ = 0;
 
-    RenderMode renderMode_ = RenderMode::FillParallel;
+    RenderMode renderMode_ = RenderMode::Fill;
 
     GLuint program_ = 0;
     
-    glm::mat4 mvp_;
+    hmm_mat4 mvp_;
     
     NeuralFieldModel model_;
     TextureRenderer renderer_;
 
     ContourLine contourLines_;
     ContourFill contourFill_;
-    ContourParallel contourParallel_;
-    ContourParallelFill contourParallelFill_;
     
-    bool showUi_ = true;
+    bool isFullscreen_ = false;
+	struct {
+    	int XPos, YPos;
+    	int Width, Height;
+	} savedWindowInfo_ = {0, 0, 0, 0};
 
     float fps_ = 0.0f;
+    uint64_t averageIteration_{ 0 };
 
     bool textureBlur_ = true;
 
-    ConfigMap_t modelConfig_;
+    NeuralFieldModelParams modelConfig_;
 
     QuadRenderer quad_;
 };

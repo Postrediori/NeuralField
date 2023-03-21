@@ -7,3 +7,7 @@ target_link_libraries(${PROJECT}
     ${PLOG_LIBRARY}
     MathLib
     )
+
+if (USE_OPENMP)
+	target_link_libraries(${PROJECT} ${OpenMP_CXX_FLAGS})
+endif()

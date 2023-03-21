@@ -3,31 +3,35 @@
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <vector>
-#include <memory>
-#include <functional>
-#include <map>
 #include <array>
-
+#include <chrono>
+#include <cmath>
 #include <ctime>
 #include <cstddef>
-#include <cstdlib>
 #include <cstdio>
-#include <cmath>
+#include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <vector>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/ext/matrix_transform.hpp> // glm::transform
-#include <glm/ext/matrix_clip_space.hpp> // glm::ortho
-#include <glm/gtc/type_ptr.hpp> // glm::value_ptr
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include <HandmadeMath.h>
+#pragma GCC diagnostic pop
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+#include <INIReader.h>
+#pragma GCC diagnostic pop
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>

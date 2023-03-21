@@ -7,27 +7,27 @@ enum class BlurDirection : int {
 
 class TextureRenderer {
 public:
-    TextureRenderer();
+    TextureRenderer() = default;
     ~TextureRenderer();
 
-    bool init(size_t size);
-    bool initTextures(size_t size);
+    bool Init(const std::filesystem::path& moduleDataDir, size_t size);
+    bool InitTextures(size_t size);
 
-    void render(const glm::mat4& mvp);
-    void resize(unsigned int w, unsigned int h);
+    void Render(const hmm_mat4& mvp);
+    void Resize(unsigned int w, unsigned int h);
 
-    void updateTexture(matrix_t* m);
+    void UpdateTexture(matrix_t* m);
 
-    void setBlur(double blur);
-    void addBlur(double dblur);
+    void SetBlur(double blur);
+    void AddBlur(double dblur);
 
-    void setUseBlur(bool newUseBlur);
+    void SetUseBlur(bool newUseBlur);
 
 private:
-    void initBlurKernelTex();
+    void InitBlurKernelTex();
 
-    void releaseTextures();
-    void release();
+    void ReleaseTextures();
+    void Release();
 
 private:
     unsigned int w = 0, h = 0;

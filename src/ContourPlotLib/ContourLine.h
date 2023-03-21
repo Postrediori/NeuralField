@@ -3,15 +3,15 @@
 class ContourPlot;
 
 /*****************************************************************************
- * ContourLine - level lines
+ * ContourParallel - level lines plot that uses OpenMP
  ****************************************************************************/
 class ContourLine : public ContourPlot {
 public:
-    ContourLine();
-
-    bool update(matrix_t* points, area_t a, double t);
-    void render(const glm::mat4& mvp,
+    ContourLine() = default;
+    
+    bool Update(matrix_t* points, const hmm_vec4& area, double t);
+    void Render(const hmm_mat4& mvp,
                 double zoom,
-                const glm::vec2& offset,
-                const std::array<GLfloat, 4>& c);
+                const hmm_vec2& offset,
+                const FloatColor& c);
 };

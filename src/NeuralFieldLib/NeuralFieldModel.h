@@ -1,36 +1,34 @@
 #pragma once
 
-typedef std::map<std::string, double> ConfigMap_t;
-
-bool ParseConfigFile(ConfigMap_t& map, const std::string& fileName);
+using NeuralFieldModelParams = std::map<std::string, double>;
 
 class NeuralFieldModel {
 public:
-    NeuralFieldModel();
+    NeuralFieldModel() = default;
 
-    bool init(const ConfigMap_t& configMap);
+    bool Init(const NeuralFieldModelParams& params);
 
-    void release();
+    void Release();
 
-    void restart();
-    void stimulate();
+    void Restart();
+    void Stimulate();
 
-    void set_activity(size_t x, size_t y, float a);
+    void SetActivity(size_t x, size_t y, float a);
 
 public:
-    size_t size;
-    size_t data_size;
+    size_t size = 0;
+    size_t data_size = 0;
 
-    double h;
-    double k, K_;
-    double sigma_k;
-    double pi_k;
+    double h = -0.1;
+    double k = 0.05, K_ = 0.125;
+    double sigma_k = 0.0;
+    double pi_k = 0.0;
 
-    double m, M_;
-    double sigma_m;
-    double pi_m;
+    double m = 0.025, M_ = 0.065;
+    double sigma_m = 0.0;
+    double pi_m = 0.0;
 
-    KernelMode mode;
+    KernelMode mode = MODE_REFLECT;
 
     KernelGuard_t excitement_kernel;
     KernelGuard_t inhibition_kernel;

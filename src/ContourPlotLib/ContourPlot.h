@@ -51,38 +51,28 @@ SquareFlags CellType(vals_t vals);
  */
 double ValuesRatio(vals_t vals, size_t i1, size_t i2);
 
-/*
- * Helper structure that describes an area of a marching square
- */
-struct area_t {
-    double xmin;
-    double xmax;
-    double ymin;
-    double ymax;
-};
-
-typedef std::vector<Math::vec2f> triangles_t;
-typedef std::vector<Math::vec4f> lines_t;
+using triangles_t = std::vector<hmm_vec2>;
+using lines_t = std::vector<hmm_vec4>;
 
 /*****************************************************************************
  * Contour Plot base class
  ****************************************************************************/
 class ContourPlot {
 public:
-    ContourPlot();
+    ContourPlot() = default;
     virtual ~ContourPlot();
 
-    bool init(GLuint p);
-    virtual bool update(matrix_t* points, area_t a, double t);
-    virtual void render(const glm::mat4& mvp, double zoom, const glm::vec2& offset,
-                        const std::array<GLfloat, 4>& c);
+    bool Init(GLuint p);
+    virtual bool Update(matrix_t* /*points*/, const hmm_vec4& /*area*/, double /*t*/) { return false; }
+    virtual void Render(const hmm_mat4& /*mvp*/, double /*zoom*/, const hmm_vec2& /*offset*/,
+    	const FloatColor& /*c*/) { }
 
-    void release();
-    void resize(int width, int height);
+    void Release();
+    void Resize(int width, int height);
 
 protected:
     int w = 0, h = 0;
-    area_t area;
+    hmm_vec4 area = { 0.0, 0.0, 0.0, 0.0 };
 
     double threshold = 0.0;
 

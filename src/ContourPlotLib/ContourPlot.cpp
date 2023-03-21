@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Matrix.h"
-#include "MathUtils.h"
-#include "GlUtils.h"
+#include "GraphicsUtils.h"
+#include "GraphicsLogger.h"
 #include "ContourPlot.h"
 
 SquareFlags operator|(SquareFlags lhs, SquareFlags rhs) {
@@ -30,18 +30,15 @@ SquareFlags CellType(vals_t vals) {
 }
 
 double ValuesRatio(vals_t vals, size_t i1, size_t i2) {
-    assert(i1 >= 0 && i1 <= 3 && i2 >= 0 && i2 <= 3);
+    assert(/*i1 >= 0 && */i1 <= 3 && /*i2 >= 0 && */i2 <= 3);
     return fabs(vals.v[i1] / (vals.v[i1] - vals.v[i2]));
 }
 
-ContourPlot::ContourPlot() {
-}
-
 ContourPlot::~ContourPlot() {
-    this->release();
+    Release();
 }
 
-bool ContourPlot::init(GLuint p) {
+bool ContourPlot::Init(GLuint p) {
     program = p;
 
     glGenVertexArrays(1, &vao); LOGOPENGLERROR();
@@ -79,12 +76,7 @@ bool ContourPlot::init(GLuint p) {
     return true;
 }
 
-bool ContourPlot::update(matrix_t* /*points*/, area_t /*a*/, double /*t*/) { return true; }
-
-void ContourPlot::render(const glm::mat4& /*mvp*/, double /*zoom*/,
-                         const glm::vec2& /*offset*/, const std::array<GLfloat, 4>& /*c*/) { }
-
-void ContourPlot::release() {
+void ContourPlot::Release() {
     if (vbo) {
         glDeleteBuffers(1, &vbo); LOGOPENGLERROR();
         vbo = 0;
@@ -95,7 +87,7 @@ void ContourPlot::release() {
     }
 }
 
-void ContourPlot::resize(int width, int height) {
+void ContourPlot::Resize(int width, int height) {
     w = width;
     h = height;
 }
