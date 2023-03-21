@@ -439,7 +439,6 @@ void NeuralFieldContext::Keyboard(int key, int /*scancode*/, int action, int /*m
                 glfwSetWindowMonitor(window_, nullptr, savedWindowInfo_.XPos, savedWindowInfo_.YPos,
                     savedWindowInfo_.Width, savedWindowInfo_.Height, GLFW_DONT_CARE);
             }
-            SwitchBlur();
             break;
 
         case GLFW_KEY_EQUAL:

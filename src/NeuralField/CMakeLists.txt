@@ -26,7 +26,7 @@ target_link_libraries(${PROJECT}
     )
 
 if (USE_OPENMP)
-    target_link_libraries(${PROJECT} ${OpenMP_CXX_FLAGS})
+    target_link_libraries(${PROJECT} ${OpenMP_CXX_LIB_NAMES})
 endif()
 
 # Data files

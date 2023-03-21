@@ -4,13 +4,27 @@
 #include "NeuralFieldModel.h"
 
 bool NeuralFieldModel::Init(const NeuralFieldModelParams& params) {
-    this->h = params.at("h");
-    this->k = params.at("k");
-    this->K_ = params.at("Kp");
-    this->m = params.at("m");
-    this->M_ = params.at("Mp");
-    // this->mode = (KernelMode)static_cast<int>(params.at("mode"));
-    this->size = (size_t)params.at("size");
+    if (params.find("h") != params.end()) {
+        this->h = params.at("h");
+    }
+    if (params.find("k") != params.end()) {
+        this->k = params.at("k");
+    }
+    if (params.find("Kp") != params.end()) {
+        this->K_ = params.at("Kp");
+    }
+    if (params.find("m") != params.end()) {
+        this->m = params.at("m");
+    }
+    if (params.find("Mp") != params.end()) {
+        this->M_ = params.at("Mp");
+    }
+    if (params.find("mode") != params.end()) {
+        this->mode = static_cast<KernelMode>(params.at("mode"));
+    }
+    if (params.find("size") != params.end()) {
+        this->size = static_cast<size_t>(params.at("size"));
+    }
 
     sigma_k = 1.0 / sqrtf(2.0 * k);
     sigma_m = 1.0 / sqrtf(2.0 * m);
