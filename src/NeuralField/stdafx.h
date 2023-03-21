@@ -1,5 +1,6 @@
 #pragma once
 
+#include <plog/Init.h>
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
