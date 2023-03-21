@@ -4,11 +4,12 @@
 #include "GraphicsLogger.h"
 #include "GraphicsResource.h"
 #include "Shader.h"
+#ifdef USE_OPENCL
+#include "ParallelUtils.h"
+#endif
 #include "NeuralFieldModel.h"
 #include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
-
-const size_t g_bitsPerPixel = 4;
 
 const std::filesystem::path g_vertexShaderPath = "texture.vert";
 const std::filesystem::path g_fragmentShaderPath = "texture.frag";
@@ -76,6 +77,23 @@ bool TextureRenderer::InitTextures(size_t newSize) {
     tex = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
     tempTex = MatrixGuard_t(matrix_allocate(size, size), matrix_free);
 
+#ifdef USE_OPENCL
+    // Init OpenCL
+    do {
+        cl_int status, callStatus;
+
+        status = CL_SUCCESS;
+
+        memTextureBuffer = clCreateBuffer(model_->context, CL_MEM_READ_WRITE, sizeof(cl_float) * size * size, NULL, &callStatus);
+        status |= callStatus;
+
+        if (status != CL_SUCCESS) {
+            LOGE << "Failed to create OpenCL memory buffer : " << ParallelUtils::GetOpenCLError(status);
+            break;
+        }
+    } while (false);
+#endif
+
     return true;
 }
 
@@ -84,10 +102,29 @@ void TextureRenderer::ReleaseTextures() {
     tempTex.reset();
 
     texture.reset();
+
+#ifdef USE_OPENCL
+    if (memTextureBuffer) {
+        clReleaseMemObject(memTextureBuffer);
+        memTextureBuffer = 0;
+    }
+#endif
 }
+
+#ifdef USE_OPENCL
+void TextureRenderer::ReleaseOpenCLBuffers() {
+    if (memBlurKernel) {
+        clReleaseMemObject(memBlurKernel);
+        memBlurKernel = 0;
+    }
+}
+#endif
 
 void TextureRenderer::Release() {
     ReleaseTextures();
+#ifdef USE_OPENCL
+    ReleaseOpenCLBuffers();
+#endif
 }
 
 void TextureRenderer::Render(const hmm_mat4& mvp) {
@@ -102,7 +139,8 @@ void TextureRenderer::Resize(unsigned int w, unsigned int h) {
 }
 
 void TextureRenderer::UpdateTexture(matrix_t* m) {
-    {
+#ifndef USE_OPENCL
+    do {
         matrix_t* m = model_->activity.get();
 
         matrix_scalar_set(tempTex.get(), 0.0);
@@ -116,7 +154,34 @@ void TextureRenderer::UpdateTexture(matrix_t* m) {
         if (useBlur) {
             kernel_apply_to_matrix(tex.get(), tex.get(), tempTex.get(), blurKernel.get());
         }
-    }
+    } while (false);
+#else
+    do {
+        cl_int status;
+
+        status = clEnqueueCopyBuffer(model_->commandQueue, model_->memActivityMatrix, memTextureBuffer,
+            0, 0, sizeof(cl_float) * this->size * this->size, 0, nullptr, nullptr);
+        if (status != CL_SUCCESS) {
+            LOGE << "Failed to copy OpenCL memory buffer : " << ParallelUtils::GetOpenCLError(status);
+            return;
+        }
+
+        model_->CalcHeaviside(memTextureBuffer, this->size);
+
+        if (useBlur) {
+            model_->GaussianBlur(memTextureBuffer, memTextureBuffer, model_->memTempMatrix, this->size,
+                this->memBlurKernel, this->blurKernel->size);
+        }
+
+        // Read the results
+        status = clEnqueueReadBuffer(model_->commandQueue, memTextureBuffer, CL_TRUE, 0,
+            sizeof(cl_float) * tex->dataSize, tex->data, 0, NULL, NULL);
+        if (status != CL_SUCCESS) {
+            LOGE << "Failed to read result buffer after OpenCL kernel run : " << ParallelUtils::GetOpenCLError(status);
+            return;
+        }
+    } while (false);
+#endif
 
     glBindTexture(GL_TEXTURE_2D, texture.get()); LOGOPENGLERROR();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, GL_RED,
@@ -129,6 +194,37 @@ void TextureRenderer::SetBlur(double blur) {
         SetUseBlur(true);
 
         blurKernel = KernelGuard_t(kernel_create(blurSigma, MODE_WRAP), kernel_free);
+
+#ifdef USE_OPENCL
+        do {
+            cl_int status, callStatus;
+
+            ReleaseOpenCLBuffers();
+
+            // --------------------------------------------------------
+            // Allocate the OpenCL buffer memory object for blur kernel
+            status = CL_SUCCESS;
+            memBlurKernel = clCreateBuffer(model_->context, CL_MEM_READ_ONLY, sizeof(cl_float) * blurKernel->size, NULL, &callStatus);
+            status |= callStatus;
+
+            if (status != CL_SUCCESS) {
+                LOGE << "Failed to create memory buffer for texture blur kernel: " << ParallelUtils::GetOpenCLError(status);
+                break;
+            }
+
+            // --------------------------------------------------------
+            // Load kernel into memory object
+            status = CL_SUCCESS;
+
+            status |= clEnqueueWriteBuffer(model_->commandQueue, memBlurKernel, CL_FALSE, 0,
+                sizeof(cl_float) * blurKernel->size, blurKernel->data, 0, NULL, NULL);
+
+            if (status != CL_SUCCESS) {
+                LOGE << "Failed to load kernels into OpenCL memory : " << ParallelUtils::GetOpenCLError(status);
+                break;
+            }
+        } while (false);
+#endif
 
 #ifndef NDEBUG
         std::stringstream s;

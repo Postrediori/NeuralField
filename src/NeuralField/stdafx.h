@@ -34,6 +34,10 @@
 #include <INIReader.h>
 #pragma GCC diagnostic pop
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#ifdef USE_OPENCL
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
+#endif

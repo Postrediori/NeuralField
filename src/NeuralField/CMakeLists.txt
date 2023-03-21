@@ -29,6 +29,12 @@ if (USE_OPENMP)
     target_link_libraries(${PROJECT} ${OpenMP_CXX_LIB_NAMES})
 endif()
 
+if (USE_OPENCL)
+    target_include_directories(${PROJECT} PRIVATE ${OpenCL_INCLUDE_DIR})
+    target_link_libraries(${PROJECT} ${OpenCL_LIBRARY}
+        ParallelUtilsLib)
+endif ()
+
 # Data files
 configure_file(
     ${CMAKE_SOURCE_DIR}/data/amari.conf

@@ -8,9 +8,9 @@ enum KernelMode : int {
 
 struct kernel_t {
     size_t size;
-    double sigma;
+    float sigma;
     KernelMode mode;
-    double* data;
+    float* data;
 };
 
 using KernelGuard_t = std::unique_ptr<kernel_t, std::function<void(kernel_t*)>>;
@@ -18,7 +18,7 @@ using KernelGuard_t = std::unique_ptr<kernel_t, std::function<void(kernel_t*)>>;
 kernel_t* kernel_alloc(size_t size);
 void kernel_free(kernel_t* k);
 
-kernel_t* kernel_create(double sigma, KernelMode mode);
+kernel_t* kernel_create(float sigma, KernelMode mode);
 
 matrix_t* kernel_apply_to_matrix(matrix_t* dst, matrix_t* src, matrix_t* tmp, kernel_t* k);
-matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, double sigma, KernelMode mode);
+matrix_t* kernel_filter_matrix(matrix_t* dst, matrix_t* src, float sigma, KernelMode mode);

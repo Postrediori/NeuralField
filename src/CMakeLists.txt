@@ -1,2 +1,9 @@
-add_all_subdirectories()
-
+add_subdirectory(ContourPlotLib)
+add_subdirectory(GraphicsLib)
+add_subdirectory(MathLib)
+add_subdirectory(NeuralField)
+add_subdirectory(NeuralFieldLib)
+if (USE_OPENCL)
+    add_subdirectory(ParallelUtilsLib)
+endif ()
+add_subdirectory(UtilsLib)

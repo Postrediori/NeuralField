@@ -29,6 +29,11 @@ macro(make_project_options_)
         target_compile_definitions(${PROJECT} PUBLIC USE_OPENMP)
     endif ()
 
+    if (USE_OPENCL)
+        target_compile_definitions(${PROJECT} PUBLIC USE_OPENCL
+            CL_TARGET_OPENCL_VERSION=120)
+    endif ()
+
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # Flags for Visual Studio compiler
         target_compile_options(${PROJECT} PUBLIC /Wall)

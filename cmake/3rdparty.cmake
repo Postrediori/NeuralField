@@ -19,6 +19,12 @@ if (USE_OPENMP)
   find_package(OpenMP REQUIRED)
 endif ()
 
+# Setup OpenCL
+if (USE_OPENCL)
+  message(STATUS "Using OpenCL for calculations")
+  find_package(OpenCL REQUIRED)
+endif ()
+
 include(cmake/glad.cmake)
 include(cmake/glfw.cmake)
 include(cmake/hmm.cmake)

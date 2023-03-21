@@ -6,6 +6,9 @@
 #include "GraphicsResource.h"
 #include "Shader.h"
 #include "NeuralFieldModel.h"
+#ifdef USE_OPENCL
+#include "ParallelUtils.h"
+#endif
 #include "PlainTextureRenderer.h"
 #include "TextureRenderer.h"
 #include "ContourPlot.h"
@@ -33,7 +36,7 @@ NeuralFieldContext::~NeuralFieldContext() {
     Release();
 }
 
-bool NeuralFieldContext::Init(GLFWwindow* window, int /*argc*/, const char* argv[]) {
+bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) {
     srand(time(0));
 
     std::filesystem::path moduleDataDir;
@@ -46,6 +49,17 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int /*argc*/, const char* argv
     LOGI << "OpenGL Vendor : " << glGetString(GL_VENDOR);
     LOGI << "OpenGL Version : " << glGetString(GL_VERSION);
     LOGI << "GLSL Version : " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+#ifdef USE_OPENMP
+    LOGI << "OpenMP Support : " << "Yes";
+#else
+    LOGI << "OpenMP Support : " << "No";
+#endif
+#ifdef USE_OPENCL
+    LOGI << "OpenCL Support : " << "Yes";
+    LOGI << "OpenCL Version : " << CL_TARGET_OPENCL_VERSION;
+#else
+    LOGI << "OpenMP Support : " << "No";
+#endif
 
     window_ = window;
     glfwSetWindowUserPointer(window_, static_cast<void *>(this));
@@ -79,10 +93,36 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int /*argc*/, const char* argv
         modelConfig_["Kp"] = DefaultKp;
         modelConfig_["m"] = DefaultM;
         modelConfig_["Mp"] = DefaultMp;
-        modelConfig_["size"] =  DefaultSize;
+        modelConfig_["size"] = DefaultSize;
     }
 
-    model_.Init(modelConfig_);
+    // Parse arguments
+    if (ParseArgs(argc, argv) != EXIT_SUCCESS) {
+        // Invalid arguments
+        return false;
+    }
+
+#ifdef USE_OPENCL
+    // Init OpenCL
+    isEnabledOpenCL = InitOpenCLContext();
+
+    model_.InitOpenCLContext(platformId, device, context, commandQueue);
+#endif
+
+    if (!model_.Init(modelConfig_)) {
+        LOGE << "Unable to init neural field model";
+        return false;
+    }
+
+#ifdef USE_OPENCL
+    isEnabledOpenCL = isEnabledOpenCL && model_.IsEnabledOpenCL();
+    if (isEnabledOpenCL) {
+        LOGI << "Successfully loaded OpenCL. Will use OpenCL mode by default";
+    }
+    else {
+        LOGI << "Unable to init OpenCL. Will use only CPU mode";
+    }
+#endif
 
     // Init render
     if (!renderer_.Init(&model_, moduleDataDir, model_.size)) {
@@ -130,7 +170,9 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int /*argc*/, const char* argv
 }
 
 void NeuralFieldContext::Release() {
-    //
+#ifdef USE_OPENCL
+    ReleaseOpenCLContext();
+#endif
 }
 
 void NeuralFieldContext::Display() {
@@ -139,14 +181,17 @@ void NeuralFieldContext::Display() {
     constexpr float zoom = 1.f;
     static const hmm_vec2 offset = {0.f, 0.f};
 
-    if (renderMode_ == RenderMode::Texture) {
+    switch (renderMode_) {
+    case RenderMode::Texture:
         renderer_.Render(mvp_);
-    }
-    else if (renderMode_ == RenderMode::Contour) {
+        break;
+
+    case RenderMode::Contour:
         quad_.Render(mvp_, zoom, offset);
         contourLines_.Render(mvp_, zoom, offset, g_outline);
-    }
-    else if (renderMode_ == RenderMode::Fill) {
+        break;
+    
+    case RenderMode::Fill:
         quad_.Render(mvp_, zoom, offset);
 
         glPolygonOffset(1, 0); LOGOPENGLERROR();
@@ -156,6 +201,7 @@ void NeuralFieldContext::Display() {
         glPolygonOffset(0, 0); LOGOPENGLERROR();
         glDisable(GL_POLYGON_OFFSET_FILL); LOGOPENGLERROR();
         contourLines_.Render(mvp_, zoom, offset, g_outline);
+        break;
     }
 
     this->RenderUi();
@@ -195,7 +241,7 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Separator();
 
-    static const std::map<std::string, int> g_ModelSizes = {
+    static const std::vector<std::tuple<std::string, int>> g_ModelSizes = {
         {"128x128", 128},
         {"256x256", 256},
         {"512x512", 512}
@@ -210,7 +256,7 @@ void NeuralFieldContext::RenderUi() {
         else {
             ImGui::SameLine();
         }
-        if (ImGui::RadioButton(s.first.c_str(), &gModelSize, s.second)) {
+        if (ImGui::RadioButton(std::get<0>(s).c_str(), &gModelSize, std::get<1>(s))) {
             modelConfig_["size"] = gModelSize;
             renderer_.InitTextures(gModelSize);
             model_.Init(modelConfig_);
@@ -255,6 +301,22 @@ void NeuralFieldContext::RenderUi() {
         modelConfig_["M_"] = gModelM;
         model_.Init(modelConfig_);
     }
+
+#ifdef USE_OPENCL
+    bool bUseOpenCL = isEnabledOpenCL;
+    if (ImGui::Checkbox("Use OpenCL", &bUseOpenCL)) {
+        // Don't change the value, this is only for indication
+        bUseOpenCL = isEnabledOpenCL;
+    }
+    if (ImGui::IsItemHovered()) {
+        std::string str = this->GetOpenCLStatus();
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(str.c_str());
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+#endif
 
     ImGui::Separator();
 
@@ -480,6 +542,167 @@ void NeuralFieldContext::Mouse(int button, int action, int /*mods*/) {
         }
     }
 }
+
+#ifdef USE_OPENCL
+bool NeuralFieldContext::InitOpenCLContext() {
+    // --------------------------------------------------------
+    // Variables
+
+    cl_int status{ 0 };
+
+    // --------------------------------------------------------
+    // Get all platforms
+    cl_uint numPlatforms{ 0 };
+    status = clGetPlatformIDs(0, nullptr, &numPlatforms);
+    if (status != CL_SUCCESS) {
+        LOGE << "Failed to get number of platforms : " << ParallelUtils::GetOpenCLError(status);
+        return false;
+    }
+
+    LOGI << "This system provides " << numPlatforms << " platforms";
+
+    std::vector<cl_platform_id> platformIds(numPlatforms);
+    status = clGetPlatformIDs(numPlatforms, platformIds.data(), nullptr);
+    if (status != CL_SUCCESS) {
+        LOGE << "Failed to get platform ids : " << ParallelUtils::GetOpenCLError(status);
+        return false;
+    }
+
+    // --------------------------------------------------------
+    // Check that selected platform exists
+    if (openClPlatformNum > platformIds.size()) {
+        LOGE << "Platform " << openClPlatformNum << " was not found in this system";
+        return false;
+    }
+
+    platformId = platformIds[openClPlatformNum - 1];
+
+    // --------------------------------------------------------
+    // Get all devices
+    cl_uint numDevices{ 0 };
+    status = clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
+    if (status != CL_SUCCESS) {
+        LOGE << "Failed to get number of OpenCL deivces : " << ParallelUtils::GetOpenCLError(status);
+        return false;
+    }
+
+    LOGI << "Platform " << openClPlatformNum << " provides " << numDevices << " devices";
+
+    std::vector<cl_device_id> deviceIds(numDevices);
+    status = clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, numDevices, deviceIds.data(), nullptr);
+    if (status != CL_SUCCESS) {
+        LOGE << "Failed to get deivce ids : " << ParallelUtils::GetOpenCLError(status);
+        return false;
+    }
+
+    // --------------------------------------------------------
+    // Check that selected device exists
+    if (openClDeviceNum > deviceIds.size()) {
+        LOGE << "OpenCL device " << openClPlatformNum << " is not found in this system";
+        return false;
+    }
+
+    device = deviceIds[openClDeviceNum - 1];
+
+    // Create the context
+    context = clCreateContext(0, 1, &device, NULL, NULL, &status);
+    if (status != CL_SUCCESS) {
+        LOGE << "Failed to create OpenCL context : " << ParallelUtils::GetOpenCLError(status);
+        return false;
+    }
+
+    // Create a command-queue
+    commandQueue = clCreateCommandQueue(context, device, 0, &status);
+    if (status != CL_SUCCESS) {
+        LOGE << "Failed to create OpenCL command queue : " << ParallelUtils::GetOpenCLError(status);
+        return false;
+    }
+
+    // Get OpenCL status
+    std::stringstream s;
+    s << "OpenCL Platform Info : " << std::endl << ParallelUtils::GetPlatformInfo(platformId)
+        << "Device Info :" << std::endl << ParallelUtils::GetDeviceInfo(device);
+    openClStatusStr = s.str();
+
+    LOGI << openClStatusStr;
+
+    return true;
+}
+
+void NeuralFieldContext::ReleaseOpenCLContext() {
+    if (context) {
+        clReleaseContext(context);
+        context = 0;
+    }
+
+    if (commandQueue) {
+        clReleaseCommandQueue(commandQueue);
+        commandQueue = 0;
+    }
+}
+
+std::string NeuralFieldContext::GetOpenCLStatus() const {
+    if (!isEnabledOpenCL) {
+        return "OpenCL is not available";
+    }
+    return openClStatusStr;
+}
+#endif /* USE_OPENCL */
+
+int NeuralFieldContext::ParseArgs(int argc, const char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
+        if (arg == "-h" || arg == "--help") {
+            return ShowUsage(argv[0]);
+        }
+#ifdef USE_OPENCL
+        else if (arg == "-p" || arg == "--platform") {
+            if (i + 1 < argc) {
+                int k = atoi(argv[++i]);
+                if (k < 1) {
+                    LOGE << "OpenCL platform ID must be greater than 0";
+                    return false;
+                }
+                openClPlatformNum = static_cast<size_t>(k);
+                LOGI << "Set OpenCL platform to " << openClPlatformNum;
+            }
+            else {
+                LOGE << "--platform option requres one argument";
+                return EXIT_FAILURE;
+            }
+        }
+        else if (arg == "-d" || arg == "--device") {
+            if (i + 1 < argc) {
+                int k = atoi(argv[++i]);
+                if (k < 1) {
+                    LOGE << "OpenCL device ID must be greater than 0";
+                    return false;
+                }
+                openClDeviceNum = static_cast<size_t>(k);
+                LOGI << "Set OpenCL device to " << openClDeviceNum;
+            }
+            else {
+                LOGE << "--device option requres one argument";
+                return EXIT_FAILURE;
+            }
+        }
+#endif /* USE_OPENCL */
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int NeuralFieldContext::ShowUsage(const std::string& cmd) {
+    std::cout << "Usage: " << cmd << " <option(s)>" << std::endl
+        << "Options:" << std::endl
+        << "\t-h,--help\t\tShow this help message" << std::endl;
+#ifdef USE_OPENCL
+    std::cout << "\t-p,--platform NUM\t\tSpecify OpenCL platform by ID" << std::endl
+        << "\t-d,--device NUM\t\tSpecify OpenCL device by ID" << std::endl;
+#endif
+    return EXIT_FAILURE;
+}
+
 void NeuralFieldContext::RegisterCallbacks() {
     glfwSetKeyCallback(window_, NeuralFieldContext::KeyboardCallback);
     glfwSetInputMode(window_, GLFW_STICKY_KEYS, GLFW_TRUE);

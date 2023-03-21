@@ -24,8 +24,11 @@ public:
     void SetUseBlur(bool newUseBlur);
 
 private:
-    void ReleaseTextures();
     void Release();
+    void ReleaseTextures();
+#ifdef USE_OPENCL
+    void ReleaseOpenCLBuffers();
+#endif
 
 private:
     unsigned int w = 0, h = 0;
@@ -43,4 +46,9 @@ private:
     GraphicsUtils::unique_program program;
 
     NeuralFieldModel* model_ = nullptr;
+
+#ifdef USE_OPENCL
+    cl_mem memTextureBuffer = 0;
+    cl_mem memBlurKernel = 0;
+#endif
 };

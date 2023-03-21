@@ -21,6 +21,13 @@ public:
     static void MouseCallback(GLFWwindow* window, int button, int action, int mods);
 
 private:
+#ifdef USE_OPENCL
+    bool InitOpenCLContext();
+    void ReleaseOpenCLContext();
+
+    std::string GetOpenCLStatus() const;
+#endif
+
     void Restart();
     void SetActivity(int x, int y);
 
@@ -37,6 +44,9 @@ private:
 
     void Keyboard(int key, int scancode, int action, int mods);
     void Mouse(int button, int action, int mods);
+
+    int ParseArgs(int argc, const char* argv[]);
+    int ShowUsage(const std::string& cmd);
 
     void RegisterCallbacks();
 
@@ -70,4 +80,18 @@ private:
     NeuralFieldModelParams modelConfig_;
 
     QuadRenderer quad_;
+
+#ifdef USE_OPENCL
+    // OpenCL context
+    bool isEnabledOpenCL = false; // If load of OpenCL was successfull
+    size_t openClPlatformNum = 1;
+    size_t openClDeviceNum = 1;
+    std::string openClStatusStr;
+
+    cl_platform_id platformId = nullptr;
+    cl_device_id device = nullptr;
+    cl_context context = nullptr;
+
+    cl_command_queue commandQueue = nullptr;
+#endif
 };
