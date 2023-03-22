@@ -64,6 +64,22 @@ dnf install \
     freetype-devel
 ```
 
+### Dependencies for OpenCL build
+
+Build with `USE_OPENCL` option requires additional dependencies.
+
+Install development libraries:
+
+```
+dnf install mesa-libOpenCL-devel ocl-icd-devel
+```
+
+Install platform-specific driver, e.g. driver for Intel:
+
+```
+dnf install intel-opencl
+```
+
 ### Cloning Repository
 ```
 git clone --recursive https://github.com/Postrediori/NeuralField.git
