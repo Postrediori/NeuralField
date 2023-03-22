@@ -85,12 +85,13 @@ make
 
 The following options are available when running CMake:
 * `USE_OPENMP` (default value: ON) - Make parallel code with OpenMP. This option is disabled on macOS.
+* `USE_OPENCL` (default value: OFF) - Use OpenCL for calculations.
 
 Example usage:
 
 ```
 mkdir build && cd build
-cmake .. -DUSE_OPENMP=OFF
+cmake .. -DUSE_OPENMP=OFF -DUSE_OPENCL=ON
 ```
 
 ### Running Project
@@ -124,7 +125,7 @@ Generate makefiles for the build:
 
 ```
 mkdir build && cd build
-cmake .. -DUSE_OPENMP=OFF -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## Configuration
@@ -179,6 +180,6 @@ h=0  | h=-0.15 | h=-0.3
 
 ## TODO
 * [ ] Build instructions for Windows.
-* [ ] Matrix algebra using hardware acceleration (OpenCL, OpenGL Compute Shaders, texture rendering&framebuffers, shader feedback, etc.)
+* [x] Matrix algebra using hardware acceleration (OpenCL, OpenGL Compute Shaders, texture rendering&framebuffers, shader feedback, etc.)
 * [ ] Export results to images and videos.
 * [ ] Expand description of the model.
