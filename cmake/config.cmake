@@ -41,6 +41,7 @@ macro(make_project_options_)
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # Flags for gcc compiler
         target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic -Werror)
+        target_compile_options(${PROJECT} PUBLIC -Wno-stringop-truncation)
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         # Flags for clang compiler
         target_compile_options(${PROJECT} PUBLIC -Wall -Wextra -Wpedantic -Werror)
