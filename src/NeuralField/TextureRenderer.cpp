@@ -21,7 +21,7 @@ TextureRenderer::~TextureRenderer() {
     Release();
 }
 
-bool TextureRenderer::Init(NeuralFieldModel* model, const std::filesystem::path& moduleDataDir, size_t textureSize) {
+bool TextureRenderer::Init(NeuralFieldModel* model, const std::filesystem::path& moduleDataDir) {
     this->model_ = model;
 
     SetBlur(1.0);
@@ -138,7 +138,7 @@ void TextureRenderer::Resize(unsigned int w, unsigned int h) {
     screenRenderer.Resize(w, h);
 }
 
-void TextureRenderer::UpdateTexture(matrix_t* m) {
+void TextureRenderer::UpdateTexture() {
 #ifndef USE_OPENCL
     do {
         matrix_t* m = model_->activity.get();

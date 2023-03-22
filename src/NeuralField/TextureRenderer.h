@@ -10,13 +10,13 @@ public:
     TextureRenderer() = default;
     ~TextureRenderer();
 
-    bool Init(NeuralFieldModel* model, const std::filesystem::path& moduleDataDir, size_t size);
+    bool Init(NeuralFieldModel* model, const std::filesystem::path& moduleDataDir);
     bool InitTextures(size_t size);
 
     void Render(const hmm_mat4& mvp);
     void Resize(unsigned int w, unsigned int h);
 
-    void UpdateTexture(matrix_t* m);
+    void UpdateTexture();
 
     void SetBlur(double blur);
     void AddBlur(double dblur);

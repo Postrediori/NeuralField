@@ -125,12 +125,12 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
 #endif
 
     // Init render
-    if (!renderer_.Init(&model_, moduleDataDir, model_.size)) {
+    if (!renderer_.Init(&model_, moduleDataDir)) {
         LOGE << "Unable to init Amari Model Renderer";
         return false;
     }
 
-    renderer_.UpdateTexture(model_.activity.get());
+    renderer_.UpdateTexture();
 
     // Init contour lines
     auto vertexShaderFile = (moduleDataDir / g_vertexShader).string();
@@ -328,7 +328,7 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Separator();
 
-    ImGui::Text("Iterations average (ms): %llu", averageIteration_);
+    ImGui::Text("Iterations average (ms): %ld", averageIteration_);
     ImGui::Text("FPS Counter: %.1f", fps_);
 
     ImGui::End();
@@ -424,7 +424,7 @@ void NeuralFieldContext::Update() {
 
     switch (renderMode_) {
     case RenderMode::Texture:
-        renderer_.UpdateTexture(model_.activity.get());
+        renderer_.UpdateTexture();
         break;
 
     case RenderMode::Contour:
