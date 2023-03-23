@@ -58,7 +58,7 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     LOGI << "OpenCL Support : " << "Yes";
     LOGI << "OpenCL Version : " << CL_TARGET_OPENCL_VERSION;
 #else
-    LOGI << "OpenMP Support : " << "No";
+    LOGI << "OpenCL Support : " << "No";
 #endif
 
     window_ = window;
@@ -106,7 +106,7 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     // Init OpenCL
     isEnabledOpenCL = InitOpenCLContext();
 
-    model_.InitOpenCLContext(platformId, device, context, commandQueue);
+    isEnabledOpenCL = isEnabledOpenCL && model_.InitOpenCLContext(platformId, device, context, commandQueue);
 #endif
 
     if (!model_.Init(modelConfig_)) {
@@ -122,6 +122,8 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     else {
         LOGI << "Unable to init OpenCL. Will use only CPU mode";
     }
+
+    renderer_.SetEnabledOpenCL(isEnabledOpenCL);
 #endif
 
     // Init render
@@ -129,6 +131,10 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
         LOGE << "Unable to init Amari Model Renderer";
         return false;
     }
+
+#ifdef USE_OPENCL
+    isEnabledOpenCL = isEnabledOpenCL && renderer_.GetEnabledOpenCL();
+#endif
 
     renderer_.UpdateTexture();
 
@@ -190,7 +196,7 @@ void NeuralFieldContext::Display() {
         quad_.Render(mvp_, zoom, offset);
         contourLines_.Render(mvp_, zoom, offset, g_outline);
         break;
-    
+
     case RenderMode::Fill:
         quad_.Render(mvp_, zoom, offset);
 
@@ -244,18 +250,20 @@ void NeuralFieldContext::RenderUi() {
     static const std::vector<std::tuple<std::string, int>> g_ModelSizes = {
         {"128x128", 128},
         {"256x256", 256},
-        {"512x512", 512}
+        {"512x512", 512},
+        {"1024x1024", 1024}
     };
     static int gModelSize = static_cast<int>(modelConfig_["size"]);
-    firstItemFlag = true;
+    int k = 0;
     ImGui::Text("Model size:");
     for (const auto& s : g_ModelSizes) {
-        if (firstItemFlag) {
-            firstItemFlag = false;
+        if (k>0) {
+            if (k%2==1) {
+                ImGui::SameLine();
+            }
         }
-        else {
-            ImGui::SameLine();
-        }
+        k++;
+
         if (ImGui::RadioButton(std::get<0>(s).c_str(), &gModelSize, std::get<1>(s))) {
             modelConfig_["size"] = gModelSize;
             renderer_.InitTextures(gModelSize);
@@ -303,6 +311,8 @@ void NeuralFieldContext::RenderUi() {
     }
 
 #ifdef USE_OPENCL
+    ImGui::Separator();
+
     bool bUseOpenCL = isEnabledOpenCL;
     if (ImGui::Checkbox("Use OpenCL", &bUseOpenCL)) {
         // Don't change the value, this is only for indication
@@ -501,6 +511,11 @@ void NeuralFieldContext::Keyboard(int key, int /*scancode*/, int action, int /*m
                 glfwSetWindowMonitor(window_, nullptr, savedWindowInfo_.XPos, savedWindowInfo_.YPos,
                     savedWindowInfo_.Width, savedWindowInfo_.Height, GLFW_DONT_CARE);
             }
+            break;
+
+        case GLFW_KEY_B:
+            textureBlur_ = !textureBlur_;
+            renderer_.SetUseBlur(textureBlur_);
             break;
 
         case GLFW_KEY_EQUAL:

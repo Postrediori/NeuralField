@@ -23,6 +23,11 @@ public:
 
     void SetUseBlur(bool newUseBlur);
 
+#ifdef USE_OPENCL
+    void SetEnabledOpenCL(bool flag) { isEnabledOpenCL = flag; }
+    bool GetEnabledOpenCL() const { return isEnabledOpenCL; }
+#endif
+
 private:
     void Release();
     void ReleaseTextures();
@@ -48,6 +53,7 @@ private:
     NeuralFieldModel* model_ = nullptr;
 
 #ifdef USE_OPENCL
+    bool isEnabledOpenCL = false;
     cl_mem memTextureBuffer = 0;
     cl_mem memBlurKernel = 0;
 #endif
