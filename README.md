@@ -51,7 +51,7 @@ apt-get install \
 
 The following instructions apply to:
 
-* RedHat-based systems (Fedora, CantOS):
+* RedHat-based systems (Fedora, CentOS):
 
 ```
 dnf install \
@@ -69,13 +69,29 @@ dnf install \
 
 Build with `USE_OPENCL` option requires additional dependencies.
 
-Install development libraries:
+* Install development libraries:
+
+On Ubuntu or Debian:
+
+```
+apt install opencl-headers ocl-icd-opencl-dev
+```
+
+On RedHat-based systems (Fedora, CentOS):
 
 ```
 dnf install mesa-libOpenCL-devel ocl-icd-devel
 ```
 
-Install platform-specific driver, e.g. driver for Intel:
+* Install platform-specific driver, e.g. driver for Intel:
+
+On Ubuntu or Debian:
+
+```
+apt install intel-opencl-icd
+```
+
+On RedHat-based systems (Fedora, CentOS):
 
 ```
 dnf install intel-opencl
