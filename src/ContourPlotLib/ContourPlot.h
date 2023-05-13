@@ -51,8 +51,8 @@ SquareFlags CellType(vals_t vals);
  */
 double ValuesRatio(vals_t vals, size_t i1, size_t i2);
 
-using triangles_t = std::vector<hmm_vec2>;
-using lines_t = std::vector<hmm_vec4>;
+using triangles_t = std::vector<HMM_Vec2>;
+using lines_t = std::vector<HMM_Vec4>;
 
 /*****************************************************************************
  * Contour Plot base class
@@ -63,8 +63,8 @@ public:
     virtual ~ContourPlot();
 
     bool Init(GLuint p);
-    virtual bool Update(matrix_t* /*points*/, const hmm_vec4& /*area*/, double /*t*/) { return false; }
-    virtual void Render(const hmm_mat4& /*mvp*/, double /*zoom*/, const hmm_vec2& /*offset*/,
+    virtual bool Update(matrix_t* /*points*/, const HMM_Vec4& /*area*/, double /*t*/) { return false; }
+    virtual void Render(const HMM_Mat4& /*mvp*/, double /*zoom*/, const HMM_Vec2& /*offset*/,
         const FloatColor& /*c*/) { }
 
     void Release();
@@ -72,7 +72,7 @@ public:
 
 protected:
     int w = 0, h = 0;
-    hmm_vec4 area = { 0.0, 0.0, 0.0, 0.0 };
+    HMM_Vec4 area = { 0.0, 0.0, 0.0, 0.0 };
 
     double threshold = 0.0;
 

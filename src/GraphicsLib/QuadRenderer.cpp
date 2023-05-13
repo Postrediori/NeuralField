@@ -4,7 +4,7 @@
 #include "GraphicsResource.h"
 #include "QuadRenderer.h"
 
-bool QuadRenderer::Init(GLuint program, const hmm_vec4& area, const FloatColor& quadColor) {
+bool QuadRenderer::Init(GLuint program, const HMM_Vec4& area, const FloatColor& quadColor) {
     this->program = program;
 
     this->SetColor(quadColor);
@@ -27,7 +27,7 @@ bool QuadRenderer::Init(GLuint program, const hmm_vec4& area, const FloatColor& 
     }
     glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
 
-    const std::vector<hmm_vec2> vertices = {
+    const std::vector<HMM_Vec2> vertices = {
         {area.Elements[0], area.Elements[2]},
         {area.Elements[0], area.Elements[3]},
         {area.Elements[1], area.Elements[2]},
@@ -38,7 +38,7 @@ bool QuadRenderer::Init(GLuint program, const hmm_vec4& area, const FloatColor& 
     };
     verticesCount = vertices.size();
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec2) * verticesCount,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(HMM_Vec2) * verticesCount,
         vertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     GLint aCoord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
@@ -51,7 +51,7 @@ bool QuadRenderer::Init(GLuint program, const hmm_vec4& area, const FloatColor& 
     return true;
 }
 
-void QuadRenderer::Render(const hmm_mat4& mvp, float zoom, const hmm_vec2& offset) {
+void QuadRenderer::Render(const HMM_Mat4& mvp, float zoom, const HMM_Vec2& offset) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao.get()); LOGOPENGLERROR();
 

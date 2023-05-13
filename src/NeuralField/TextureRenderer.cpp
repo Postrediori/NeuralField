@@ -129,7 +129,7 @@ void TextureRenderer::Release() {
 #endif
 }
 
-void TextureRenderer::Render(const hmm_mat4& mvp) {
+void TextureRenderer::Render(const HMM_Mat4& mvp) {
     screenRenderer.SetMvp(mvp);
     screenRenderer.Render();
 }

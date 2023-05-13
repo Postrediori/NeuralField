@@ -26,7 +26,7 @@ const std::filesystem::path g_configFile = "amari.conf";
 const std::filesystem::path g_vertexShader = "plane.vert";
 const std::filesystem::path g_fragmentShader = "plane.frag";
 
-const hmm_vec4 g_area = {-1.f, 1.f, -1.f, 1.f};
+const HMM_Vec4 g_area = {-1.f, 1.f, -1.f, 1.f};
 
 const float g_textureBlurDelta = 0.1f;
 
@@ -65,7 +65,7 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     glfwSetWindowUserPointer(window_, static_cast<void *>(this));
 
     // Init MVP matrices
-    mvp_ = HMM_Orthographic(g_area.X, g_area.Y, g_area.Z, g_area.W, 1.f, -1.f);
+    mvp_ = HMM_Orthographic_RH_NO(g_area.X, g_area.Y, g_area.Z, g_area.W, 1.f, -1.f);
 
     constexpr float DefaultH = -0.1;
     constexpr float DefaultK = 0.05;
@@ -185,7 +185,7 @@ void NeuralFieldContext::Display() {
     glClear(GL_COLOR_BUFFER_BIT); LOGOPENGLERROR();
 
     constexpr float zoom = 1.f;
-    static const hmm_vec2 offset = {0.f, 0.f};
+    static const HMM_Vec2 offset = {0.f, 0.f};
 
     switch (renderMode_) {
     case RenderMode::Texture:
@@ -353,7 +353,7 @@ void NeuralFieldContext::Resize(int w, int h) {
     int newW = windowWidth_ - static_cast<int>(g_UiWidth);
     float newScale = 2.0 / static_cast<float>(newW);
     float newLeft = g_area.X - g_UiWidth * newScale;
-    mvp_ = HMM_Orthographic(newLeft, g_area.Y, g_area.Z, g_area.W, 1.f, -1.f);
+    mvp_ = HMM_Orthographic_RH_NO(newLeft, g_area.Y, g_area.Z, g_area.W, 1.f, -1.f);
 
     quad_.Resize(newW, h);
     renderer_.Resize(newW, h);

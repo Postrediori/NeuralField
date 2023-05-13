@@ -5,7 +5,7 @@
 #include "ContourPlot.h"
 #include "ContourLine.h"
 
-bool ContourLine::Update(matrix_t* points, const hmm_vec4& area, double t) {
+bool ContourLine::Update(matrix_t* points, const HMM_Vec4& area, double t) {
     threshold = t;
     
     this->area = area;
@@ -172,7 +172,7 @@ bool ContourLine::Update(matrix_t* points, const hmm_vec4& area, double t) {
     vbo_count = lines.size() * 2;
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec4) * lines.size(), lines.data(),
+    glBufferData(GL_ARRAY_BUFFER, sizeof(HMM_Vec4) * lines.size(), lines.data(),
                  GL_DYNAMIC_DRAW); LOGOPENGLERROR();
 
     LOGD << "Created parallel line contour with " << lines.size() << " lines";
@@ -180,9 +180,9 @@ bool ContourLine::Update(matrix_t* points, const hmm_vec4& area, double t) {
     return true;
 }
 
-void ContourLine::Render(const hmm_mat4& mvp,
+void ContourLine::Render(const HMM_Mat4& mvp,
                          double zoom,
-                         const hmm_vec2& offset,
+                         const HMM_Vec2& offset,
                          const FloatColor& c) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();

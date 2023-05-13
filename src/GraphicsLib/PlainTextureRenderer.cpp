@@ -6,9 +6,9 @@
 /*****************************************************************************
  * Geometry constants
  ****************************************************************************/
-const hmm_vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
+const HMM_Vec4 PlaneBounds = { -1.0f, 1.0f, -1.0f, 1.0f };
 
-const std::vector<hmm_vec4> g_quadVertices = {
+const std::vector<HMM_Vec4> g_quadVertices = {
     {-1.0f, -1.0f, 0.f, 0.f},
     {-1.0f,  1.0f, 0.f, 1.f},
     {1.0f, -1.0f, 1.f, 0.f},
@@ -30,7 +30,7 @@ bool PlainTextureRenderer::Init(GLuint program) {
     uMvp = glGetUniformLocation(program, "mvp"); LOGOPENGLERROR();
     uTex = glGetUniformLocation(program, "tex"); LOGOPENGLERROR();
 
-    mvp = HMM_Orthographic(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
+    mvp = HMM_Orthographic_RH_NO(PlaneBounds.X, PlaneBounds.Y, PlaneBounds.Z, PlaneBounds.W, 1.f, -1.f);
 
     // Init VAO
     glGenVertexArrays(1, vao.put()); LOGOPENGLERROR();
@@ -81,7 +81,7 @@ void PlainTextureRenderer::SetTexture(GLuint t) {
     texture = t;
 }
 
-void PlainTextureRenderer::SetMvp(const hmm_mat4& newMvp) {
+void PlainTextureRenderer::SetMvp(const HMM_Mat4& newMvp) {
     mvp = newMvp;
 }
 

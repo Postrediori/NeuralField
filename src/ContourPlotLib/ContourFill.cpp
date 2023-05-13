@@ -5,7 +5,7 @@
 #include "ContourPlot.h"
 #include "ContourFill.h"
 
-bool ContourFill::Update(matrix_t* points, const hmm_vec4& area, double t) {
+bool ContourFill::Update(matrix_t* points, const HMM_Vec4& area, double t) {
     threshold = t;
 
     this->area = area;
@@ -296,7 +296,7 @@ bool ContourFill::Update(matrix_t* points, const hmm_vec4& area, double t) {
     vbo_count = all_triangles.size();
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec2) * all_triangles.size(),
+    glBufferData(GL_ARRAY_BUFFER, sizeof(HMM_Vec2) * all_triangles.size(),
         all_triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     LOGD << "Created parallel filled contour with " << all_triangles.size() / 3 << " triangles";
@@ -304,9 +304,9 @@ bool ContourFill::Update(matrix_t* points, const hmm_vec4& area, double t) {
     return true;
 }
 
-void ContourFill::Render(const hmm_mat4& mvp,
+void ContourFill::Render(const HMM_Mat4& mvp,
                          double zoom,
-                         const hmm_vec2& offset,
+                         const HMM_Vec2& offset,
                          const FloatColor& c) {
     glUseProgram(program); LOGOPENGLERROR();
     glBindVertexArray(vao); LOGOPENGLERROR();

@@ -58,7 +58,7 @@ private:
 
     GraphicsUtils::unique_program program_;
 
-    hmm_mat4 mvp_;
+    HMM_Mat4 mvp_;
 
     NeuralFieldModel model_;
     TextureRenderer renderer_;

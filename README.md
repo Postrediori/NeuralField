@@ -31,6 +31,7 @@ You need CMake to generate platform-specific makefiles or project files. This re
 * [glm](https://github.com/g-truc/glm) - OpenGL Mathematics.
 * [plog](https://github.com/SergiusTheBest/plog) - Logging library.
 * [imgui](https://github.com/ocornut/imgui) - UI library.
+* [inih](https://github.com/jtilly/inih) - INI file parsing.
 
 ## Building for Linux
 

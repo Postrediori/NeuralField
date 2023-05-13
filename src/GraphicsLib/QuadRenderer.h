@@ -4,8 +4,8 @@ class QuadRenderer {
 public:
     QuadRenderer() = default;
 
-    bool Init(GLuint program, const hmm_vec4& area, const FloatColor& color);
-    void Render(const hmm_mat4& mvp, float zoom, const hmm_vec2& offset);
+    bool Init(GLuint program, const HMM_Vec4& area, const FloatColor& color);
+    void Render(const HMM_Mat4& mvp, float zoom, const HMM_Vec2& offset);
     void Resize(int w, int h);
     void SetColor(const FloatColor& newColor);
 

@@ -9,9 +9,9 @@ class ContourFill : public ContourPlot {
 public:
     ContourFill() = default;
     
-    bool Update(matrix_t* points, const hmm_vec4& area, double t);
-    void Render(const hmm_mat4& mvp,
+    bool Update(matrix_t* points, const HMM_Vec4& area, double t);
+    void Render(const HMM_Mat4& mvp,
                 double zoom,
-                const hmm_vec2& offset,
+                const HMM_Vec2& offset,
                 const FloatColor& c);
 };
