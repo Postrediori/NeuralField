@@ -41,7 +41,7 @@ bool TextureRenderer::Init(NeuralFieldModel* model, const std::filesystem::path&
     }
 
     // Init renderers
-    if (!screenRenderer.Init(program.get())) {
+    if (!screenRenderer.Init(static_cast<GLuint>(program))) {
         LOGE << "Failed to create screen texture renderer";
         return false;
     }
@@ -61,15 +61,15 @@ bool TextureRenderer::InitTextures(size_t newSize) {
         return false;
     }
 
-    glBindTexture(GL_TEXTURE_2D, texture.get()); LOGOPENGLERROR();
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture)); LOGOPENGLERROR();
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); LOGOPENGLERROR();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); LOGOPENGLERROR();
 
-    screenRenderer.SetTexture(texture.get());
+    screenRenderer.SetTexture(static_cast<GLuint>(texture));
 
     // Create base texture
-    glBindTexture(GL_TEXTURE_2D, texture.get()); LOGOPENGLERROR();
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture)); LOGOPENGLERROR();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, size, size, 0, GL_RED,
         GL_FLOAT, nullptr); LOGOPENGLERROR();
 
@@ -188,7 +188,7 @@ void TextureRenderer::UpdateTexture() {
     }
 #endif
 
-    glBindTexture(GL_TEXTURE_2D, texture.get()); LOGOPENGLERROR();
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture)); LOGOPENGLERROR();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, GL_RED,
                     GL_FLOAT, static_cast<const GLfloat *>(tex->data)); LOGOPENGLERROR();
 }

@@ -61,6 +61,9 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
     LOGI << "OpenCL Support : " << "No";
 #endif
 
+    LOGI << "GLFW Version : " << GLFW_VERSION_MAJOR << "." << GLFW_VERSION_MINOR << "." << GLFW_VERSION_REVISION;
+    LOGI << "ImGui Version : " << IMGUI_VERSION << " (" << IMGUI_VERSION_NUM << ")";
+
     window_ = window;
     glfwSetWindowUserPointer(window_, static_cast<void *>(this));
 
@@ -95,6 +98,11 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
         modelConfig_["Mp"] = DefaultMp;
         modelConfig_["size"] = DefaultSize;
     }
+
+    modelSize_ = static_cast<int>(modelConfig_["size"]);
+    modelMode_ = static_cast<int>(modelConfig_["mode"]);
+    modelH_ = -0.2;
+    modelM_ = 0.065;
 
     // Parse arguments
     if (ParseArgs(argc, argv) != EXIT_SUCCESS) {
@@ -147,14 +155,14 @@ bool NeuralFieldContext::Init(GLFWwindow* window, int argc, const char* argv[]) 
         return false;
     }
 
-    quad_.Init(program_.get(), { g_area.X, g_area.Y, g_area.Z, g_area.W }, g_background);
+    quad_.Init(static_cast<GLuint>(program_), { g_area.X, g_area.Y, g_area.Z, g_area.W }, g_background);
 
-    if (!contourLines_.Init(program_.get())) {
+    if (!contourLines_.Init(static_cast<GLuint>(program_))) {
         LOGE << "Unable to create Contour Lines";
         return false;
     }
 
-    if (!contourFill_.Init(program_.get())) {
+    if (!contourFill_.Init(static_cast<GLuint>(program_))) {
         LOGE << "Unable to create Filled Contour";
         return false;
     }
@@ -235,10 +243,10 @@ void NeuralFieldContext::RenderUi() {
         std::string name;
         RenderMode mode;
         std::tie(name, mode) = info;
-        ImGui::RadioButton(name.c_str(), (int *)&this->renderMode_, (int)mode);
+        ImGui::RadioButton(name.c_str(), reinterpret_cast<int *>(&renderMode_), static_cast<int>(mode));
         if (firstItemFlag) {
             ImGui::SameLine();
-            if (ImGui::Checkbox("Texture Blur", (bool *)&this->textureBlur_)) {
+            if (ImGui::Checkbox("Texture Blur", reinterpret_cast<bool *>(&textureBlur_))) {
                 renderer_.SetUseBlur(this->textureBlur_);
             }
             firstItemFlag = false;
@@ -253,7 +261,6 @@ void NeuralFieldContext::RenderUi() {
         {"512x512", 512},
         {"1024x1024", 1024}
     };
-    static int gModelSize = static_cast<int>(modelConfig_["size"]);
     int k = 0;
     ImGui::Text("Model size:");
     for (const auto& s : g_ModelSizes) {
@@ -264,9 +271,9 @@ void NeuralFieldContext::RenderUi() {
         }
         k++;
 
-        if (ImGui::RadioButton(std::get<0>(s).c_str(), &gModelSize, std::get<1>(s))) {
-            modelConfig_["size"] = gModelSize;
-            renderer_.InitTextures(gModelSize);
+        if (ImGui::RadioButton(std::get<0>(s).c_str(), &modelSize_, std::get<1>(s))) {
+            modelConfig_["size"] = modelSize_;
+            renderer_.InitTextures(modelSize_);
             model_.Init(modelConfig_);
         }
     }
@@ -278,7 +285,6 @@ void NeuralFieldContext::RenderUi() {
         {"reflect", static_cast<int>(KernelMode::MODE_REFLECT)},
         {"mirror", static_cast<int>(KernelMode::MODE_MIRROR)}
     };
-    static int gModelMode = static_cast<int>(modelConfig_["mode"]);
     firstItemFlag = true;
     ImGui::Text("Border mode:");
     for (const auto& s : g_ModelModes) {
@@ -288,8 +294,8 @@ void NeuralFieldContext::RenderUi() {
         else {
             ImGui::SameLine();
         }
-        if (ImGui::RadioButton(s.first.c_str(), &gModelMode, s.second)) {
-            modelConfig_["mode"] = gModelMode;
+        if (ImGui::RadioButton(s.first.c_str(), &modelMode_, s.second)) {
+            modelConfig_["mode"] = modelMode_;
             model_.Init(modelConfig_);
         }
     }
@@ -298,15 +304,13 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Text("Model params:");
 
-    static float gModelH = -0.2;
-    if (ImGui::SliderFloat("h", &gModelH, -0.3f, 0.0f)) {
-        modelConfig_["h"] = gModelH;
+    if (ImGui::SliderFloat("h", &modelH_, -0.3f, 0.0f)) {
+        modelConfig_["h"] = modelH_;
         model_.Init(modelConfig_);
     }
 
-    static float gModelM = 0.065;
-    if (ImGui::SliderFloat("M", &gModelM, 0.05f, 0.07)) {
-        modelConfig_["M_"] = gModelM;
+    if (ImGui::SliderFloat("M", &modelM_, 0.05f, 0.07)) {
+        modelConfig_["M_"] = modelM_;
         model_.Init(modelConfig_);
     }
 
@@ -398,23 +402,19 @@ void NeuralFieldContext::Restart() {
 }
 
 void NeuralFieldContext::Update() {
-    static double lastFpsTime = 0.0;
     double currentTime = glfwGetTime();
 
-    static uint64_t iterationsTime = 0;
-    static int simulationsCounter = 0;
-
-    if (currentTime - lastFpsTime > 1.0) {
+    if (currentTime - lastFpsTime_ > 1.0) {
         fps_ = ImGui::GetIO().Framerate;
-        lastFpsTime = currentTime;
+        lastFpsTime_ = currentTime;
 
-        if (simulationsCounter != 0) {
-            averageIteration_ = iterationsTime / simulationsCounter;
+        if (simulationsCounter_ != 0) {
+            averageIteration_ = iterationsTime_ / simulationsCounter_;
 
             LOGI << "Stimulation Step Avg Time (microseconds) = " << averageIteration_;
 
-            iterationsTime = 0;
-            simulationsCounter = 0;
+            iterationsTime_ = 0;
+            simulationsCounter_ = 0;
         }
     }
 
@@ -426,8 +426,8 @@ void NeuralFieldContext::Update() {
         auto stimulationStepEnd = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stimulationStepEnd - stimulationStepStart);
 
-        simulationsCounter++;
-        iterationsTime += duration.count();
+        simulationsCounter_++;
+        iterationsTime_ += duration.count();
     }
 
     constexpr double ContourThreshold = 0.0;
@@ -499,7 +499,7 @@ void NeuralFieldContext::Keyboard(int key, int /*scancode*/, int action, int /*m
         case GLFW_KEY_F1:
             isFullscreen_ = !isFullscreen_;
             if (isFullscreen_) {
-                glfwGetWindowPos(window_, &savedWindowInfo_.XPos, &savedWindowInfo_.YPos);
+                glfwGetWindowPos(window_, &savedWindowInfo_.X, &savedWindowInfo_.Y);
                 glfwGetWindowSize(window_, &savedWindowInfo_.Width, &savedWindowInfo_.Height);
 
                 GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -508,7 +508,7 @@ void NeuralFieldContext::Keyboard(int key, int /*scancode*/, int action, int /*m
                     mode->width, mode->height, mode->refreshRate);
             }
             else {
-                glfwSetWindowMonitor(window_, nullptr, savedWindowInfo_.XPos, savedWindowInfo_.YPos,
+                glfwSetWindowMonitor(window_, nullptr, savedWindowInfo_.X, savedWindowInfo_.Y,
                     savedWindowInfo_.Width, savedWindowInfo_.Height, GLFW_DONT_CARE);
             }
             break;

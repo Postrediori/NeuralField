@@ -6,6 +6,11 @@ enum class RenderMode : int {
     Fill
 };
 
+struct WindowDimensions {
+    int X, Y;
+    int Width, Height;
+};
+
 class NeuralFieldContext {
 public:
     NeuralFieldContext() = default;
@@ -54,6 +59,7 @@ private:
     GLFWwindow* window_ = nullptr;
     int windowWidth_ = 0, windowHeight_ = 0;
 
+
     RenderMode renderMode_ = RenderMode::Fill;
 
     GraphicsUtils::unique_program program_;
@@ -61,19 +67,24 @@ private:
     HMM_Mat4 mvp_;
 
     NeuralFieldModel model_;
+    int modelSize_;
+    int modelMode_;
+    float modelH_;
+    float modelM_;
+
     TextureRenderer renderer_;
 
     ContourLine contourLines_;
     ContourFill contourFill_;
 
     bool isFullscreen_ = false;
-    struct {
-        int XPos, YPos;
-        int Width, Height;
-    } savedWindowInfo_ = {0, 0, 0, 0};
+    WindowDimensions savedWindowInfo_ = { 0, 0, 0, 0 };
 
     float fps_ = 0.0f;
+    double lastFpsTime_ = 0.0;
     uint64_t averageIteration_{ 0 };
+    uint64_t iterationsTime_ = 0;
+    int simulationsCounter_ = 0;
 
     bool textureBlur_ = true;
 

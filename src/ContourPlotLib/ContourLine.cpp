@@ -172,7 +172,7 @@ bool ContourLine::Update(matrix_t* points, const HMM_Vec4& area, double t) {
     vbo_count = lines.size() * 2;
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(HMM_Vec4) * lines.size(), lines.data(),
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lines[0]) * lines.size(), lines.data(),
                  GL_DYNAMIC_DRAW); LOGOPENGLERROR();
 
     LOGD << "Created parallel line contour with " << lines.size() << " lines";

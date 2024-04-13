@@ -19,13 +19,13 @@ bool QuadRenderer::Init(GLuint program, const HMM_Vec4& area, const FloatColor& 
     if (!vao) {
         return false;
     }
-    glBindVertexArray(vao.get()); LOGOPENGLERROR();
+    glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 
     glGenBuffers(1, vbo.put()); LOGOPENGLERROR();
     if (!vbo) {
         return false;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(vbo)); LOGOPENGLERROR();
 
     const std::vector<HMM_Vec2> vertices = {
         {area.Elements[0], area.Elements[2]},
@@ -38,7 +38,7 @@ bool QuadRenderer::Init(GLuint program, const HMM_Vec4& area, const FloatColor& 
     };
     verticesCount = vertices.size();
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(HMM_Vec2) * verticesCount,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(),
         vertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     GLint aCoord = glGetAttribLocation(program, "coord"); LOGOPENGLERROR();
@@ -53,7 +53,7 @@ bool QuadRenderer::Init(GLuint program, const HMM_Vec4& area, const FloatColor& 
 
 void QuadRenderer::Render(const HMM_Mat4& mvp, float zoom, const HMM_Vec2& offset) {
     glUseProgram(program); LOGOPENGLERROR();
-    glBindVertexArray(vao.get()); LOGOPENGLERROR();
+    glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 
     glUniformMatrix4fv(uMvp, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(&mvp)); LOGOPENGLERROR();
     glUniform1f(uZoom, zoom); LOGOPENGLERROR();

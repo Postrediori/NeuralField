@@ -296,7 +296,7 @@ bool ContourFill::Update(matrix_t* points, const HMM_Vec4& area, double t) {
     vbo_count = all_triangles.size();
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo); LOGOPENGLERROR();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(HMM_Vec2) * all_triangles.size(),
+    glBufferData(GL_ARRAY_BUFFER, sizeof(all_triangles[0]) * all_triangles.size(),
         all_triangles.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
     LOGD << "Created parallel filled contour with " << all_triangles.size() / 3 << " triangles";

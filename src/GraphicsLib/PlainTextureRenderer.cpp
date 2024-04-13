@@ -38,7 +38,7 @@ bool PlainTextureRenderer::Init(GLuint program) {
         LOGE << "Failed to create VAO for planar texture";
         return false;
     }
-    glBindVertexArray(vao.get()); LOGOPENGLERROR();
+    glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 
     // Init VBO
     glGenBuffers(1, vbo.put()); LOGOPENGLERROR();
@@ -46,7 +46,8 @@ bool PlainTextureRenderer::Init(GLuint program) {
         LOGE << "Failed to create VBO for planar texture";
         return false;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, vbo.get()); LOGOPENGLERROR();
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(vbo)); LOGOPENGLERROR();
+    
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quadVertices[0]) * g_quadVertices.size(),
         g_quadVertices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
@@ -56,7 +57,7 @@ bool PlainTextureRenderer::Init(GLuint program) {
         LOGE << "Failed to create indices VBO";
         return false;
     }
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indVbo.get());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLuint>(indVbo));
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_quadIndices[0]) * g_quadIndices.size(),
         g_quadIndices.data(), GL_STATIC_DRAW); LOGOPENGLERROR();
 
@@ -66,11 +67,11 @@ bool PlainTextureRenderer::Init(GLuint program) {
 
     glEnableVertexAttribArray(aCoord); LOGOPENGLERROR();
     glVertexAttribPointer(aCoord, 2, GL_FLOAT, GL_FALSE,
-        sizeof(GLfloat) * 4, (void *)(0)); LOGOPENGLERROR();
+        sizeof(GLfloat) * 4, reinterpret_cast<void *>(0)); LOGOPENGLERROR();
 
     glEnableVertexAttribArray(aTexCoord); LOGOPENGLERROR();
     glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE,
-        sizeof(GLfloat) * 4, (void *)(sizeof(GLfloat) * 2)); LOGOPENGLERROR();
+        sizeof(GLfloat) * 4, reinterpret_cast<void *>(sizeof(GLfloat) * 2)); LOGOPENGLERROR();
 
     glBindVertexArray(0); LOGOPENGLERROR();
 
@@ -96,7 +97,7 @@ void PlainTextureRenderer::AdjustViewport() {
 
 void PlainTextureRenderer::Render() {
     glUseProgram(program); LOGOPENGLERROR();
-    glBindVertexArray(vao.get()); LOGOPENGLERROR();
+    glBindVertexArray(static_cast<GLuint>(vao)); LOGOPENGLERROR();
 
     glActiveTexture(GL_TEXTURE0); LOGOPENGLERROR();
     glBindTexture(GL_TEXTURE_2D, texture); LOGOPENGLERROR();
