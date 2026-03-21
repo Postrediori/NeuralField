@@ -62,7 +62,14 @@ dnf install \
     libXinerama-devel \
     libXcursor-devel \
     libXi-devel \
+    libxkbcommon-devel \
     freetype-devel
+```
+
+Additional dependency for building under Wayland:
+
+```
+sudo dnf install -y wayland-devel
 ```
 
 ### Dependencies for OpenCL build
