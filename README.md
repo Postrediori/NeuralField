@@ -159,6 +159,21 @@ tree
 2 directories, 7 files
 ```
 
+### Environment variables for OpenCL
+
+Setup OpenCL driver with environment variable `RUSTICL_ENABLE`, for example:
+
+```
+RUSTICL_ENABLE=llvmpipe ./bundle/NeuralField
+
+RUSTICL_ENABLE=iris ./bundle/NeuralField
+```
+
+Links:
+* Mesa 3D Environment Variables - https://docs.mesa3d.org/envvars.html#envvar-RUSTICL_ENABLE
+* Getting started with OpenCL using mesa/rusticl - https://nullr0ute.com/2023/12/getting-started-with-opencl-using-mesa-rusticl/
+
+
 ## Building for macOS
 
 Generate makefiles for the build:
