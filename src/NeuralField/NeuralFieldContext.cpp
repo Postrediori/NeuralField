@@ -342,7 +342,7 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Separator();
 
-    ImGui::Text("Iterations average (ms): %ld", averageIteration_);
+    ImGui::Text("Iterations average (us): %ld", averageIteration_);
     ImGui::Text("FPS Counter: %.1f", fps_);
 
     ImGui::End();

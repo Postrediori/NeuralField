@@ -36,22 +36,26 @@ You need CMake to generate platform-specific makefiles or project files. This re
 ## Building for Linux
 
 ### Dependencies
-The following instructions apply to:
 
-* Ubuntu or Debian
+**On Ubuntu or Debian:**
 
 ```
-apt-get install \
+apt install \
     build-essential \
     cmake \
     xorg-dev \
     libgl1-mesa-dev \
-    libfreetype6-dev
+    libfreetype6-dev \
+    libxkbcommon-dev
 ```
 
-The following instructions apply to:
+Additional dependency for building under Wayland:
 
-* RedHat-based systems (Fedora, CentOS):
+```
+apt install libwayland-dev
+```
+
+**On RedHat-based, Fedora systems:**
 
 ```
 dnf install \
@@ -69,14 +73,14 @@ dnf install \
 Additional dependency for building under Wayland:
 
 ```
-sudo dnf install -y wayland-devel
+dnf install wayland-devel
 ```
 
 ### Dependencies for OpenCL build
 
 Build with `USE_OPENCL` option requires additional dependencies.
 
-* Install development libraries:
+**Install development libraries:**
 
 On Ubuntu or Debian:
 
@@ -84,13 +88,13 @@ On Ubuntu or Debian:
 apt install opencl-headers ocl-icd-opencl-dev
 ```
 
-On RedHat-based systems (Fedora, CentOS):
+On RedHat-based, Fedora systems:
 
 ```
 dnf install mesa-libOpenCL-devel ocl-icd-devel
 ```
 
-* Install platform-specific driver, e.g. driver for Intel:
+**Install platform-specific driver (e.g. driver for Intel):**
 
 On Ubuntu or Debian:
 
@@ -98,7 +102,7 @@ On Ubuntu or Debian:
 apt install intel-opencl-icd
 ```
 
-On RedHat-based systems (Fedora, CentOS):
+On RedHat-based, Fedora systems:
 
 ```
 dnf install intel-opencl
