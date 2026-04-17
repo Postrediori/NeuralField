@@ -80,6 +80,8 @@ private:
     bool isFullscreen_ = false;
     WindowDimensions savedWindowInfo_ = { 0, 0, 0, 0 };
 
+    bool bShowUi = true;
+
     float fps_ = 0.0f;
     double lastFpsTime_ = 0.0;
     uint64_t averageIteration_{ 0 };

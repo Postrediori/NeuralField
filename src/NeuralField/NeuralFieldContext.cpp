@@ -218,7 +218,9 @@ void NeuralFieldContext::Display() {
         break;
     }
 
-    this->RenderUi();
+    if (bShowUi) {
+        this->RenderUi();
+    }
 }
 
 void NeuralFieldContext::RenderUi() {
@@ -264,10 +266,8 @@ void NeuralFieldContext::RenderUi() {
     int k = 0;
     ImGui::Text("Model size:");
     for (const auto& s : g_ModelSizes) {
-        if (k>0) {
-            if (k%2==1) {
-                ImGui::SameLine();
-            }
+        if (k>0 && k%2==1) {
+            ImGui::SameLine();
         }
         k++;
 
@@ -336,6 +336,7 @@ void NeuralFieldContext::RenderUi() {
 
     ImGui::Text("User Guide:");
     ImGui::BulletText("F1 to on/off fullscreen mode.");
+    ImGui::BulletText("F2 to show/hide UI.");
     ImGui::BulletText("RMB to Clear model.");
     ImGui::BulletText("LMB to Activate model in a point.");
     ImGui::BulletText("B to toggle texture blur on/off.");
@@ -354,9 +355,17 @@ void NeuralFieldContext::Resize(int w, int h) {
 
     glViewport(0, 0, windowWidth_, windowHeight_); LOGOPENGLERROR();
 
-    int newW = windowWidth_ - static_cast<int>(g_UiWidth);
+    int newW = windowWidth_;
+    if (bShowUi) {
+        newW -= static_cast<int>(g_UiWidth);
+    }
+
     float newScale = 2.0 / static_cast<float>(newW);
-    float newLeft = g_area.X - g_UiWidth * newScale;
+    float newLeft = g_area.X;
+    if (bShowUi) {
+        newLeft -= g_UiWidth * newScale;
+    }
+
     mvp_ = HMM_Orthographic_RH_NO(newLeft, g_area.Y, g_area.Z, g_area.W, 1.f, -1.f);
 
     quad_.Resize(newW, h);
@@ -368,17 +377,22 @@ void NeuralFieldContext::Resize(int w, int h) {
 void NeuralFieldContext::SetActivity(int x, int y) {
     int cx = 0, cy = 0;
 
-    int newX = x - static_cast<int>(g_UiWidth);
+    int viewportX = x;
 
-    int w = windowWidth_ - static_cast<int>(g_UiWidth);
+    int w = windowWidth_;
     int h = windowHeight_;
 
+    if (bShowUi) {
+        viewportX -= static_cast<int>(g_UiWidth);
+        w -= static_cast<int>(g_UiWidth);
+    }
+
     if (w > h) {
-        cx = newX - (w - h) / 2;
+        cx = viewportX - (w - h) / 2;
         cy = y;
     }
     else {
-        cx = newX;
+        cx = viewportX;
         cy = y - (h - w) / 2;
     }
 
@@ -411,11 +425,11 @@ void NeuralFieldContext::Update() {
         if (simulationsCounter_ != 0) {
             averageIteration_ = iterationsTime_ / simulationsCounter_;
 
-            LOGI << "Stimulation Step Avg Time (microseconds) = " << averageIteration_;
-
             iterationsTime_ = 0;
             simulationsCounter_ = 0;
         }
+
+        LOGI << "FPS: " << static_cast<int>(fps_) << ", Average Stimulation Step Time (us) = " << averageIteration_;
     }
 
     {
@@ -511,6 +525,11 @@ void NeuralFieldContext::Keyboard(int key, int /*scancode*/, int action, int /*m
                 glfwSetWindowMonitor(window_, nullptr, savedWindowInfo_.X, savedWindowInfo_.Y,
                     savedWindowInfo_.Width, savedWindowInfo_.Height, GLFW_DONT_CARE);
             }
+            break;
+
+        case GLFW_KEY_F2:
+            bShowUi = !bShowUi;
+            Resize(windowWidth_, windowHeight_);
             break;
 
         case GLFW_KEY_B:
